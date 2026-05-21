@@ -7,7 +7,7 @@ interface ProgramDetailProps {
   description: string;
 }
 
-export default function ProgramDetail({ degree, cipCode, school, description }: any) {
+export default function ProgramDetail({ degree, cipCode, school, description }: ProgramDetailProps) {
   return (
     <div className="mb-10">
       <h2 className="text-2xl font-extrabold text-gray-900 mb-6 inline-block border-b-[6px] border-black pb-1 leading-none">

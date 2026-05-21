@@ -9,41 +9,48 @@ interface CourseSummarySideCardProps {
 }
 
 export default function CourseSummarySideCard({
-  degree, duration, format, financialAid
+  degree,
+  duration,
+  format,
+  financialAid,
 }: CourseSummarySideCardProps) {
   return (
     <div className="w-full shrink-0">
-      <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-4 px-2">
-        <Info size={12} className="shrink-0" />
-        <span className="leading-tight">Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.</span>
+      <div className="flex items-start gap-2 text-[10px] text-slate-500 mb-4 px-2">
+        <Info size={14} className="shrink-0 mt-0.5" />
+        <span className="leading-tight">
+          Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.
+        </span>
       </div>
-      
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-5">Course Summary</h3>
+
+      <div className="bg-white border border-gray-100 rounded-[32px] shadow-sm p-6">
+        <h3 className="text-xl font-semibold text-slate-900 mb-5">Course Summary</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-2 border-b border-gray-50">
-            <span className="text-sm text-gray-500">Degree</span>
-            <span className="text-sm font-bold text-gray-900 text-right">{degree}</span>
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-sm text-slate-500">Degree</span>
+            <span className="text-sm font-semibold text-slate-900 text-right">{degree}</span>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-50">
-            <span className="text-sm text-gray-500">Duration</span>
-            <span className="text-sm font-bold text-gray-900">{duration}</span>
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-sm text-slate-500">Duration</span>
+            <span className="text-sm font-semibold text-slate-900">{duration}</span>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-50">
-            <span className="text-sm text-gray-500">Format</span>
-            <span className="text-sm font-bold text-gray-900 text-right">{format}</span>
+          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+            <span className="text-sm text-slate-500">Format</span>
+            <span className="text-sm font-semibold text-slate-900">{format}</span>
           </div>
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-gray-500">Financial Aid</span>
-            <span className="text-sm font-bold text-green-600">{financialAid}</span>
+          <div className="flex items-center justify-between py-3">
+            <span className="text-sm text-slate-500">Financial Aid</span>
+            <span className="text-sm font-semibold text-emerald-600">{financialAid}</span>
           </div>
         </div>
-        
-        <div className="mt-6 flex flex-col gap-2">
-          <button className="w-full bg-[#83449F] hover:bg-purple-800 text-white font-bold py-3.5 rounded-xl transition-colors">
+
+        <div className="mt-6 flex flex-col gap-3">
+          <button className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-700">
             Apply Now
           </button>
-          <p className="text-[9px] text-gray-400 text-center">Next intake: Fall 2025 &bull; Deadline: Jan 5, 2025</p>
+          <p className="text-[11px] text-slate-500 text-center">
+            Next intake: Fall 2025 · Deadline: Jan 5, 2025
+          </p>
         </div>
       </div>
     </div>

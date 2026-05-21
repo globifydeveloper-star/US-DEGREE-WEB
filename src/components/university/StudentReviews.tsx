@@ -41,7 +41,6 @@ export default function StudentReviews() {
         <span className="font-bold text-gray-900">4.8</span>
         <span className="text-sm text-blue-600 underline cursor-pointer">(1,240 reviews)</span>
       </div>
-
       <div className="space-y-6">
         {reviews.map((review, i) => (
           <div key={i} className="bg-gray-50 rounded-2xl p-6">

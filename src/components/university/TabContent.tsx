@@ -8,6 +8,8 @@ import AdmissionsOverview from "./AdmissionsOverview";
 import OutcomesSection from "./OutcomesSection";
 import StudentReviews from "./StudentReviews";
 import CourseSummarySideCard from "./CourseSummarySideCard";
+import ProgramSearchBand from "./ProgramSearchBand";
+import ProgramsAcademicsTab from "./ProgramsAcademicsTab";
 
 const tabs = [
   "Overview",
@@ -19,43 +21,41 @@ const tabs = [
 ];
 
 export default function TabContent({ data }: { data: any }) {
-  const [activeTab, setActiveTab] = useState("Admissions"); // Set to Admissions initially based on request
+  const [activeTab, setActiveTab] = useState("Overview");
 
   return (
     <>
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-8">
-          <div className="flex items-center gap-0 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`whitespace-nowrap px-5 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${
                   activeTab === tab
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-900"
+                    ? "text-[#2563EB]"
+                    : "text-[#64748B] hover:text-gray-900"
                 }`}
               >
                 {tab}
+                {activeTab === tab && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#EF4444] rounded-t-full" />
+                )}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-10 w-full flex flex-col md:flex-row gap-12">
-        {/* Left Column - Tab Content */}
+      <div className="max-w-7xl mx-auto px-8 py-10 w-full flex flex-col xl:flex-row gap-10">
         <div className="flex-1 w-full min-w-0">
           {activeTab === "Overview" && (
-            <div className="flex flex-col gap-16">
-              <section>
+            <div className="space-y-16">
+              <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
                 <AboutSection
                   name={data.name}
                   description={data.description}
-                  degree={data.degree}
-                  duration={data.duration}
-                  format={data.format}
-                  financialAid={data.financialAid}
                 />
                 <StatsGrid
                   totalStudents={data.totalStudents}
@@ -65,51 +65,30 @@ export default function TabContent({ data }: { data: any }) {
                   fafsaApplications={data.fafsaApplications}
                   completionRate={data.completionRate}
                 />
-              </section>
+              </div>
 
-              <section>
-                <ProgramDetail
-                  degree={data.degree || `B.S. in Computer Science`}
-                  cipCode={data.cipCode}
-                  school={data.school}
-                  description={data.programDescription}
-                />
-              </section>
+              <AdmissionsOverview
+                admissionRate={data.admissionRate}
+                applicants={data.applicants}
+                satReadingWriting={data.satReadingWriting}
+                satMath={data.satMath}
+                satAverage={data.satAverage}
+                salaryYear1={data.salaryYear1}
+                salaryYear10={data.salaryYear10}
+                netRoi20Yr={data.netRoi20Yr}
+                growthRate={data.growthRate}
+              />
 
-              <section>
-                <AdmissionsOverview
-                  admissionRate={data.admissionRate}
-                  applicants={data.applicants}
-                  satReadingWriting={data.satReadingWriting}
-                  satMath={data.satMath}
-                  satAverage={data.satAverage}
-                />
-              </section>
-
-              <section>
-                <OutcomesSection
-                  salaryYear1={data.salaryYear1}
-                  salaryYear10={data.salaryYear10}
-                  netRoi20Yr={data.netRoi20Yr}
-                  growthRate={data.growthRate}
-                  empFactor={data.empFactor}
-                  debtIncomeRatio={data.debtIncomeRatio}
-                />
-              </section>
-
-              <section>
+              <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
                 <StudentReviews />
-              </section>
+              </div>
+
+              <ProgramSearchBand />
             </div>
           )}
 
           {activeTab === "Programs & Academics" && (
-            <ProgramDetail
-              degree={`B.S. in Computer Science`}
-              cipCode={data.cipCode}
-              school={data.school}
-              description={data.programDescription}
-            />
+            <ProgramsAcademicsTab data={data} />
           )}
 
           {activeTab === "Admissions" && (
@@ -134,7 +113,9 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Campus & Students" && (
-            <StudentReviews />
+            <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
+              <p className="text-slate-500">Campus & Students details are coming soon.</p>
+            </div>
           )}
 
           {activeTab === "Tuition & Costs" && (
@@ -145,8 +126,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
         </div>
 
-        {/* Right Column - Persistent Course Summary */}
-        <div className="w-full md:w-80 shrink-0">
+        <div className="w-full xl:w-[320px] shrink-0 xl:sticky xl:top-24 self-start">
           <CourseSummarySideCard
             degree={data.degree}
             duration={data.duration}
