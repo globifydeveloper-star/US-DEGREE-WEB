@@ -16,7 +16,7 @@ export default function TabNavigation() {
 
   return (
     <div className="sticky top-16 z-40 bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-8">
+      <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px]">
         <div className="flex items-center gap-0 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => (
             <button

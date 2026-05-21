@@ -3,7 +3,7 @@ import React from "react";
 export default function ProBanner() {
   return (
     <section className="px-6 sm:px-10 lg:px-[86px] py-12 flex justify-center">
-      <div className="w-full max-w-[1600px] bg-gradient-to-r from-indigo-600 to-blue-500 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl shadow-blue-900/20">
+      <div className="w-full max-w-[2380px] bg-gradient-to-r from-indigo-600 to-blue-500 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl shadow-blue-900/20">
         
         {/* LEFT TEXT */}
         <div className="text-white max-w-lg">

@@ -78,7 +78,7 @@ export default async function UniversityPage({
   const { id } = await params;
   const sParams = await searchParams;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   // 1. Gather all data we can fetch from the backend overview endpoint
   let apiData: any = null;
@@ -114,6 +114,17 @@ export default async function UniversityPage({
     } catch (err) {
       console.error("Error fetching outcomes details:", err);
     }
+  }
+
+  // 2b. Fetch campus details
+  let campusData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/campus/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      campusData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching campus details:", err);
   }
 
   // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
@@ -163,9 +174,17 @@ export default async function UniversityPage({
     : (id === "1" ? "94%" : id === "2" ? "92%" : "N/A");
 
   // SAT & Student metrics from API if present, otherwise mock fallbacks
-  const satAverage = (universityData[id]?.satAverage) || "N/A";
-  const satReadingWriting = (universityData[id]?.satReadingWriting) || "N/A";
-  const satMath = (universityData[id]?.satMath) || "N/A";
+  const satAverage = apiData?.admissions?.sat_avg_overall !== null && apiData?.admissions?.sat_avg_overall !== undefined
+    ? String(apiData.admissions.sat_avg_overall)
+    : (universityData[id]?.satAverage) || "N/A";
+
+  const satReadingWriting = apiData?.admissions?.sat_rw_min !== null && apiData?.admissions?.sat_rw_max !== null && apiData?.admissions?.sat_rw_min !== undefined && apiData?.admissions?.sat_rw_max !== undefined
+    ? `${apiData.admissions.sat_rw_min} - ${apiData.admissions.sat_rw_max}`
+    : (universityData[id]?.satReadingWriting) || "N/A";
+
+  const satMath = apiData?.admissions?.sat_math_min !== null && apiData?.admissions?.sat_math_max !== null && apiData?.admissions?.sat_math_min !== undefined && apiData?.admissions?.sat_math_max !== undefined
+    ? `${apiData.admissions.sat_math_min} - ${apiData.admissions.sat_math_max}`
+    : (universityData[id]?.satMath) || "N/A";
 
   const applicants = apiData?.students?.fafsa_applications
     ? String(apiData.students.fafsa_applications)
@@ -227,7 +246,10 @@ export default async function UniversityPage({
     netRoi20Yr,
     growthRate,
     empFactor,
-    debtIncomeRatio
+    debtIncomeRatio,
+
+    // Campus Data
+    campusData
   };
 
   return (

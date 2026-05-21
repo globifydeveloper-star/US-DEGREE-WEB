@@ -41,7 +41,7 @@ function SearchContent() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const requestParams = new URLSearchParams(searchParams.toString());
         requestParams.delete("school_type");
 
@@ -82,7 +82,9 @@ function SearchContent() {
       schoolType: getCollegeType(result) || "Unknown",
       admissionRate: hasValue(result.admission_rate) ? `${(Number(result.admission_rate) * 100).toFixed(1)}%` : "N/A",
       avgGpa: "N/A",
-      satAct: "N/A",
+      satAct: hasValue(result.school_min_range) && hasValue(result.school_max_range)
+        ? `${result.school_min_range} - ${result.school_max_range}`
+        : "N/A",
       duration: "4 Years", // Default fallback if not provided
       specializations: result.credential_title || "N/A",
       matchScore: 90, // Placeholder
@@ -102,7 +104,7 @@ function SearchContent() {
     <div className="flex-1">
       <TopSearchBar />
       
-      <div className="max-w-7xl mx-auto px-8 py-4 flex flex-col md:flex-row gap-8">
+      <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4 flex flex-col md:flex-row gap-8">
         {/* Sidebar */}
         <SearchSidebar />
 

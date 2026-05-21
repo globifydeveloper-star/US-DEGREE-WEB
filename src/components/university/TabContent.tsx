@@ -10,6 +10,7 @@ import StudentReviews from "./StudentReviews";
 import CourseSummarySideCard from "./CourseSummarySideCard";
 import ProgramSearchBand from "./ProgramSearchBand";
 import ProgramsAcademicsTab from "./ProgramsAcademicsTab";
+import CampusStudentsTab from "./CampusStudentsTab";
 
 const tabs = [
   "Overview",
@@ -25,8 +26,8 @@ export default function TabContent({ data }: { data: any }) {
 
   return (
     <>
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-8">
+      <div className="sticky top-[50px] z-40 bg-white border-b border-gray-100 shadow-sm">
+        <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px]">
           <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => (
               <button
@@ -48,7 +49,7 @@ export default function TabContent({ data }: { data: any }) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-10 w-full flex flex-col xl:flex-row gap-10">
+      <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-10 w-full flex flex-col lg:flex-row gap-10">
         <div className="flex-1 w-full min-w-0">
           {activeTab === "Overview" && (
             <div className="space-y-16">
@@ -113,9 +114,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Campus & Students" && (
-            <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
-              <p className="text-slate-500">Campus & Students details are coming soon.</p>
-            </div>
+            <CampusStudentsTab campusData={data.campusData} fafsaApplications={data.fafsaApplications} />
           )}
 
           {activeTab === "Tuition & Costs" && (
@@ -126,7 +125,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
         </div>
 
-        <div className="w-full xl:w-[320px] shrink-0 xl:sticky xl:top-24 self-start">
+        <div className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-28 self-start">
           <CourseSummarySideCard
             degree={data.degree}
             duration={data.duration}

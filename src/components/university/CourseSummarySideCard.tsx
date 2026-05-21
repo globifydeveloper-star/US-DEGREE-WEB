@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 interface CourseSummarySideCardProps {
   degree: string;
@@ -15,44 +15,52 @@ export default function CourseSummarySideCard({
   financialAid,
 }: CourseSummarySideCardProps) {
   return (
-    <div className="w-full shrink-0">
-      <div className="flex items-start gap-2 text-[10px] text-slate-500 mb-4 px-2">
-        <Info size={14} className="shrink-0 mt-0.5" />
-        <span className="leading-tight">
+    <div className="w-full flex flex-col gap-4">
+      {/* Citation Above Card */}
+      <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">
+        <HelpCircle size={13} className="text-slate-400 mt-0.5 shrink-0" />
+        <span>
           Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.
         </span>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-[32px] shadow-sm p-6">
-        <h3 className="text-xl font-semibold text-slate-900 mb-5">Course Summary</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-sm text-slate-500">Degree</span>
-            <span className="text-sm font-semibold text-slate-900 text-right">{degree}</span>
+      {/* Main Course Summary Card */}
+      <div className="bg-white border border-[#EAEFF5] rounded-[32px] shadow-sm p-8 flex flex-col gap-6">
+        <h3 className="text-[20px] font-black text-slate-900 tracking-tight leading-none">
+          Course Summary
+        </h3>
+        
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between py-4 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-400">Degree</span>
+            <span className="text-sm font-black text-slate-900 text-right max-w-[200px] leading-tight">
+              {degree}
+            </span>
           </div>
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-sm text-slate-500">Duration</span>
-            <span className="text-sm font-semibold text-slate-900">{duration}</span>
+          <div className="flex items-center justify-between py-4 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-400">Duration</span>
+            <span className="text-sm font-black text-slate-900">{duration}</span>
           </div>
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <span className="text-sm text-slate-500">Format</span>
-            <span className="text-sm font-semibold text-slate-900">{format}</span>
+          <div className="flex items-center justify-between py-4 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-400">Format</span>
+            <span className="text-sm font-black text-slate-900">{format}</span>
           </div>
-          <div className="flex items-center justify-between py-3">
-            <span className="text-sm text-slate-500">Financial Aid</span>
-            <span className="text-sm font-semibold text-emerald-600">{financialAid}</span>
+          <div className="flex items-center justify-between py-4">
+            <span className="text-sm font-semibold text-slate-400">Financial Aid</span>
+            <span className="text-sm font-black text-emerald-500">{financialAid}</span>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3">
-          <button className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+        <div className="flex flex-col gap-3">
+          <button className="w-full rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10">
             Apply Now
           </button>
-          <p className="text-[11px] text-slate-500 text-center">
-            Next intake: Fall 2025 · Deadline: Jan 5, 2025
+          <p className="text-[11px] font-bold text-slate-400 text-center">
+            Next intake: Fall 2025 • Deadline: Jan 15, 2025
           </p>
         </div>
       </div>
     </div>
   );
 }
+

@@ -23,7 +23,7 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="pb-20 px-8 max-w-7xl mx-auto">
+    <section className="pb-20 px-6 sm:px-10 lg:px-[86px] max-w-[2380px] mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {testimonials.map((t, i) => (
           <div key={i} className={`${t.color} rounded-3xl p-8 text-white shadow-xl shadow-blue-900/10 flex flex-col justify-between min-h-[220px]`}>
