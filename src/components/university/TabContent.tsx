@@ -11,6 +11,7 @@ import CourseSummarySideCard from "./CourseSummarySideCard";
 import ProgramSearchBand from "./ProgramSearchBand";
 import ProgramsAcademicsTab from "./ProgramsAcademicsTab";
 import CampusStudentsTab from "./CampusStudentsTab";
+import TuitionCostsSection from "./TuitionCostsSection";
 
 const tabs = [
   "Overview",
@@ -118,10 +119,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Tuition & Costs" && (
-            <div className="py-10">
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-4">Tuition & Costs</h2>
-              <p className="text-gray-600">Information about tuition and costs will be displayed here.</p>
-            </div>
+            <TuitionCostsSection tuitionData={data.tuitionData} schoolName={data.name} />
           )}
         </div>
 
