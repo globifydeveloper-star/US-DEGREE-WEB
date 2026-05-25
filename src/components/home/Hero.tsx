@@ -108,107 +108,122 @@ export default function Hero() {
 
       <div className="relative w-full max-w-[2380px] grid gap-14 lg:grid-cols-[0.98fr_1fr] lg:gap-[62px]">
         <div className="flex flex-col items-start pt-[10px]">
-          <span className="mb-5 inline-block rounded-full bg-[#ff3b30] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white">
-            TOP-TIER EDUCATION
-          </span>
+          <div>
 
-          <h1 className="mb-4 max-w-[560px] text-[36px] font-extrabold leading-[1.05] tracking-tight text-[#111827] sm:text-[48px]">
-            Find the Most
-            <br />
-            <span className="text-[#3b5bdb]">Exciting</span> U.S.
-            <br />
-            Degrees
-          </h1>
+            <span className="mb-5 inline-block rounded-full bg-[#ff3b30] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white">
+              TOP-TIER EDUCATION
+            </span>
 
-          <p className="mb-4 max-w-[620px] text-[15px] leading-[1] text-[#4b5563] sm:text-[15px]">
-            Navigate the complex world of American higher education with ease. Our
-            mission is to connect ambitious students with programs that fuel passion and
-            guarantee success.
-          </p>
+            <h1 className="
+  mb-6
+  max-w-[600px]
+  text-[64px]
+  lg:text-[78px]
+  font-bold
+  leading-[0.95]
+  tracking-[-0.04em]
+  text-[#111827]
+">              The Neutral Way to 
+             
+              Choose a  <span className="text-[#3b5bdb]"> U.S. </span>
+              <br />
+              Degrees
+            </h1>
 
-          <div className="w-full max-w-[620px] rounded-[32px] md:rounded-[40px] bg-white p-4 sm:p-3 sm:pt-3 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex flex-col">
-                <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
-                  Course / Field of study
-                </label>
-                <div className="flex h-[40px] items-center bg-white px-1">
-                  <Select
-                    showSearch
-                    className="w-full text-[#2f3b4c]"
-                    variant="borderless"
-                    placeholder="SELECT A COURSE"
-                    options={levels}
-                    onChange={(value) => setSelectedLevel(value)}
-                    filterOption={(input, option) =>
-                      (option?.label ?? "")
-                        .toString()
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                  />
+            <p className="
+  mb-8
+  max-w-[650px]
+  text-[18px]
+  leading-[1.3]
+  text-[#4b5563]
+">              Navigate the complex world of American higher education with ease. Our
+              mission is to connect ambitious students with programs that fuel passion and
+              guarantee success.
+            </p>
+
+            <div className="w-full max-w-[620px] rounded-[32px] md:rounded-[40px] bg-white p-4 sm:p-3 sm:pt-3 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex flex-col">
+                  <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
+                    Credential Level
+                  </label>
+                  <div className="flex h-[40px] items-center bg-white px-1">
+                    <Select
+                      showSearch
+                      className="w-full text-[#2f3b4c]"
+                      variant="borderless"
+                      placeholder="Select credential Level"
+                      options={levels}
+                      onChange={(value) => setSelectedLevel(value)}
+                      filterOption={(input, option) =>
+                        (option?.label ?? "")
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
+                    States
+                  </label>
+                  <div className="flex h-[36px] items-center bg-white px-1">
+                    <Select
+                      showSearch
+                      className="w-full text-[#2f3b4c]"
+                      variant="borderless"
+                      placeholder="Select a State"
+                      options={states}
+                      onChange={(value) => setSelectedState(value)}
+                      filterOption={(input, option) =>
+                        (option?.label ?? "")
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
+                    Course / Field of study
+                  </label>
+                  <div className="flex h-[36px] items-center bg-white px-1">
+                    <Select
+                      showSearch
+                      className="w-full text-[#2f3b4c]"
+                      variant="borderless"
+                      placeholder="Select a Course"
+                      options={courses}
+                      value={selectedCourse}
+                      loading={isCoursesLoading}
+                      onChange={(value) => setSelectedCourse(value)}
+                      disabled={!selectedLevel && !selectedState}
+                      filterOption={(input, option) =>
+                        (option?.label ?? "")
+                          .toString()
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
-                  Course / Field of study
-                </label>
-                <div className="flex h-[36px] items-center bg-white px-1">
-                  <Select
-                    showSearch
-                    className="w-full text-[#2f3b4c]"
-                    variant="borderless"
-                    placeholder="SELECT A COURSE"
-                    options={states}
-                    onChange={(value) => setSelectedState(value)}
-                    filterOption={(input, option) =>
-                      (option?.label ?? "")
-                        .toString()
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="pl-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0c1724]">
-                  Course / Field of study
-                </label>
-                <div className="flex h-[36px] items-center bg-white px-1">
-                  <Select
-                    showSearch
-                    className="w-full text-[#2f3b4c]"
-                    variant="borderless"
-                    placeholder="SELECT A COURSE"
-                    options={courses}
-                    value={selectedCourse}
-                    loading={isCoursesLoading}
-                    onChange={(value) => setSelectedCourse(value)}
-                    disabled={!selectedLevel && !selectedState}
-                    filterOption={(input, option) =>
-                      (option?.label ?? "")
-                        .toString()
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                  />
-                </div>
-              </div>
+              <button
+                onClick={handleSearch}
+                disabled={isLoading}
+                className="mt-3 md:mt-1 flex h-[40px] md:h-[26px] w-full md:w-[200px] items-center justify-center gap-2 rounded-full bg-[#3b5bdb] text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(59,91,219,0.24)] transition-all hover:bg-[#364fc7] disabled:cursor-not-allowed disabled:opacity-70 mx-auto lg:mx-0 lg:ml-[160px]"
+              >
+                <Search className="h-4 w-4" strokeWidth={2.4} />
+                {isLoading ? "Searching..." : "Search Degrees"}
+              </button>
             </div>
-
-            <button
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="mt-3 md:mt-1 flex h-[40px] md:h-[26px] w-full md:w-[200px] items-center justify-center gap-2 rounded-full bg-[#3b5bdb] text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(59,91,219,0.24)] transition-all hover:bg-[#364fc7] disabled:cursor-not-allowed disabled:opacity-70 mx-auto lg:mx-0 lg:ml-[160px]"
-            >
-              <Search className="h-4 w-4" strokeWidth={2.4} />
-              {isLoading ? "Searching..." : "Search Degrees"}
-            </button>
           </div>
         </div>
-
         <div className="relative min-h-[220px] lg:min-h-[320px]">
           <div className="relative z-10 overflow-hidden rounded-[48px]">
             <img
