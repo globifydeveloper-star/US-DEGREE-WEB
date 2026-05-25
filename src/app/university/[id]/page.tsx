@@ -127,6 +127,17 @@ export default async function UniversityPage({
     console.error("Error fetching campus details:", err);
   }
 
+  // 2c. Fetch tuition details
+  let tuitionData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/tuition/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      tuitionData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching tuition details:", err);
+  }
+
   // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
   const name = sParams.name || (universityData[id]?.name) || "Unknown University";
   const city = sParams.city || "";
@@ -249,7 +260,10 @@ export default async function UniversityPage({
     debtIncomeRatio,
 
     // Campus Data
-    campusData
+    campusData,
+
+    // Tuition Data
+    tuitionData
   };
 
   return (
