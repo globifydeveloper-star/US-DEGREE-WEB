@@ -31,9 +31,16 @@ interface TuitionCostsSectionProps {
     };
   } | null;
   schoolName?: string;
+  tuitionType?: 'in_state' | 'out_state';
+  setTuitionType?: (type: 'in_state' | 'out_state') => void;
 }
 
-export default function TuitionCostsSection({ tuitionData, schoolName = "this university" }: TuitionCostsSectionProps) {
+export default function TuitionCostsSection({ 
+  tuitionData, 
+  schoolName = "this university",
+  tuitionType: propTuitionType,
+  setTuitionType: propSetTuitionType
+}: TuitionCostsSectionProps) {
   // Fallbacks if database has nulls or if tuitionData is absent
   const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
   const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? 25000;
@@ -65,7 +72,10 @@ export default function TuitionCostsSection({ tuitionData, schoolName = "this un
   const stickerOutState = bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
 
   // Active tuition view
-  const [tuitionType, setTuitionType] = useState<'in_state' | 'out_state'>('in_state');
+  const [localTuitionType, setLocalTuitionType] = useState<'in_state' | 'out_state'>('in_state');
+  const tuitionType = propTuitionType ?? localTuitionType;
+  const setTuitionType = propSetTuitionType ?? setLocalTuitionType;
+  
   const activeTuition = tuitionType === 'in_state' ? tuitionInState : tuitionOutState;
   const activeStickerPrice = tuitionType === 'in_state' ? stickerInState : stickerOutState;
 

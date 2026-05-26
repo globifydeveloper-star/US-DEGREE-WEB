@@ -12,6 +12,8 @@ import ProgramSearchBand from "./ProgramSearchBand";
 import ProgramsAcademicsTab from "./ProgramsAcademicsTab";
 import CampusStudentsTab from "./CampusStudentsTab";
 import TuitionCostsSection from "./TuitionCostsSection";
+import UniversityHero from "./UniversityHero";
+import TrustBanner from "./TrustBanner";
 
 const tabs = [
   "Overview",
@@ -24,9 +26,23 @@ const tabs = [
 
 export default function TabContent({ data }: { data: any }) {
   const [activeTab, setActiveTab] = useState("Overview");
+  const [tuitionType, setTuitionType] = useState<'in_state' | 'out_state'>('in_state');
 
   return (
     <>
+      <UniversityHero
+        name={data.name}
+        location={data.location}
+        type={data.type}
+        rank={data.rank}
+        admissionRate={data.admissionRate}
+        tuitionFee={data.tuitionFee}
+        logoColor={data.logoColor}
+        tuitionData={data.tuitionData}
+        tuitionType={tuitionType}
+      />
+      <TrustBanner />
+
       <div className="sticky top-[50px] z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px]">
           <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
@@ -119,7 +135,12 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Tuition & Costs" && (
-            <TuitionCostsSection tuitionData={data.tuitionData} schoolName={data.name} />
+            <TuitionCostsSection 
+              tuitionData={data.tuitionData} 
+              schoolName={data.name} 
+              tuitionType={tuitionType}
+              setTuitionType={setTuitionType}
+            />
           )}
         </div>
 
