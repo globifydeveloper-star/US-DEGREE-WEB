@@ -1,62 +1,101 @@
 import React from "react";
-import { GraduationCap, Users, ShieldCheck, CircleDollarSign } from "lucide-react";
+import {
+  ReadOutlined,
+  TeamOutlined,
+  SafetyCertificateOutlined,
+  DollarCircleOutlined,
+} from "@ant-design/icons";
 
 const stats = [
   {
     title: "5,000+",
     desc: "Universities Tracked",
-    bg: "bg-blue-100",
-    iconBg: "bg-blue-200",
-    iconColor: "text-blue-600",
-    icon: GraduationCap,
+    bg: "#DCEBFF",
+    icon: <ReadOutlined />,
   },
   {
     title: "2 lakhs+",
     desc: "Degree Programs",
-    bg: "bg-gray-100",
-    iconBg: "bg-gray-200",
-    iconColor: "text-gray-600",
-    icon: Users,
+    bg: "#DCE3EE",
+    icon: <TeamOutlined />,
   },
   {
     title: "100%",
     desc: "Accredited Degrees",
-    bg: "bg-green-100",
-    iconBg: "bg-green-200",
-    iconColor: "text-green-600",
-    icon: ShieldCheck,
+    bg: "#D9F5EA",
+    icon: <SafetyCertificateOutlined />,
   },
   {
     title: "$48K – $120K",
-    desc: "Graduate Salary Range\nFor average program",
-    bg: "bg-yellow-100",
-    iconBg: "bg-yellow-200",
-    iconColor: "text-yellow-600",
-    icon: CircleDollarSign,
+    desc: (
+      <>
+        Graduate Salary Range
+        <br />
+        The #1 Parent Concern
+      </>
+    ),
+    bg: "#F2E9C8",
+    icon: <DollarCircleOutlined />,
   },
 ];
 
 export default function Stats() {
   return (
-    <section className="px-6 sm:px-10 lg:px-[86px] py-12 flex justify-center">
-      <div className="w-full max-w-[2380px]">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-10">
-        {stats.map((item, i) => {
-          const Icon = item.icon;
-          return (
+    <section className="px-6 lg:px-[86px] py-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((item, i) => (
+          <div
+            key={i}
+            className="
+              h-[178px]
+              rounded-[28px]
+              flex
+              flex-col
+              items-center
+              justify-center
+              text-center
+            "
+            style={{ backgroundColor: item.bg }}
+          >
+            {/* Icon */}
             <div
-              key={i}
-              className={`p-8 rounded-3xl text-center flex flex-col items-center justify-center transition-transform hover:-translate-y-1 cursor-default ${item.bg}`}
+              className="
+                text-[48px]
+                text-[#4F46E5]
+                leading-none
+                mb-5
+              "
             >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${item.iconBg}`}>
-                <Icon className={item.iconColor} size={24} strokeWidth={2} />
-              </div>
-              <h3 className="text-2xl font-extrabold text-gray-900 mb-2">{item.title}</h3>
-              <p className="text-xs font-medium text-gray-600 whitespace-pre-line">{item.desc}</p>
+              {item.icon}
             </div>
-          );
-        })}
-        </div>
+
+            {/* Title */}
+            <h3
+              className="
+                text-[22px]
+                md:text-[24px]
+                font-extrabold
+                text-[#111827]
+                leading-none
+                decoration-[2px]
+                mb-2
+              "
+            >
+              {item.title}
+            </h3>
+
+            {/* Description */}
+            <div
+              className="
+                text-[15px]
+                text-[#4B5563]
+                leading-[1.3]
+              "
+            >
+              {item.desc}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

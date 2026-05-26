@@ -1,64 +1,178 @@
 import React from "react";
-import { Search, FileCheck, Lightbulb, Calculator } from "lucide-react";
+import {
+  SearchOutlined,
+  FileDoneOutlined,
+  BulbOutlined,
+  CalculatorOutlined,
+} from "@ant-design/icons";
 
 const steps = [
   {
     num: "1",
     title: "Search",
-    desc: "Browse hundreds of programs across every major U.S. state instantly.",
-    icon: Search,
+    desc: "Browse thousands of programs across every major U.S. state and city.",
+    icon: <SearchOutlined />,
   },
   {
     num: "2",
     title: "Find",
-    desc: "Filter results by tuition, test, campus safety, and more visual criteria.",
-    icon: FileCheck,
+    desc: "Filter results by tuition cost, campus culture, and future career outcomes.",
+    icon: <FileDoneOutlined />,
   },
   {
     num: "3",
     title: "Understand",
-    desc: "Discover insights like international student services and hidden fees.",
-    icon: Lightbulb,
+    desc: "Get deep insights into accreditation, alumni network, and faculty expertise.",
+    icon: <BulbOutlined />,
   },
   {
     num: "4",
     title: "Estimate",
     desc: "Calculate your total cost of attendance and potential return on investment.",
-    icon: Calculator,
+    icon: <CalculatorOutlined />,
   },
 ];
 
 export default function Journey() {
   return (
-    <section className="px-6 sm:px-10 lg:px-[86px] py-20 flex justify-center">
-      <div className="w-full max-w-[2380px] text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Your Journey to Success</h2>
-        <p className="text-gray-500 mb-16 max-w-2xl mx-auto">
-          Four simple steps to find, fund, and enroll in your dream U.S. degree program.
-        </p>
+    <section className="bg-[#f5f7fb] py-16 md:py-20 lg:py-24
+px-5 sm:px-8 lg:px-[86px]">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Heading */}
+        <div className="text-center mb-16 lg:mb-24">
+          <h2 className="text-[32px] sm:text-[40px] lg:text-[56px] leading-none font-black text-[#111827] mb-6">
+            Your Journey to Success
+          </h2>
 
-      <div className="relative grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Connecting line for desktop */}
-        <div className="hidden md:block absolute top-6 left-[12.5%] right-[12.5%] h-px bg-blue-100 -z-10"></div>
+          <p className="text-[18px] text-[#4b5563] max-w-[800px] mx-auto">
+            Four simple steps to find, fund, and enroll in your dream U.S.
+            degree program.
+          </p>
+        </div>
 
-        {steps.map((step, i) => {
-          const Icon = step.icon;
-          return (
-            <div key={i} className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white border-2 border-blue-100 flex items-center justify-center mb-6 shadow-sm relative text-blue-600 font-bold text-lg bg-clip-padding">
-                {step.num}
-                {/* Floating icon */}
-                <div className="absolute -right-3 -top-3 w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
-                  <Icon size={14} />
+        {/* Steps */}
+        <div
+          className="
+    flex
+    flex-wrap
+    justify-center
+    gap-y-14
+    gap-x-8
+    lg:gap-x-12
+    xl:gap-x-16
+  "
+        >
+          {steps.map((step) => (
+            <div
+              key={step.num}
+              className="
+    w-full
+    sm:w-[280px]
+    md:w-[240px]
+    lg:w-[260px]
+    xl:w-[280px]
+  "
+            >
+              {/* Number + Icon */}
+              <div
+                className="
+    flex
+    items-center
+    gap-4
+    sm:gap-6
+    lg:gap-8
+    mb-6
+    justify-center
+    md:justify-start
+  "
+              >                {/* Number Circle */}
+                <div className="relative flex items-center justify-center">
+                  {/* Soft Purple Glow */}
+                  <div
+                    className="
+                      absolute
+                      -inset-4
+                      rounded-full
+                      bg-[#dbe2ff]
+                      opacity-40
+                      blur-xl
+                    "
+                  />
+
+                  {/* Circle */}
+                  <div
+                    className="
+                     relative w-[64px] h-[64px] sm:w-[72px] sm:h-[72px] lg:w-[84px] lg:h-[84px] rounded-full  border border-white/70  flex
+                    items-center  justify-center shadow-[0_8px_24px_rgba(99,102,241,0.06)]  "
+                    style={{
+                      background:
+                        "radial-gradient(circle at center, #ffffff 0%, #fbfbfb 65%, #eef2ff 100%)",
+                    }}
+                  >
+                    <span
+                      className="
+                        text-[#2956ff]
+                        text-[28px]
+                        sm:text-[34px]
+                        lg:text-[42px]
+                        font-semibold
+                        leading-none
+                      "
+                    >
+                      {step.num}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Icon */}
+                <div
+                  className="
+                    text-[48px]
+                    sm:text-[60px]
+                    lg:text-[76px]
+                    text-[#d8def8]
+                    leading-none
+                    opacity-90
+                  "
+                >
+                  {step.icon}
                 </div>
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed max-w-[200px]">
+
+              {/* Title */}
+              <h3
+                className="
+                  text-[24px]
+                  lg:text-[28px]
+                  font-extrabold
+                  text-[#111827]
+                  decoration-[2px]
+                  mb-4
+                  text-center
+                  md:text-left
+                "
+              >
+                {step.title}
+              </h3>
+
+              {/* Description */}
+              <p
+                className="
+                  text-[15px]
+                  lg:text-[16px]
+                  leading-[1.8]
+                  text-[#4b5563]
+                  decoration-[1px]
+                  max-w-full
+                  sm:max-w-[240px]
+                  text-center
+                  md:text-left
+                "
+              >
                 {step.desc}
               </p>
             </div>
-          );
-        })}
+          ))}
         </div>
       </div>
     </section>
