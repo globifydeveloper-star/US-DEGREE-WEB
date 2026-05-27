@@ -11,12 +11,29 @@ interface UniversityHeroProps {
   admissionRate: string;
   tuitionFee: string;
   logoColor: string;
+  tuitionData?: any;
+  tuitionType?: 'in_state' | 'out_state';
 }
 
 export default function UniversityHero({
-  name, location, type, rank, admissionRate, tuitionFee, logoColor
+  name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state'
 }: UniversityHeroProps) {
   const isStanford = name.toLowerCase().includes("stanford");
+
+  // Fallbacks if database has nulls or if tuitionData is absent
+  const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
+  const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? 25000;
+  const bookSupply = tuitionData?.tuition?.booksupply ?? 1200;
+  const roomBoardOnCampus = tuitionData?.housing?.roomboard_oncampus ?? 7348;
+  const otherExpenseOnCampus = tuitionData?.expenses?.otherexpense_oncampus ?? 2832;
+
+  const stickerInState = bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
+  const stickerOutState = bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
+
+  const activeStickerVal = tuitionType === 'in_state' ? stickerInState : stickerOutState;
+  const activeStickerPrice = tuitionData 
+    ? `$${Math.round(activeStickerVal).toLocaleString()}` 
+    : tuitionFee;
 
   return (
     <div className="relative w-full">
@@ -78,7 +95,7 @@ export default function UniversityHero({
             </div>
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tuition Fee</p>
-              <p className="text-xl font-black text-gray-900">{tuitionFee}</p>
+              <p className="text-xl font-black text-gray-900">{activeStickerPrice}</p>
             </div>
           </div>
 

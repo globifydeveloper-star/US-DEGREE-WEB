@@ -1,8 +1,6 @@
 import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import UniversityHero from "@/components/university/UniversityHero";
-import TrustBanner from "@/components/university/TrustBanner";
 import TabContent from "@/components/university/TabContent";
 
 // Mock data — fallback if API fetch fails or if id is 1 or 2 and backend lacks data
@@ -127,6 +125,17 @@ export default async function UniversityPage({
     console.error("Error fetching campus details:", err);
   }
 
+  // 2c. Fetch tuition details
+  let tuitionData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/tuition/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      tuitionData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching tuition details:", err);
+  }
+
   // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
   const name = sParams.name || (universityData[id]?.name) || "Unknown University";
   const city = sParams.city || "";
@@ -139,7 +148,20 @@ export default async function UniversityPage({
     ? `${(Number(apiData.admissions.admission_rate) * 100).toFixed(1)}%`
     : null) || (universityData[id]?.admissionRate) || "N/A";
 
-  const tuitionRaw = sParams.tuition || (universityData[id]?.tuitionFee) || "N/A";
+  // Calculate real sticker price if tuitionData is available
+  let calculatedStickerPriceString = "N/A";
+  if (tuitionData) {
+    const tuitionInState = tuitionData.tuition?.tuition_in_state ?? 12714;
+    const bookSupply = tuitionData.tuition?.booksupply ?? 1200;
+    const roomBoardOnCampus = tuitionData.housing?.roomboard_oncampus ?? 7348;
+    const otherExpenseOnCampus = tuitionData.expenses?.otherexpense_oncampus ?? 2832;
+    const stickerInState = bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
+    calculatedStickerPriceString = `$${Math.round(stickerInState).toLocaleString()}`;
+  }
+
+  const tuitionRaw = tuitionData
+    ? calculatedStickerPriceString
+    : (sParams.tuition || (universityData[id]?.tuitionFee) || "N/A");
 
   const degree = sParams.degree || (universityData[id]?.degree) || "Bachelor's Degree";
   
@@ -249,24 +271,17 @@ export default async function UniversityPage({
     debtIncomeRatio,
 
     // Campus Data
-    campusData
+    campusData,
+
+    // Tuition Data
+    tuitionData
   };
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <UniversityHero
-        name={data.name}
-        location={data.location}
-        type={data.type}
-        rank={data.rank}
-        admissionRate={data.admissionRate}
-        tuitionFee={data.tuitionFee}
-        logoColor={data.logoColor}
-      />
-      <TrustBanner />
       
-      {/* Page Content with Tabs and Sidebar */}
+      {/* Page Content with Tabs, Hero, and Sidebar */}
       <TabContent data={data} />
 
       <Footer />
