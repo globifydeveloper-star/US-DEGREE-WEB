@@ -6,7 +6,7 @@ body {
 
 .degree-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #dbd9d9 transparent;
+  scrollbar-color: #bfbdbd transparent;
 }
 
 .degree-scrollbar::-webkit-scrollbar {
@@ -28,7 +28,7 @@ body {
 
 .main-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #b3b1b1 transparent;
+  scrollbar-color: #c8c6c6 transparent;
 }
 
 .main-scrollbar::-webkit-scrollbar {
