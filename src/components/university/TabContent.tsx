@@ -6,7 +6,6 @@ import StatsGrid from "./StatsGrid";
 import ProgramDetail from "./ProgramDetail";
 import AdmissionsOverview from "./AdmissionsOverview";
 import OutcomesSection from "./OutcomesSection";
-import StudentReviews from "./StudentReviews";
 import CourseSummarySideCard from "./CourseSummarySideCard";
 import ProgramSearchBand from "./ProgramSearchBand";
 import ProgramsAcademicsTab from "./ProgramsAcademicsTab";
@@ -50,11 +49,10 @@ export default function TabContent({ data }: { data: any }) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${
-                  activeTab === tab
+                className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${activeTab === tab
                     ? "text-[#2563EB]"
                     : "text-[#64748B] hover:text-gray-900"
-                }`}
+                  }`}
               >
                 {tab}
                 {activeTab === tab && (
@@ -98,7 +96,7 @@ export default function TabContent({ data }: { data: any }) {
               />
 
               <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
-                <StudentReviews />
+                {/* <StudentReviews /> */}
               </div>
 
               <ProgramSearchBand />
@@ -135,9 +133,9 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Tuition & Costs" && (
-            <TuitionCostsSection 
-              tuitionData={data.tuitionData} 
-              schoolName={data.name} 
+            <TuitionCostsSection
+              tuitionData={data.tuitionData}
+              schoolName={data.name}
               tuitionType={tuitionType}
               setTuitionType={setTuitionType}
             />
