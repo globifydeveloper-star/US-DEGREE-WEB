@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Filter, X, SlidersHorizontal } from "lucide-react";
 import { Slider } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { SidebarSkeleton } from "./SearchSkeletons";
 
 export default function SearchSidebar() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function SearchSidebar() {
   const [states, setStates] = useState<{ state_code: string; state_title: string }[]>([]);
   const [credentials, setCredentials] = useState<{ id: number; name: string }[]>([]);
   const [searchState, setSearchState] = useState("");
+  const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
   const selectedStates = searchParams.get("state")?.split(",").filter(Boolean) ?? [];
   const selectedCredentials = searchParams.get("credential_title")?.split(",").filter(Boolean) ?? [];
@@ -72,6 +74,8 @@ export default function SearchSidebar() {
         }
       } catch (error) {
         console.error("Error fetching sidebar options:", error);
+      } finally {
+        setIsFiltersLoading(false);
       }
     };
     fetchOptions();
@@ -112,7 +116,9 @@ export default function SearchSidebar() {
   );
 
   /* ── Shared filter content (used in both mobile drawer & desktop sidebar) ── */
-  const filterContent = (
+  const filterContent = isFiltersLoading ? (
+    <SidebarSkeleton />
+  ) : (
     <>
       {/* Degree & Credentials */}
       <div>

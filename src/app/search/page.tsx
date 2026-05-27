@@ -9,6 +9,7 @@ import SearchSidebar from "@/components/search/SearchSidebar";
 import ResultCard from "@/components/search/ResultCard";
 import TileCard from "@/components/search/TileCard";
 import Pagination from "@/components/search/Pagination";
+import { ResultListSkeleton, TileGridSkeleton, SearchHeaderSkeleton } from "@/components/search/SearchSkeletons";
 import { SearchResult } from "@/types/search-details";
 
 type ViewMode = 'list' | 'grid';
@@ -148,25 +149,30 @@ function SearchContent() {
 
         {/* Main Content Area */}
         <div className="flex-1 w-full min-w-0">
-          <SearchHeader view={viewMode} onViewChange={setViewMode} />
-          
-          {/* Results */}
           {isLoading ? (
-            <p className="text-sm text-gray-500 py-8 text-center">Loading...</p>
-          ) : currentResults.length === 0 ? (
-            <p className="text-sm text-gray-500 py-8 text-center">No results found.</p>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {currentResults.map((result, i) => (
-                <TileCard key={i} {...mapToCardProps(result)} />
-              ))}
-            </div>
+            <>
+              <SearchHeaderSkeleton />
+              {viewMode === 'grid' ? <TileGridSkeleton count={6} /> : <ResultListSkeleton count={5} />}
+            </>
           ) : (
-            <div className="flex flex-col gap-4">
-              {currentResults.map((result, i) => (
-                <ResultCard key={i} {...mapToCardProps(result)} />
-              ))}
-            </div>
+            <>
+              <SearchHeader view={viewMode} onViewChange={setViewMode} />
+              {currentResults.length === 0 ? (
+                <p className="text-sm text-gray-500 py-8 text-center">No results found.</p>
+              ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {currentResults.map((result, i) => (
+                    <TileCard key={i} {...mapToCardProps(result)} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {currentResults.map((result, i) => (
+                    <ResultCard key={i} {...mapToCardProps(result)} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           <Pagination 
@@ -184,7 +190,14 @@ export default function SearchPage() {
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <Suspense fallback={<p>Loading search...</p>}>
+      <Suspense fallback={
+        <div className="flex-1">
+          <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4">
+            <SearchHeaderSkeleton />
+            <ResultListSkeleton count={5} />
+          </div>
+        </div>
+      }>
         <SearchContent />
       </Suspense>
       <Footer />
