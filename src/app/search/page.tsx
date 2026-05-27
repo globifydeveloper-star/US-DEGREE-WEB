@@ -43,18 +43,56 @@ function SearchContent() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
         const requestParams = new URLSearchParams(searchParams.toString());
+
+        // Remove params that we'll filter client-side
         requestParams.delete("school_type");
+
+        // For multi-value params (comma-separated), send only the first value
+        // to the API so it returns a broad set, then filter client-side for all values.
+        const credentialRaw = searchParams.get("credential_title") || "";
+        const stateRaw = searchParams.get("state") || "";
+        const selectedCredentials = credentialRaw.split(",").filter(Boolean);
+        const selectedStates = stateRaw.split(",").filter(Boolean);
+
+        // Send the first value to the API to narrow results somewhat,
+        // then widen via client-side filtering for remaining values.
+        if (selectedCredentials.length > 1) {
+          requestParams.delete("credential_title");
+        }
+        if (selectedStates.length > 1) {
+          requestParams.delete("state");
+        }
 
         const res = await fetch(`${apiUrl}/search?${requestParams.toString()}`);
         const data = await res.json();
         
         if (res.ok && Array.isArray(data)) {
-          // Apply client-side filtering for college type if backend doesn't support it.
-          const schoolType = searchParams.get("school_type");
           let filteredData = data;
+
+          // Client-side filtering for school_type
+          const schoolType = searchParams.get("school_type");
           if (schoolType) {
-            filteredData = data.filter((item: SearchResult) => matchesCollegeType(item, schoolType));
+            filteredData = filteredData.filter((item: SearchResult) => matchesCollegeType(item, schoolType));
           }
+
+          // Client-side filtering for multiple credential titles
+          if (selectedCredentials.length > 1) {
+            filteredData = filteredData.filter((item: SearchResult) =>
+              selectedCredentials.some(cred =>
+                item.credential_title?.toLowerCase() === cred.toLowerCase()
+              )
+            );
+          }
+
+          // Client-side filtering for multiple states
+          if (selectedStates.length > 1) {
+            filteredData = filteredData.filter((item: SearchResult) =>
+              selectedStates.some(st =>
+                item.state?.toLowerCase() === st.toLowerCase()
+              )
+            );
+          }
+
           setResults(filteredData);
           setCurrentPage(1); // Reset to first page on new search
         } else {

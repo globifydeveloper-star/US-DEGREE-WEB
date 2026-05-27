@@ -10,23 +10,23 @@ export default function Footer() {
           {/* Brand & Description */}
           <div className="md:col-span-5">
             <Link href="/" className="inline-block bg-white p-2 rounded mb-6">
-              <img 
+              <img
                 src="/images/logo2.png"
-                alt="US Degrees" 
+                alt="US Degrees"
                 className="h-8 w-auto object-contain"
               />
             </Link>
             <p className="text-blue-100 text-sm max-w-sm mb-6 leading-relaxed">
               Empowering global learners to reach their full potential in U.S. higher education.
             </p>
-            <div className="flex items-center gap-4 text-blue-100">
+            {/* <div className="flex items-center gap-4 text-blue-100">
               <a href="#" className="hover:text-white transition-colors">
                 <Globe size={18} />
               </a>
               <a href="#" className="hover:text-white transition-colors">
                 <Share2 size={18} />
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Links Columns */}
@@ -64,7 +64,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/10 text-xs text-blue-200">
-          <p>© 2024 US Degrees Academy. All rights reserved.</p>
+          <p>Copyright @2021-2026. USDegrees.com. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
