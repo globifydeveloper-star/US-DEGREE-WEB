@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const faqs = [
@@ -21,28 +23,64 @@ const faqs = [
 ];
 
 export default function FAQ() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const handleToggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
-    <section className="px-6 sm:px-10 lg:px-[86px] py-20 bg-gray-50 flex justify-center">
+    <section className="bg-gray-50 px-6 py-20 sm:px-10 lg:px-[86px] flex justify-center">
       <div className="w-full max-w-[2380px]">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Common Questions</h2>
-          <p className="text-gray-500">Everything you need to know about your upcoming degree search.</p>
+        <div className="mb-12 text-center">
+          <h2 className="mb-3 text-3xl font-extrabold text-gray-900">
+            Common Questions
+          </h2>
+          <p className="text-gray-500">
+            Everything you need to know about your upcoming degree search.
+          </p>
         </div>
 
-      <div className="space-y-4">
-        {faqs.map((faq, i) => (
-          <details key={i} className="group bg-gray-50 rounded-2xl border border-gray-100 open:bg-white open:ring-1 open:ring-gray-200 open:shadow-lg transition-all duration-200">
-            <summary className="flex items-center justify-between p-6 cursor-pointer list-none font-semibold text-gray-900">
-              {faq.q}
-              <span className="transition group-open:rotate-180">
-                <ChevronDown size={20} className="text-gray-400" />
-              </span>
-            </summary>
-            <div className="px-6 pb-6 text-gray-600 text-sm leading-relaxed">
-              {faq.a}
-            </div>
-          </details>
-        ))}
+        <div className="space-y-4">
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+
+            return (
+              <div
+                key={index}
+                className={`overflow-hidden rounded-2xl border transition-all duration-300 ease-in-out ${isOpen
+                    ? "border-gray-200 bg-white shadow-lg"
+                    : "border-gray-100 bg-gray-50"
+                  }`}
+              >
+                <button
+                  onClick={() => handleToggle(index)}
+                  className="flex w-full items-center justify-between p-6 text-left font-semibold text-gray-900"
+                >
+                  <span>{faq.q}</span>
+
+                  <ChevronDown
+                    size={20}
+                    className={`text-gray-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
+
+                <div
+                  className={`grid transition-all duration-500 ease-in-out ${isOpen
+                      ? "grid-rows-[1fr] opacity-100"
+                      : "grid-rows-[0fr] opacity-0"
+                    }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-6 text-sm leading-relaxed text-gray-600">
+                      {faq.a}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

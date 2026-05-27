@@ -104,8 +104,14 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden bg-[#f5f8fc] px-6 pb-0 pt-[30px] sm:px-10 lg:px-[49px] flex justify-center">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-[radial-gradient(circle_at_45%_72%,rgba(144,224,206,0.52),rgba(144,224,206,0.16)_26%,rgba(245,248,252,0)_57%)]" />
-
+<div
+  className="
+    pointer-events-none
+    absolute
+    inset-0
+    bg-[radial-gradient(circle_at_58%_38%,rgba(186,235,227,0.85)_0%,rgba(186,235,227,0.55)_25%,rgba(186,235,227,0.22)_45%,rgba(255,255,255,0)_72%)]
+  "
+/>
       <div className="relative w-full max-w-[2380px] grid gap-14 lg:grid-cols-[0.98fr_1fr] lg:gap-[62px]">
         <div className="flex flex-col items-start pt-[10px]">
           <div>

@@ -20,6 +20,7 @@ const STATE_MAP: Record<string, string> = {
 };
 
 const FILTER_KEYS = ['state', 'credential_title', 'title', 'school_type'];
+const MULTI_VALUE_KEYS = new Set(['state', 'credential_title']);
 
 interface SearchHeaderProps {
   view: ViewMode;
@@ -33,14 +34,22 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
 
   const title = searchParams.get("title");
   const credentialTitle = searchParams.get("credential_title");
-  const stateCode = searchParams.get("state");
+  const stateParam = searchParams.get("state");
   const sort = searchParams.get("sort") || "recommended";
-  
-  const stateName = stateCode ? (STATE_MAP[stateCode.toUpperCase()] || stateCode) : null;
 
-  const headingPrefix = title || credentialTitle || "Degree";
-  const headingSuffix = stateName ? `in ${stateName}` : "";
-  const heading = `${headingPrefix} Programs ${headingSuffix}`.trim();
+  // Parse multi-value params for heading
+  const stateCodes = stateParam?.split(",").filter(Boolean) ?? [];
+  const credentialTitles = credentialTitle?.split(",").filter(Boolean) ?? [];
+
+  const firstStateName = stateCodes.length > 0 ? (STATE_MAP[stateCodes[0].toUpperCase()] || stateCodes[0]) : null;
+  const stateHeading = firstStateName
+    ? stateCodes.length > 1
+      ? `in ${firstStateName} +${stateCodes.length - 1} more`
+      : `in ${firstStateName}`
+    : "";
+
+  const headingPrefix = title || (credentialTitles.length === 1 ? credentialTitles[0] : credentialTitles.length > 1 ? "Multiple Degrees" : "Degree");
+  const heading = `${headingPrefix} Programs ${stateHeading}`.trim();
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -48,9 +57,22 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const removeFilter = (key: string) => {
+  const removeFilter = (key: string, value?: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete(key);
+
+    // For multi-value keys, remove only the specific value from the comma list
+    if (value && MULTI_VALUE_KEYS.has(key)) {
+      const current = params.get(key)?.split(",").filter(Boolean) ?? [];
+      const updated = current.filter(v => v !== value);
+      if (updated.length > 0) {
+        params.set(key, updated.join(","));
+      } else {
+        params.delete(key);
+      }
+    } else {
+      params.delete(key);
+    }
+
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -67,12 +89,21 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
   const getActiveFilters = () => {
     const active: { key: string; value: string; display: string }[] = [];
     FILTER_KEYS.forEach(key => {
-      const val = searchParams.get(key);
-      if (val) {
-        let display = val;
-        if (key === 'state') display = STATE_MAP[val.toUpperCase()] || val;
-        if (key === 'school_type') display = val.charAt(0).toUpperCase() + val.slice(1);
-        active.push({ key, value: val, display });
+      const raw = searchParams.get(key);
+      if (!raw) return;
+
+      if (MULTI_VALUE_KEYS.has(key)) {
+        // Split comma-separated values into individual chips
+        const values = raw.split(",").filter(Boolean);
+        values.forEach(val => {
+          let display = val;
+          if (key === 'state') display = STATE_MAP[val.toUpperCase()] || val;
+          active.push({ key, value: val, display });
+        });
+      } else {
+        let display = raw;
+        if (key === 'school_type') display = raw.charAt(0).toUpperCase() + raw.slice(1);
+        active.push({ key, value: raw, display });
       }
     });
     return active;
@@ -148,8 +179,8 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
       <div className="flex flex-wrap items-center gap-2">
         {activeFilters.map((filter) => (
           <div 
-            key={filter.key}
-            onClick={() => removeFilter(filter.key)}
+            key={`${filter.key}-${filter.value}`}
+            onClick={() => removeFilter(filter.key, filter.value)}
             className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-100 transition"
           >
             {filter.display}

@@ -18,7 +18,7 @@ export default function Home() {
       <Journey />
       <ProBanner />
       <Categories />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <FAQ />
       <CTA />
       <Footer />
