@@ -37,6 +37,19 @@ function SearchContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const itemsPerPage = 10;
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -66,7 +79,7 @@ function SearchContent() {
 
         const res = await fetch(`${apiUrl}/search?${requestParams.toString()}`);
         const data = await res.json();
-        
+
         if (res.ok && Array.isArray(data)) {
           let filteredData = data;
 
@@ -140,49 +153,113 @@ function SearchContent() {
   const currentResults = results.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="flex-1">
-      <TopSearchBar />
-      
-      <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4 flex flex-col md:flex-row gap-8">
-        {/* Sidebar */}
-        <SearchSidebar />
+    <>
+      <div className="flex-1">
+        <TopSearchBar />
+        <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4 flex flex-col md:flex-row gap-8">
+          {/* Sidebar */}
+          <SearchSidebar />
 
-        {/* Main Content Area */}
-        <div className="flex-1 w-full min-w-0">
-          {isLoading ? (
-            <>
-              <SearchHeaderSkeleton />
-              {viewMode === 'grid' ? <TileGridSkeleton count={6} /> : <ResultListSkeleton count={5} />}
-            </>
-          ) : (
-            <>
-              <SearchHeader view={viewMode} onViewChange={setViewMode} />
-              {currentResults.length === 0 ? (
-                <p className="text-sm text-gray-500 py-8 text-center">No results found.</p>
-              ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {currentResults.map((result, i) => (
-                    <TileCard key={i} {...mapToCardProps(result)} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {currentResults.map((result, i) => (
-                    <ResultCard key={i} {...mapToCardProps(result)} />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+          {/* Main Content Area */}
+          <div className="flex-1 w-full min-w-0">
+            {isLoading ? (
+              <>
+                <SearchHeaderSkeleton />
+                {viewMode === "grid" ? (
+                  <TileGridSkeleton count={6} />
+                ) : (
+                  <ResultListSkeleton count={5} />
+                )}
+              </>
+            ) : (
+              <>
+                <SearchHeader
+                  view={viewMode}
+                  onViewChange={setViewMode}
+                />
 
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+                {currentResults.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-8 text-center">
+                    No results found.
+                  </p>
+                ) : viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {currentResults.map((result, i) => (
+                      <TileCard
+                        key={i}
+                        {...mapToCardProps(result)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {currentResults.map((result, i) => (
+                      <ResultCard
+                        key={i}
+                        {...mapToCardProps(result)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+
+                window.scrollTo({
+                  top: 0,
+                  behavior: "smooth",
+                });
+              }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Back To Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={() =>
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          className="
+  fixed
+  bottom-6
+  right-6
+  z-50
+  w-12
+  h-12
+  rounded-full
+
+  backdrop-blur-xl
+  bg-[#878cd7]/10
+  border
+  border-[#878cd7]/60
+
+  shadow-lg
+  transition-all
+  duration-300
+
+  text-gray-500
+  hover:text-white
+  hover:bg-blue-600
+  hover:border-blue-500
+  hover:scale-110
+  active:scale-95
+"
+          aria-label="Back to top"
+        >
+          ↑
+        </button>
+      )}
+    </>
   );
 }
 
