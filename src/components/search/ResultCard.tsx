@@ -137,6 +137,8 @@ export default function ResultCard({
   const [showModal, setShowModal] = useState(false);
   const [tempGpa, setTempGpa] = useState<string>("");
   const [tempSat, setTempSat] = useState<string>("");
+  const [satError, setSatError] = useState("");
+  const [gpaError, setGpaError] = useState("");
 
   const shouldShowFit = isCalculated && hasSatData;
 
@@ -188,13 +190,15 @@ export default function ResultCard({
     const satNum = parseInt(tempSat) || 0;
 
     if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
-      alert("Please enter a valid GPA between 0.0 and 4.0");
+      setGpaError("Enter a value between 0.0 and 4.0 only");
       return;
     }
 
-    if (tempSat && (isNaN(satNum) || satNum < 400 || satNum > 1600)) {
-      alert("Please enter a valid SAT score between 400 and 1600");
-      return;
+    if (tempSat) {
+      if (isNaN(satNum) || satNum < 400 || satNum > 1600) {
+        setSatError("Enter a value between 400 and 1600 only");
+        return;
+      }
     }
 
     localStorage.setItem("fit_score_gpa", tempGpa);
@@ -215,6 +219,8 @@ export default function ResultCard({
     setCurrentScore(matchScore);
     setTempGpa("");
     setTempSat("");
+    setSatError("");
+    setGpaError("");
     setShowModal(false);
     window.dispatchEvent(new Event("fit-score-updated"));
   };
@@ -234,10 +240,39 @@ export default function ResultCard({
       roi: roi,
     }
   };
+  const validateSat = (value: string) => {
+    if (!value) {
+      setSatError("");
+      return;
+    }
+
+    const sat = Number(value);
+
+    if (sat < 400 || sat > 1600) {
+      setSatError("Enter a value between 400 and 1600 only");
+    } else {
+      setSatError("");
+    }
+  };
+
+  const validateGpa = (value: string) => {
+    if (!value) {
+      setGpaError("Enter a value between 0.0 and 4.0 only");
+      return;
+    }
+
+    const gpa = Number(value);
+
+    if (isNaN(gpa) || gpa < 0 || gpa > 4.0) {
+      setGpaError("Enter a value between 0.0 and 4.0 only");
+    } else {
+      setGpaError("");
+    }
+  };
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-      
+
       {/* Top Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex gap-4 items-start">
@@ -293,7 +328,7 @@ export default function ResultCard({
       {/* Degree Info */}
       <div className="mb-5 md:pr-28">
         <h3 className="text-sm text-red-500 font-bold mb-2">{degree}</h3>
-        
+
         <div className="flex flex-wrap gap-5 mb-3">
           <div>
             <p className="text-[9px] text-gray-500 uppercase font-semibold">Admission Rate</p>
@@ -315,11 +350,10 @@ export default function ResultCard({
             {duration}
           </span>
           {schoolType && (
-            <span className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${
-              schoolType.toLowerCase().includes('public') 
-                ? 'bg-green-50 border-green-100 text-green-700' 
-                : 'bg-purple-50 border-purple-100 text-purple-700'
-            }`}>
+            <span className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${schoolType.toLowerCase().includes('public')
+              ? 'bg-green-50 border-green-100 text-green-700'
+              : 'bg-purple-50 border-purple-100 text-purple-700'
+              }`}>
               {schoolType.split(',')[0]}
             </span>
           )}
@@ -332,26 +366,69 @@ export default function ResultCard({
 
       {/* Stat Tiles */}
       <div className="flex flex-wrap gap-3 py-4 border-y border-gray-100 mb-4">
-        
+
         {/* Employment Rate */}
-        <div className="flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]">
+        <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Employment Rate</span>
           <span className="text-sm font-extrabold text-gray-900">
             {gradRate > 0 ? `${gradRate}%` : 'N/A'}
           </span>
         </div>
 
-        <div className="flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]">
+        <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Median Salary</span>
           <span className="text-sm font-extrabold text-green-600">{medianSalary ?? 'N/A'}</span>
         </div>
 
         {/* 20yr ROI */}
-        <div className="flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]">
+        <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">20yr ROI</span>
           <span className="text-sm font-extrabold text-blue-600">
             {roi ?? 'N/A'}
           </span>
+        </div>
+
+        {/* Mobile Fit Score */}
+        <div className="md:hidden flex flex-col bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 min-w-[90px]">
+          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wide mb-1">
+            {shouldShowFit ? "Fit Score" : "Match Score"}
+          </span>
+
+          <div className="flex items-center gap-2">
+            <div className="relative w-8 h-8">
+              <svg
+                className="w-full h-full transform -rotate-90"
+                viewBox="0 0 36 36"
+              >
+                <path
+                  className="text-gray-200 stroke-current"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  strokeWidth="3"
+                />
+
+                <path
+                  className="text-blue-600 stroke-current"
+                  strokeDasharray={`${shouldShowFit ? currentScore : matchScore
+                    }, 100`}
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  strokeWidth="3"
+                />
+              </svg>
+
+              <span className="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold text-blue-900">
+                {shouldShowFit ? currentScore : matchScore}%
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-[9px] font-bold text-blue-600 hover:text-blue-700"
+            >
+              {shouldShowFit ? "Update" : "Find"}
+            </button>
+          </div>
         </div>
 
       </div>
@@ -362,7 +439,7 @@ export default function ResultCard({
           <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
           <span className="text-[11px] font-medium text-gray-600">Compare</span>
         </label>
-        
+
         <div className="flex gap-2 w-full sm:w-auto">
           <button className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition">
             Visit Website
@@ -411,10 +488,23 @@ export default function ResultCard({
                   max="4.0"
                   step="0.01"
                   value={tempGpa}
-                  onChange={(e) => setTempGpa(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setTempGpa(value);
+                    validateGpa(value);
+                  }}
                   placeholder="e.g. 3.75"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold transition text-slate-800"
+                  className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold transition text-slate-800 focus:outline-none
+                    ${gpaError
+                      ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                      : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    }`}
                 />
+                {gpaError && (
+                  <p className="mt-1 text-[10px] text-red-500 font-medium">
+                    {gpaError}
+                  </p>
+                )}
               </div>
 
               {/* SAT Input */}
@@ -424,21 +514,41 @@ export default function ResultCard({
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
                     SAT Score
                   </label>
+
                   {hasSatData && (
-                    <span className="text-[10px] font-semibold text-slate-400">(400 - 1600)</span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      (400 - 1600)
+                    </span>
                   )}
                 </div>
+
                 {hasSatData ? (
-                  <input
-                    type="number"
-                    min="400"
-                    max="1600"
-                    step="10"
-                    value={tempSat}
-                    onChange={(e) => setTempSat(e.target.value)}
-                    placeholder="e.g. 1350"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold transition text-slate-800"
-                  />
+                  <>
+                    <input
+                      type="number"
+                      min="400"
+                      max="1600"
+                      step="10"
+                      value={tempSat}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setTempSat(value);
+                        validateSat(value);
+                      }}
+                      placeholder="e.g. 1350"
+                      className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold transition text-slate-800 focus:outline-none
+          ${satError
+                          ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                          : "border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        }`}
+                    />
+
+                    {satError && (
+                      <p className="mt-1 text-[10px] text-red-500 font-medium">
+                        {satError}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <div className="w-full px-3 py-2 rounded-xl border border-slate-100 bg-slate-50 text-xs font-medium text-slate-400 italic">
                     Not available for this school
