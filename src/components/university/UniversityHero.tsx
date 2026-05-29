@@ -31,8 +31,8 @@ export default function UniversityHero({
   const stickerOutState = bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
 
   const activeStickerVal = tuitionType === 'in_state' ? stickerInState : stickerOutState;
-  const activeStickerPrice = tuitionData 
-    ? `$${Math.round(activeStickerVal).toLocaleString()}` 
+  const activeStickerPrice = tuitionData
+    ? `$${Math.round(activeStickerVal).toLocaleString()}`
     : tuitionFee;
 
   return (
@@ -48,11 +48,11 @@ export default function UniversityHero({
       </div>
 
       {/* University Info Overlay Container */}
-      <div className="w-full max-w-[1024px] mx-auto px-6 sm:px-10 lg:px-[86px] relative">
+      <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] relative">
         <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-14 md:-mt-20 relative z-10">
           {/* Logo Card */}
           {isStanford ? (
-            <div className="w-28 h-28 md:w-[150px] md:h-[150px] bg-white border border-gray-100 rounded-[24px] shadow-xl p-3.5 flex items-center justify-center shrink-0">
+            <div className="w-28 h-28 md:w-[160px] md:h-[160px] md:mt-12 bg-white border border-gray-100 rounded-[24px] shadow-xl p-3.5 flex items-center justify-center shrink-0">
               <img
                 src="/images/stanford_logo.png"
                 alt={`${name} logo`}
@@ -60,9 +60,9 @@ export default function UniversityHero({
               />
             </div>
           ) : (
-            <div className={`w-28 h-28 md:w-32 md:h-32 rounded-3xl ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0`}>
-              <span className="text-4xl font-bold">{name.charAt(0)}</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">{name.split(' ')[0]}</span>
+            <div className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0`}>
+              <span className="text-4xl md:text-6xl font-bold">{name.charAt(0)}</span>
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider mt-1">{name.split(' ')[0]}</span>
             </div>
           )}
 
