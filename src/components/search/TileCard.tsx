@@ -17,6 +17,22 @@ export default function TileCard({
   roi,
   logoColor,
 }: ResultCardProps) {
+  const universityHref = {
+    pathname: `/university/${id}`,
+    query: {
+      cip: cipCode,
+      name: university,
+      city: location.split(", ")[0] || "",
+      state: location.split(", ")[1] || "",
+      degree: degree,
+      type: schoolType,
+      admissionRate: admissionRate,
+      tuition: estCost,
+      avgSalary: avgSalary,
+      roi: roi,
+    }
+  };
+
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 relative">
       {/* Header */}
@@ -26,7 +42,9 @@ export default function TileCard({
             {university.charAt(0)}
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-gray-900 truncate">{university}</h2>
+            <Link href={universityHref}>
+              <h2 className="text-sm font-bold text-gray-900 truncate hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
+            </Link>
             <div className="flex items-center text-gray-400 text-[11px] mt-0.5">
               <MapPin size={10} className="mr-0.5 shrink-0" />
               <span className="truncate">{location}</span>
@@ -74,21 +92,7 @@ export default function TileCard({
 
       {/* CTA */}
       <Link
-        href={{
-          pathname: `/university/${id}`,
-          query: {
-            cip: cipCode,
-            name: university,
-            city: location.split(", ")[0] || "",
-            state: location.split(", ")[1] || "",
-            degree: degree,
-            type: schoolType,
-            admissionRate: admissionRate,
-            tuition: estCost,
-            avgSalary: avgSalary,
-            roi: roi,
-          }
-        }}
+        href={universityHref}
         className="mt-auto block text-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-[11px] font-bold transition"
       >
         View Details

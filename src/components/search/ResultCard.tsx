@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Clock, BookOpen, MapPin } from 'lucide-react';
+import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
 
 export interface ResultCardProps {
   id?: number | string;
@@ -23,6 +23,93 @@ export interface ResultCardProps {
   logoColor: string;
 }
 
+const parseAdmissionRate = (rateStr: string): number | null => {
+  if (!rateStr || rateStr === 'N/A') return null;
+  const num = parseFloat(rateStr.replace('%', ''));
+  return isNaN(num) ? null : num / 100;
+};
+
+const parseSatRange = (satStr: string): { min: number; max: number } | null => {
+  if (!satStr || satStr === 'N/A') return null;
+  const parts = satStr.split('-');
+  if (parts.length === 2) {
+    const min = parseInt(parts[0].trim());
+    const max = parseInt(parts[1].trim());
+    if (!isNaN(min) && !isNaN(max)) {
+      return { min, max };
+    }
+  }
+  return null;
+};
+
+const calculateFitScore = (
+  userGpa: number,
+  userSat: number,
+  admissionRateStr: string,
+  satActStr: string
+): number => {
+  let score = 75; // base score
+
+  // GPA factor
+  if (userGpa >= 3.8) {
+    score += 15;
+  } else if (userGpa >= 3.5) {
+    score += 8;
+  } else if (userGpa >= 3.0) {
+    score += 0;
+  } else if (userGpa >= 2.5) {
+    score -= 10;
+  } else {
+    score -= 20;
+  }
+
+  // SAT factor
+  const satRange = parseSatRange(satActStr);
+  if (satRange) {
+    const { min, max } = satRange;
+    if (userSat >= max) {
+      score += 15;
+    } else if (userSat >= min) {
+      score += 8;
+    } else {
+      const diff = min - userSat;
+      if (diff > 200) {
+        score -= 20;
+      } else {
+        score -= 10;
+      }
+    }
+  } else if (userSat > 0) {
+    if (userSat >= 1400) {
+      score += 10;
+    } else if (userSat >= 1200) {
+      score += 5;
+    } else if (userSat < 1000) {
+      score -= 10;
+    }
+  }
+
+  // Admission rate selectivity factor
+  const admRate = parseAdmissionRate(admissionRateStr);
+  if (admRate !== null) {
+    if (admRate < 0.15) {
+      const isStellar = userGpa >= 3.9 && userSat >= 1500;
+      if (!isStellar) {
+        score -= 15;
+      } else {
+        score += 5;
+      }
+    } else if (admRate < 0.35) {
+      const isVeryGood = userGpa >= 3.7 && (userSat >= 1400 || userSat === 0);
+      if (!isVeryGood) {
+        score -= 8;
+      }
+    }
+  }
+
+  return Math.min(99, Math.max(45, score));
+};
+
 export default function ResultCard({
   id = 1,
   cipCode,
@@ -43,6 +130,110 @@ export default function ResultCard({
   medianSalary,
   logoColor
 }: ResultCardProps) {
+  const hasSatData = satAct && satAct !== 'N/A';
+
+  const [isCalculated, setIsCalculated] = useState(false);
+  const [currentScore, setCurrentScore] = useState(matchScore);
+  const [showModal, setShowModal] = useState(false);
+  const [tempGpa, setTempGpa] = useState<string>("");
+  const [tempSat, setTempSat] = useState<string>("");
+
+  const shouldShowFit = isCalculated && hasSatData;
+
+  useEffect(() => {
+    // Load from localStorage if present
+    const savedGpa = localStorage.getItem("fit_score_gpa");
+    const savedSat = localStorage.getItem("fit_score_sat");
+    if (savedGpa) {
+      const gpaNum = parseFloat(savedGpa);
+      const satNum = parseInt(savedSat || "0") || 0;
+      if (!isNaN(gpaNum)) {
+        const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
+        setCurrentScore(computed);
+        setIsCalculated(true);
+        setTempGpa(savedGpa);
+        setTempSat(savedSat || "");
+      }
+    }
+
+    const handleUpdate = () => {
+      const gpa = localStorage.getItem("fit_score_gpa");
+      const sat = localStorage.getItem("fit_score_sat");
+      if (gpa) {
+        const gpaNum = parseFloat(gpa);
+        const satNum = parseInt(sat || "0") || 0;
+        if (!isNaN(gpaNum)) {
+          const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
+          setCurrentScore(computed);
+          setIsCalculated(true);
+          setTempGpa(gpa);
+          setTempSat(sat || "");
+        }
+      } else {
+        setIsCalculated(false);
+        setCurrentScore(matchScore);
+        setTempGpa("");
+        setTempSat("");
+      }
+    };
+
+    window.addEventListener("fit-score-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("fit-score-updated", handleUpdate);
+    };
+  }, [admissionRate, satAct, matchScore]);
+
+  const handleCalculate = () => {
+    const gpaNum = parseFloat(tempGpa);
+    const satNum = parseInt(tempSat) || 0;
+
+    if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
+      alert("Please enter a valid GPA between 0.0 and 4.0");
+      return;
+    }
+
+    if (tempSat && (isNaN(satNum) || satNum < 400 || satNum > 1600)) {
+      alert("Please enter a valid SAT score between 400 and 1600");
+      return;
+    }
+
+    localStorage.setItem("fit_score_gpa", tempGpa);
+    localStorage.setItem("fit_score_sat", tempSat || "");
+
+    const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
+    setCurrentScore(computed);
+    setIsCalculated(true);
+    setShowModal(false);
+
+    window.dispatchEvent(new Event("fit-score-updated"));
+  };
+
+  const handleClear = () => {
+    localStorage.removeItem("fit_score_gpa");
+    localStorage.removeItem("fit_score_sat");
+    setIsCalculated(false);
+    setCurrentScore(matchScore);
+    setTempGpa("");
+    setTempSat("");
+    setShowModal(false);
+    window.dispatchEvent(new Event("fit-score-updated"));
+  };
+
+  const universityHref = {
+    pathname: `/university/${id}`,
+    query: {
+      cip: cipCode,
+      name: university,
+      city: location.split(", ")[0] || "",
+      state: location.split(", ")[1] || "",
+      degree: degree,
+      type: schoolType,
+      admissionRate: admissionRate,
+      tuition: estCost,
+      avgSalary: avgSalary || medianSalary,
+      roi: roi,
+    }
+  };
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
@@ -54,7 +245,9 @@ export default function ResultCard({
             {university.charAt(0)}
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900">{university}</h2>
+            <Link href={universityHref}>
+              <h2 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
+            </Link>
             <div className="flex items-center text-gray-500 text-xs mt-0.5">
               <MapPin size={12} className="mr-1" />
               {location}
@@ -69,9 +262,17 @@ export default function ResultCard({
       </div>
 
       {/* Match Badge (Absolute on Desktop, regular flow on mobile) */}
-      <div className="hidden md:flex absolute top-5 right-5 flex-col items-center bg-blue-50/50 border border-blue-100 rounded-xl p-2.5 w-24">
-        <span className="text-[9px] font-bold text-blue-600 uppercase mb-1 text-center leading-tight">Match for your profile!</span>
-        <div className="relative w-12 h-12 flex items-center justify-center">
+      <div className="hidden md:flex absolute top-5 right-5 flex-col items-center bg-blue-50/50 border border-blue-100 rounded-xl p-2 w-28 transition-all duration-300 hover:border-blue-200">
+        <button
+          onClick={() => setShowModal(true)}
+          className="w-full text-[9px] bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-1 px-1 rounded-lg mb-1.5 text-center transition-all duration-200 shadow-sm leading-tight hover:scale-105 active:scale-95 whitespace-nowrap"
+        >
+          {shouldShowFit ? "Update Fit" : "Find your fit score"}
+        </button>
+        <span className="text-[8px] font-bold text-blue-600 uppercase mb-1 text-center leading-tight">
+          {shouldShowFit ? "Your Fit Score" : "Match Score"}
+        </span>
+        <div className={`relative w-11 h-11 flex items-center justify-center transition-all duration-500 ${!shouldShowFit ? 'filter blur-[1.5px] opacity-80' : ''}`}>
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
             <path
               className="text-gray-200 stroke-current"
@@ -80,12 +281,12 @@ export default function ResultCard({
             />
             <path
               className="text-blue-600 stroke-current"
-              strokeDasharray={`${matchScore}, 100`}
+              strokeDasharray={`${shouldShowFit ? currentScore : matchScore}, 100`}
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               fill="none" strokeWidth="3"
             />
           </svg>
-          <span className="absolute text-xs font-bold text-blue-900">{matchScore}%</span>
+          <span className="absolute text-[10px] font-extrabold text-blue-900">{shouldShowFit ? currentScore : matchScore}%</span>
         </div>
       </div>
 
@@ -167,27 +368,133 @@ export default function ResultCard({
             Visit Website
           </button>
           <Link
-            href={{
-              pathname: `/university/${id}`,
-              query: {
-                cip: cipCode,
-                name: university,
-                city: location.split(", ")[0] || "",
-                state: location.split(", ")[1] || "",
-                degree: degree,
-                type: schoolType,
-                admissionRate: admissionRate,
-                tuition: estCost,
-                avgSalary: avgSalary || medianSalary,
-                roi: roi,
-              }
-            }}
+            href={universityHref}
             className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center"
           >
             View Full Details
           </Link>
         </div>
       </div>
+
+      {/* Profile/Fit Score Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden transform transition-all scale-100">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-white relative">
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/10 rounded-full p-1 transition"
+              >
+                <X size={16} />
+              </button>
+              <h3 className="text-base font-bold">Calculate Your Fit Score</h3>
+              <p className="text-[11px] text-blue-100 mt-1">
+                Enter your academic details to estimate your fit score for <span className="font-semibold">{university}</span>.
+              </p>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 space-y-4">
+              {/* GPA Input */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    GPA
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400">(0.0 - 4.0)</span>
+                </div>
+                <input
+                  type="number"
+                  min="0.0"
+                  max="4.0"
+                  step="0.01"
+                  value={tempGpa}
+                  onChange={(e) => setTempGpa(e.target.value)}
+                  placeholder="e.g. 3.75"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold transition text-slate-800"
+                />
+              </div>
+
+              {/* SAT Input */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                    SAT Score
+                  </label>
+                  {hasSatData && (
+                    <span className="text-[10px] font-semibold text-slate-400">(400 - 1600)</span>
+                  )}
+                </div>
+                {hasSatData ? (
+                  <input
+                    type="number"
+                    min="400"
+                    max="1600"
+                    step="10"
+                    value={tempSat}
+                    onChange={(e) => setTempSat(e.target.value)}
+                    placeholder="e.g. 1350"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-semibold transition text-slate-800"
+                  />
+                ) : (
+                  <div className="w-full px-3 py-2 rounded-xl border border-slate-100 bg-slate-50 text-xs font-medium text-slate-400 italic">
+                    Not available for this school
+                  </div>
+                )}
+              </div>
+
+              {/* Help Text */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] text-slate-500 leading-relaxed">
+                {hasSatData ? (
+                  <>
+                    Your stats are compared against <span className="font-semibold text-slate-700">{university}</span>&apos;s admission rate (<span className="font-semibold text-slate-700">{admissionRate}</span>) and SAT range (<span className="font-semibold text-slate-700">{satAct}</span>) to calculate your personalized fit!
+                  </>
+                ) : (
+                  <>
+                    Your stats are compared against <span className="font-semibold text-slate-700">{university}</span>&apos;s admission rate (<span className="font-semibold text-slate-700">{admissionRate}</span>) to calculate your personalized fit!
+                  </>
+                )}
+              </div>
+
+              {/* Disclaimer */}
+              <div className="text-[9px] text-slate-400 text-center italic">
+                *Disclaimer: These values are only approximate.
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="bg-slate-50 px-5 py-3 flex justify-between items-center border-t border-slate-100">
+              <div>
+                {isCalculated && (
+                  <button
+                    onClick={handleClear}
+                    className="text-[10px] font-bold text-red-500 hover:text-red-700 transition"
+                  >
+                    Clear Stats
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCalculate}
+                  className="px-4 py-1.5 rounded-lg text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all"
+                >
+                  Calculate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
