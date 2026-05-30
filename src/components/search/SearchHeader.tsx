@@ -132,26 +132,23 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
             Discover accredited programs tailored to your professional goals.
           </p>
         </div>
-        
+
         {/* View Toggle + Sort */}
         <div className="flex items-center gap-2">
           {/* List / Grid toggle */}
-          <div className="flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">
-            <button
-              onClick={() => onViewChange('list')}
-              title="List view"
-              className={`p-1.5 rounded-md transition ${
-                view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
+          <div className="hidden md:flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">            <button
+            onClick={() => onViewChange('list')}
+            title="List view"
+            className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
               }`}
-            >
-              <LayoutList size={16} />
-            </button>
+          >
+            <LayoutList size={16} />
+          </button>
             <button
               onClick={() => onViewChange('grid')}
               title="Tile view"
-              className={`p-1.5 rounded-md transition ${
-                view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
-              }`}
+              className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
+                }`}
             >
               <LayoutGrid size={16} />
             </button>
@@ -160,7 +157,7 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
           {/* Sort Dropdown */}
           <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm min-w-[200px]">
             <span className="text-sm text-gray-500 mr-2 whitespace-nowrap">Sort by:</span>
-            <Select 
+            <Select
               value={sort}
               variant="borderless"
               className="w-full font-medium text-gray-900"
@@ -178,7 +175,7 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
       {/* Active Filters */}
       <div className="flex flex-wrap items-center gap-2">
         {activeFilters.map((filter) => (
-          <div 
+          <div
             key={`${filter.key}-${filter.value}`}
             onClick={() => removeFilter(filter.key, filter.value)}
             className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-100 transition"
@@ -187,9 +184,9 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
             <X size={12} className="opacity-60" />
           </div>
         ))}
-        
+
         {activeFilters.length > 0 && (
-          <button 
+          <button
             onClick={clearAllFilters}
             className="text-xs font-medium text-gray-500 hover:text-blue-600 ml-2 underline underline-offset-2"
           >
