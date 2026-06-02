@@ -1,5 +1,18 @@
 import type { Metadata } from 'next';
+import { Lexend, Poppins } from 'next/font/google';
 import './globals.css';
+
+const lexend = Lexend({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-lexend',
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: 'US Degrees',
@@ -12,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${lexend.variable} ${poppins.variable}`}>
+      <body className={lexend.className}>
         {children}
       </body>
     </html>
