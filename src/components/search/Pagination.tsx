@@ -18,36 +18,41 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-12 mb-8">
-      <button 
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ChevronLeft size={16} />
-      </button>
-      
-      {pages.map(page => (
-        <button 
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition ${
-            currentPage === page 
-              ? 'bg-blue-600 text-white shadow-sm' 
-              : 'text-gray-600 hover:bg-gray-100 font-medium'
-          }`}
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 mb-8">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {page}
+          <ChevronLeft size={16} />
         </button>
-      ))}
-      
-      <button 
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ChevronRight size={16} />
-      </button>
+
+        {pages.map(page => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition ${currentPage === page
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100 font-medium'
+              }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      <span className="text-xs font-bold text-gray-400 bg-gray-50 border border-gray-150 rounded-full px-3 py-1 shadow-sm leading-none shrink-0">
+        Page {currentPage} of {totalPages}
+      </span>
     </div>
   );
 }
