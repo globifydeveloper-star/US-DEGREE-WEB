@@ -5,6 +5,7 @@ import AboutSection from "./AboutSection";
 import StatsGrid from "./StatsGrid";
 import ProgramDetail from "./ProgramDetail";
 import AdmissionsOverview from "./AdmissionsOverview";
+import AdmissionsTabContent from "./AdmissionsTabContent";
 import OutcomesSection from "./OutcomesSection";
 import CourseSummarySideCard from "./CourseSummarySideCard";
 import ProgramSearchBand from "./ProgramSearchBand";
@@ -67,21 +68,27 @@ export default function TabContent({ data }: { data: any }) {
       <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-10 w-full flex flex-col lg:flex-row gap-10">
         <div className="flex-1 w-full min-w-0">
           {activeTab === "Overview" && (
-            <div className="space-y-16">
-              <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
-                <AboutSection
-                  name={data.name}
-                  description={data.description}
-                />
-                <StatsGrid
-                  totalStudents={data.totalStudents}
-                  facultyRatio={data.facultyRatio}
-                  retentionRate={data.retentionRate}
-                  programs={data.programs}
-                  fafsaApplications={data.fafsaApplications}
-                  completionRate={data.completionRate}
-                />
-              </div>
+            <div className="space-y-10">
+              <AboutSection
+                name={data.name}
+                description={data.description}
+              />
+              
+              <StatsGrid
+                totalStudents={data.totalStudents}
+                facultyRatio={data.facultyRatio}
+                retentionRate={data.retentionRate}
+                programs={data.programs}
+                fafsaApplications={data.fafsaApplications}
+                completionRate={data.completionRate}
+              />
+
+              <ProgramDetail
+                degree={data.degree}
+                cipCode={data.cipCode}
+                school={data.school}
+                description={data.programDescription}
+              />
 
               <AdmissionsOverview
                 admissionRate={data.admissionRate}
@@ -95,10 +102,6 @@ export default function TabContent({ data }: { data: any }) {
                 growthRate={data.growthRate}
               />
 
-              <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm">
-                {/* <StudentReviews /> */}
-              </div>
-
               <ProgramSearchBand />
             </div>
           )}
@@ -108,7 +111,8 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Admissions" && (
-            <AdmissionsOverview
+            <AdmissionsTabContent
+              name={data.name}
               admissionRate={data.admissionRate}
               applicants={data.applicants}
               satReadingWriting={data.satReadingWriting}
@@ -142,7 +146,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
         </div>
 
-        <div className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-28 self-start">
+        <div className="w-full lg:w-[320px] shrink-0 self-start">
           <CourseSummarySideCard
             degree={data.degree}
             duration={data.duration}
