@@ -144,8 +144,8 @@ export default function SearchSidebar() {
 
                 <span
                   className={`text-[13px] leading-5 ${selectedCredentials.includes(cred.name)
-                      ? "font-bold text-blue-600"
-                      : "text-gray-700 group-hover:text-gray-900"
+                    ? "font-bold text-blue-600"
+                    : "text-gray-700 group-hover:text-gray-900"
                     }`}
                 >
                   {cred.name}
@@ -258,18 +258,16 @@ export default function SearchSidebar() {
 
       {/* ── Mobile: Backdrop overlay ── */}
       <div
-        className={`md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
-          isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+        className={`md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
       {/* ── Mobile: Slide-in drawer (visible below md) ── */}
       <div
         id="sidebar-mobile-drawer"
-        className={`md:hidden fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[320px] bg-white shadow-2xl transition-transform duration-300 ease-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`md:hidden fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[320px] bg-white shadow-2xl transition-transform duration-300 ease-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
