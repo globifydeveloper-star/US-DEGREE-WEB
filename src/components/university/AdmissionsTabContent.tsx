@@ -82,13 +82,13 @@ export default function AdmissionsTabContent({
 
   return (
     <div className="flex flex-col gap-16 py-4 max-w-4xl">
-      
+
       {/* 1. Acceptance Rate Section */}
       <div className="flex flex-col gap-8">
         <h2 className="text-[28px] font-semibold text-[#F7221F] font-['Poppins'] leading-none">
           Acceptance Rate
         </h2>
-        
+
         <div className="flex flex-col md:flex-row items-center gap-10">
           {/* Circular progress container */}
           <div className="relative w-[240px] h-[240px] flex items-center justify-center shrink-0">
@@ -140,7 +140,7 @@ export default function AdmissionsTabContent({
             </div>
             {/* Slider track */}
             <div className="relative h-3.5 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
-              <div 
+              <div
                 className="absolute h-full rounded-full bg-gradient-to-r from-[#60A5FA] to-[#2563EB]"
                 style={{ left: `${satLeft}%`, width: `${satWidth}%` }}
               />
@@ -160,7 +160,7 @@ export default function AdmissionsTabContent({
             </div>
             {/* Slider track */}
             <div className="relative h-3.5 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
-              <div 
+              <div
                 className="absolute h-full rounded-full bg-gradient-to-r from-[#60A5FA] to-[#2563EB]"
                 style={{ left: `${actLeft}%`, width: `${actWidth}%` }}
               />

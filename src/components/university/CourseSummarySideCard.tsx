@@ -29,7 +29,7 @@ export default function CourseSummarySideCard({
         <h3 className="text-[20px] font-black text-slate-900 tracking-tight leading-none">
           Course Summary
         </h3>
-        
+
         <div className="flex flex-col">
           <div className="flex items-center justify-between py-4 border-b border-slate-100">
             <span className="text-sm font-semibold text-slate-400">Degree</span>
