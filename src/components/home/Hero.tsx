@@ -186,22 +186,20 @@ export default function Hero() {
               <div className="flex bg-[#f5f5f5] p-1 rounded-full">
                 <button
                   onClick={() => setSearchType("programs")}
-                  className={`px-6 py-2 rounded-full font-medium transition ${
-                    searchType === "programs"
+                  className={`px-6 py-2 rounded-full font-medium transition ${searchType === "programs"
                       ? "bg-[#2563eb] text-white shadow"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Search Programs
                 </button>
 
                 <button
                   onClick={() => setSearchType("universities")}
-                  className={`px-6 py-2 rounded-full font-medium transition ${
-                    searchType === "universities"
+                  className={`px-6 py-2 rounded-full font-medium transition ${searchType === "universities"
                       ? "bg-[#2563eb] text-white shadow"
                       : "text-gray-600"
-                  }`}
+                    }`}
                 >
                   Search Universities
                 </button>
@@ -209,11 +207,10 @@ export default function Hero() {
             </div>
 
             <div
-              className={`grid gap-5 ${
-                searchType === "programs"
+              className={`grid gap-5 ${searchType === "programs"
                   ? "md:grid-cols-3"
                   : "md:grid-cols-2"
-              }`}
+                }`}
             >
               {/* Credential Field */}
               <div className="flex flex-col">
@@ -276,8 +273,8 @@ export default function Hero() {
                 {isLoading
                   ? "Searching..."
                   : searchType === "programs"
-                  ? "Search Degrees"
-                  : "Search Universities"}
+                    ? "Search Degrees"
+                    : "Search Universities"}
               </button>
             </div>
           </div>
