@@ -143,6 +143,40 @@ export default function ResultCard({
 
   const shouldShowFit = isCalculated && hasSatData;
 
+  const [isCompared, setIsCompared] = useState(false);
+
+  useEffect(() => {
+    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    setIsCompared(list.includes(String(id)));
+
+    const handleUpdate = () => {
+      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+      setIsCompared(updatedList.includes(String(id)));
+    };
+
+    window.addEventListener('compared-colleges-updated', handleUpdate);
+    return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
+  }, [id]);
+
+  const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    if (checked) {
+      if (list.length >= 5) {
+        alert("You can compare a maximum of 5 colleges simultaneously.");
+        return;
+      }
+      if (!list.includes(String(id))) {
+        list.push(String(id));
+      }
+    } else {
+      list = list.filter((cid: string) => cid !== String(id));
+    }
+    localStorage.setItem('compared_colleges', JSON.stringify(list));
+    setIsCompared(checked);
+    window.dispatchEvent(new Event('compared-colleges-updated'));
+  };
+
   useEffect(() => {
     // Load from localStorage if present
     const savedGpa = localStorage.getItem("fit_score_gpa");
@@ -437,7 +471,12 @@ export default function ResultCard({
       {/* Footer Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
+          <input
+            type="checkbox"
+            checked={isCompared}
+            onChange={handleCompareChange}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+          />
           <span className="text-[11px] font-medium text-gray-600">Compare</span>
         </label>
 

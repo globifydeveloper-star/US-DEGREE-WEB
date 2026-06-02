@@ -25,6 +25,9 @@ const Navbar = () => {
             <Link href="/" className="hover:text-[#2b55ff] transition-colors">
               Home
             </Link>
+            <Link href="/compare" className="hover:text-[#2b55ff] transition-colors">
+              Compare Colleges
+            </Link>
             <Link href="/courses" className="hover:text-[#2b55ff] transition-colors">
               Courses
             </Link>
@@ -64,6 +67,7 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="absolute top-[50px] left-0 w-full bg-white border-b border-[#f0f2f5] shadow-lg lg:hidden flex flex-col p-6 gap-6 text-[#4b5563] font-medium animate-in slide-in-from-top-2">
           <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+          <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)}>Compare Colleges</Link>
           <Link href="/courses" onClick={() => setIsMobileMenuOpen(false)}>Courses</Link>
           <Link href="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
           <Link href="/mentors" onClick={() => setIsMobileMenuOpen(false)}>Mentors</Link>
