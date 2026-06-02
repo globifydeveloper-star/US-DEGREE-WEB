@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
+import StickerPrice from './StickerPrice';
 
 export interface ResultCardProps {
   id?: number | string;
@@ -353,6 +354,9 @@ export default function ResultCard({
             {roi ?? 'N/A'}
           </span>
         </div>
+
+        {/* Sticker Price */}
+        <StickerPrice id={id} estCost={estCost} />
 
       </div>
 
