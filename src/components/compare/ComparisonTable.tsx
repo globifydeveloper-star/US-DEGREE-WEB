@@ -10,34 +10,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
+import { College, ComparisonTableProps } from '@/types/compare';
 
-export interface College {
-  id: string;
-  name: string;
-  shortName: string;
-  logo: string;
-  state: string;
-  location: string;
-  isPrivate: boolean;
-  tuitionInState: number | null;
-  tuitionOutOfState: number | null;
-  acceptanceRate: number | null; // 0.0 to 1.0
-  satMin: number | null;
-  satMax: number | null;
-  graduationRate: number | null; // 0.0 to 1.0
-  medianSalary: number | null;
-  studentPopulation: number | null;
-  image: string;
-  website: string;
-}
-
-interface ComparisonTableProps {
-  comparedColleges: College[];
-  averages: { tuition: number; graduationRate: number; medianSalary: number };
-  highlights: { lowestTuitionId: string; highestGraduationId: string; highestSalaryId: string; bestValueId: string };
-  onRemove: (id: string) => void;
-  onViewDetails: (id: string) => void;
-}
 
 export default function ComparisonTable({
   comparedColleges,
@@ -48,7 +22,7 @@ export default function ComparisonTable({
 }: ComparisonTableProps) {
   return (
     <div className="overflow-x-auto overflow-y-clip rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm bg-white">
-      <table className="w-full text-left border-collapse table-fixed min-w-[768px] md:min-w-[1000px]">
+      <table className="w-full text-left border-collapse table-fixed min-w-[500px] md:min-w-[1000px]">
         {/* Sticky Header Row */}
         <thead>
           <tr className="border-b border-gray-100 bg-[#FAFBFD]/90 backdrop-blur sticky top-[70px] z-20">
@@ -61,7 +35,7 @@ export default function ComparisonTable({
               const isLowestCost = highlights.lowestTuitionId === college.id;
 
               return (
-                <th key={college.id} className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky top-[70px] bg-[#FAFBFD] z-20">
+                <th key={college.id} className="p-4 md:p-8 relative min-w-[120px] md:min-w-[200px] sticky top-[70px] bg-[#FAFBFD] z-20">
                   <div className="absolute top-2 right-2 md:top-4 md:right-4 z-40">
                     <Tooltip title="Remove college">
                       <Button
@@ -229,9 +203,8 @@ export default function ComparisonTable({
                   <span className="text-sm md:text-xl font-bold text-slate-900">
                     {(college.acceptanceRate * 100).toFixed(1)}%
                   </span>
-                  <span className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${
-                    isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
-                  }`}>
+                  <span className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
+                    }`}>
                     {isHighlyCompetitive ? 'Selective' : isCompetitive ? 'Competitive' : 'Match'}
                   </span>
                 </td>
