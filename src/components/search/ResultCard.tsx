@@ -2,27 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
 import UserSatPopup from './UserSatPopup';
-
-export interface ResultCardProps {
-  id?: number | string;
-  cipCode?: string;
-  university: string;
-  location: string;
-  degree: string;
-  schoolType?: string;
-  admissionRate: string;
-  avgGpa: string;
-  satAct: string;
-  duration: string;
-  specializations: string;
-  matchScore: number;
-  gradRate: number;
-  avgSalary?: string;
-  estCost?: string;
-  medianSalary?: string;
-  roi?: string;
-  logoColor: string;
-}
+import { ResultCardProps } from '@/types/result-card';
 
 const parseAdmissionRate = (rateStr: string): number | null => {
   if (!rateStr || rateStr === 'N/A') return null;

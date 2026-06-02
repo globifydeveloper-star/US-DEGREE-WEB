@@ -1,16 +1,5 @@
 import React from 'react';
-
-interface AdmissionsOverviewProps {
-  admissionRate: string;
-  applicants: string;
-  satReadingWriting: string;
-  satMath: string;
-  satAverage: string;
-  salaryYear1?: number | string | null;
-  salaryYear10?: number | string | null;
-  netRoi20Yr?: number | string | null;
-  growthRate?: number | string | null;
-}
+import { AdmissionsOverviewProps, ScoreBarProps } from '@/types/admission-overview'
 
 const parseDisplayNumber = (value: string) => Number(value.replace(/[^0-9.]/g, ''));
 
@@ -38,12 +27,6 @@ const formatPercent = (value: number | string | null | undefined) => {
   const pct = n < 2 ? n * 100 : n;
   return `${pct.toFixed(1).replace(/\.0$/, '')}%`;
 };
-
-interface ScoreBarProps {
-  label: string;
-  range: string;
-  percent: number;
-}
 
 function ScoreBar({ label, range, percent }: ScoreBarProps) {
   return (
@@ -233,7 +216,6 @@ export default function AdmissionsOverview({
               Growth Rate
             </p>
           </div>
-
         </div>
       </div>
     </div>
