@@ -13,7 +13,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
   const totalStudents = data.totalStudents || 17680;
   const completionRate = data.completionRate || "94%";
   const facultyRatio = data.facultyRatio || "5:1";
-  
+
   // Dynamic selective label
   const parsedRate = parseFloat(admissionRate);
   const selectiveLabel = !isNaN(parsedRate) && parsedRate > 0
@@ -39,20 +39,20 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
   // Filtering based on search query and degree level dropdown
   const filteredPrograms = allPrograms.filter(prog => {
-    const matchesSearch = prog.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          prog.school.toLowerCase().includes(searchQuery.toLowerCase());
-                          
-    const matchesDegree = degreeLevel === "all" || 
+    const matchesSearch = prog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      prog.school.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesDegree = degreeLevel === "all" ||
       (degreeLevel === "undergrad" && prog.level.toLowerCase().includes("undergrad")) ||
       (degreeLevel === "grad" && prog.level.toLowerCase().includes("grad")) ||
       (degreeLevel === "prof" && prog.level.toLowerCase().includes("prof"));
-      
+
     return matchesSearch && matchesDegree;
   });
 
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
-      
+
       {/* 1. Top Row of 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Acceptance Rate */}
@@ -137,10 +137,10 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
               </p>
             </div>
             {/* Red dot indicator matching Figma */}
-            <div className="absolute right-5 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            {/* <div className="absolute right-5 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
+              <span className="ate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 px-5 py-3 border border-gray-250 rounded-[14px] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white font-medium text-gray-700 placeholder-gray-400"
           />
-          <select 
+          <select
             value={degreeLevel}
             onChange={(e) => setDegreeLevel(e.target.value)}
             className="px-5 py-3 border border-gray-250 rounded-[14px] text-xs bg-white shadow-sm font-semibold text-gray-700 focus:outline-none cursor-pointer"
@@ -328,7 +328,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
         {/* List of cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {filteredPrograms.map((prog, index) => (
-            <div 
+            <div
               key={index}
               className="bg-white border border-gray-150 hover:border-blue-400 hover:shadow-md transition-all rounded-2xl p-5 flex items-center justify-between cursor-pointer group"
             >

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
 import UserSatPopup from './UserSatPopup';
+import StickerPrice from './StickerPrice';
 
 export interface ResultCardProps {
   id?: number | string;
@@ -431,6 +432,9 @@ export default function ResultCard({
             </button>
           </div>
         </div>
+
+        {/* Sticker Price */}
+        <StickerPrice id={id} estCost={estCost} />
 
       </div>
 
