@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
+import ProgramSearchBand from './ProgramSearchBand';
 
 interface ProgramsAcademicsTabProps {
   data: any;
 }
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [degreeLevel, setDegreeLevel] = useState("all");
 
   const name = data.name || "Stanford University";
   const admissionRate = data.admissionRate || "3.9%";
@@ -29,26 +28,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
     tuitionDisplay = isNaN(parsed) ? String(data.tuitionInState) : `$${Math.round(parsed).toLocaleString()}`;
   }
 
-  // Programs catalog list to display
-  const allPrograms = [
-    { name: "Aeronautics and Astronautics", school: "School of Engineering", level: "Graduate" },
-    { name: "Comparative Literature", school: "School of Humanities & Sciences", level: "Undergraduate" },
-    { name: "Computational Mathematics", school: "School of Humanities & Sciences", level: "Graduate" },
-    { name: "Energy Resources Engineering", school: "School of Earth Sciences", level: "Graduate" }
-  ];
 
-  // Filtering based on search query and degree level dropdown
-  const filteredPrograms = allPrograms.filter(prog => {
-    const matchesSearch = prog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prog.school.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDegree = degreeLevel === "all" ||
-      (degreeLevel === "undergrad" && prog.level.toLowerCase().includes("undergrad")) ||
-      (degreeLevel === "grad" && prog.level.toLowerCase().includes("grad")) ||
-      (degreeLevel === "prof" && prog.level.toLowerCase().includes("prof"));
-
-    return matchesSearch && matchesDegree;
-  });
 
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
@@ -291,70 +271,6 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
           </div>
         </div>
       </div>
-
-      {/* 5. Search All Programs */}
-      <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/50 rounded-[32px] p-6 sm:p-10 mt-2 shadow-sm">
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-1 text-center">
-          Search All Programs
-        </h2>
-        <p className="text-xs text-gray-500 mb-8 text-center font-medium">
-          Explore the complete catalog of {name}'s academic offerings across seven schools.
-        </p>
-
-        {/* Search widget row */}
-        <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-8">
-          <input
-            type="text"
-            placeholder="Search by keyword (e.g. Physics, Data Science...)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-5 py-3 border border-gray-250 rounded-[14px] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white font-medium text-gray-700 placeholder-gray-400"
-          />
-          <select
-            value={degreeLevel}
-            onChange={(e) => setDegreeLevel(e.target.value)}
-            className="px-5 py-3 border border-gray-250 rounded-[14px] text-xs bg-white shadow-sm font-semibold text-gray-700 focus:outline-none cursor-pointer"
-          >
-            <option value="all">Degree Level</option>
-            <option value="undergrad">Undergraduate</option>
-            <option value="grad">Graduate</option>
-            <option value="prof">Professional</option>
-          </select>
-          <button className="px-8 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-[14px] text-xs transition-colors shadow-sm">
-            Find
-          </button>
-        </div>
-
-        {/* List of cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredPrograms.map((prog, index) => (
-            <div
-              key={index}
-              className="bg-white border border-gray-150 hover:border-blue-400 hover:shadow-md transition-all rounded-2xl p-5 flex items-center justify-between cursor-pointer group"
-            >
-              <div>
-                <h3 className="text-xs font-black text-gray-950 group-hover:text-blue-650 transition-colors uppercase tracking-wide">
-                  {prog.name}
-                </h3>
-                <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-wider">
-                  {prog.school} • <span className="text-blue-500/80">{prog.level}</span>
-                </p>
-              </div>
-              <div className="text-gray-300 group-hover:text-blue-600 transition-colors ml-4 shrink-0">
-                <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          ))}
-          {filteredPrograms.length === 0 && (
-            <p className="text-center text-xs text-gray-400 font-medium py-6 col-span-2">
-              No matching programs found.
-            </p>
-          )}
-        </div>
-      </div>
-
     </div>
   );
 }
