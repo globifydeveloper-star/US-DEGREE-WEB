@@ -489,6 +489,9 @@ export default function ResultCard({
           </div>
         </div>
 
+        {/* Sticker Price */}
+        <StickerPrice id={id} estCost={estCost} />
+
       </div>
 
       {/* Footer Actions */}

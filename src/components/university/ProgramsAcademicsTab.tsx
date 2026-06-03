@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
+import ProgramSearchBand from './ProgramSearchBand';
 
 interface ProgramsAcademicsTabProps {
   data: any;
 }
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [degreeLevel, setDegreeLevel] = useState("all");
 
   const name = data.name || "Stanford University";
   const admissionRate = data.admissionRate || "3.9%";
   const totalStudents = data.totalStudents || 17680;
   const completionRate = data.completionRate || "94%";
   const facultyRatio = data.facultyRatio || "5:1";
+
 
   // Dynamic selective label
   const parsedRate = parseFloat(admissionRate);
@@ -52,6 +52,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
+
 
       {/* 1. Top Row of 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -137,10 +138,10 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
               </p>
             </div>
             {/* Red dot indicator matching Figma */}
-            <div className="absolute right-5 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            {/* <div className="absolute right-5 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
+              <span className="ate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

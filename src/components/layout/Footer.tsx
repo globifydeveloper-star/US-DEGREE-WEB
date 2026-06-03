@@ -2,9 +2,9 @@ import React from 'react';
 import Link from 'next/link';
 import { Globe, Share2 } from 'lucide-react';
 
-export default function Footer() {
+export default function Footer({ className = "mt-12" }: { className?: string }) {
   return (
-    <footer className="bg-[#295af6] text-white pt-16 pb-8 px-6 sm:px-10 lg:px-[86px] mt-12 flex justify-center">
+    <footer className={`bg-[#295af6] text-white pt-16 pb-8 px-6 sm:px-10 lg:px-[86px] flex justify-center ${className}`}>
       <div className="w-full max-w-[2380px]">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
           {/* Brand & Description */}

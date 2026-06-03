@@ -29,7 +29,7 @@ export default function UniversityHero({
       {/* Banner Cover Image */}
       <div className="h-64 md:h-[300px] w-full overflow-hidden relative">
         <img
-          src={isStanford ? "/images/stanford_cover.png" : "https://images.unsplash.com/photo-1541625602330-2277a4c46182?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"}
+          src="/images/2.jpg"
           alt={`${name} campus`}
           className="w-full h-full object-cover"
         />
@@ -65,7 +65,7 @@ export default function UniversityHero({
                 <MapPin size={14} className="text-gray-400" /> {location}
               </span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-black text-blue-600 tracking-tight leading-none mb-1">
+            <h1 className="text-2xl md:text-4xl font-black text-blue-600 tracking-tight leading-none mb-1">
               {name}
             </h1>
           </div>
@@ -74,10 +74,10 @@ export default function UniversityHero({
         {/* Stats Row */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-6 mt-4 border-b border-gray-200">
           <div className="flex flex-wrap gap-12">
-            <div>
+            {/* <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Rank</p>
               <p className="text-xl font-black text-red-600">{rank}</p>
-            </div>
+            </div> */}
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Admission Rate</p>
               <p className="text-xl font-black text-gray-900">{admissionRate}</p>
@@ -96,7 +96,7 @@ export default function UniversityHero({
               <Share2 size={16} /> Share
             </button>
             <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
-              <GitCompareArrows size={16} /> Compare
+              <GitCompareArrows size={16} /> Add to Compare
             </button>
           </div>
         </div>

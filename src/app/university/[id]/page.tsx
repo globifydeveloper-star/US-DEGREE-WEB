@@ -284,7 +284,7 @@ export default async function UniversityPage({
       {/* Page Content with Tabs, Hero, and Sidebar */}
       <TabContent data={data} />
 
-      <Footer />
+      <Footer className="mt-0" />
     </main>
   );
 }

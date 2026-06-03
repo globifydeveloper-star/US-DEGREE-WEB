@@ -21,6 +21,12 @@ export default function AdmissionsTabContent({
   const rateValue = parseFloat(admissionRate);
   const parsedRate = isNaN(rateValue) ? 0 : rateValue;
 
+  const percentage = Math.min(Math.max(parsedRate, 0), 100);
+  const strokeWidth = 14;
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
   const competitiveness =
     parsedRate > 0
       ? parsedRate < 15
@@ -83,22 +89,36 @@ export default function AdmissionsTabContent({
 
         <div className="flex flex-col md:flex-row items-center gap-10">
           {/* Circular progress container */}
-          <div className="relative w-[240px] h-[240px] flex items-center justify-center shrink-0">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="#CBD5E1" strokeWidth="10" />
+          <div 
+            style={{ width: 170, height: 170 }} 
+            className="relative flex items-center justify-center shrink-0"
+          >
+            <svg width="170" height="170" viewBox="0 0 170 170" className="w-full h-full">
+              {/* Gray background track with white inner fill */}
               <circle
-                cx="60"
-                cy="60"
-                r="50"
+                cx="85"
+                cy="85"
+                r={radius}
+                fill="white"
+                stroke="#CBD5E1"
+                strokeWidth={strokeWidth}
+              />
+              {/* Blue active progress segment */}
+              <circle
+                cx="85"
+                cy="85"
+                r={radius}
                 fill="none"
                 stroke="#2054FE"
-                strokeWidth="10"
-                strokeDasharray="314.159"
-                strokeDashoffset={314.159 * (1 - (parsedRate || 4.3) / 100)}
+                strokeWidth={strokeWidth}
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                transform="rotate(-90 85 85)"
                 className="transition-all duration-1000"
               />
             </svg>
-            <span className="absolute text-[48px] font-black text-[#0F172A] font-['Lexend'] leading-none">
+            <span className="absolute text-3xl font-black text-[#0F172A] font-['Lexend'] border-b-[3px] border-[#0F172A] pb-0.5 leading-none">
               {admissionRate}
             </span>
           </div>

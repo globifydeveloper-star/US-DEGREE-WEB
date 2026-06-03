@@ -101,8 +101,6 @@ export default function TabContent({ data }: { data: any }) {
                 netRoi20Yr={data.netRoi20Yr}
                 growthRate={data.growthRate}
               />
-
-              <ProgramSearchBand />
             </div>
           )}
 
@@ -146,7 +144,7 @@ export default function TabContent({ data }: { data: any }) {
           )}
         </div>
 
-        <div className="w-full lg:w-[320px] shrink-0 self-start">
+        <div className="w-full lg:w-[320px] shrink-0 lg:sticky lg:top-[120px] self-start">
           <CourseSummarySideCard
             degree={data.degree}
             duration={data.duration}
@@ -155,6 +153,8 @@ export default function TabContent({ data }: { data: any }) {
           />
         </div>
       </div>
+
+      {(activeTab === "Overview" || activeTab === "Programs & Academics") && <ProgramSearchBand />}
     </>
   );
 }
