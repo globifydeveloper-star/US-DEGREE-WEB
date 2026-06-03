@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Select, Spin, message } from 'antd';
 import { ComparedCollege } from '@/types/compare';
 import { Search } from 'lucide-react';
@@ -26,17 +26,15 @@ export default function CompareSearch({
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-  // Load default 20 colleges on focus / initial
+  // Load default colleges on focus using the search endpoint with a broad term
   const loadDefaultSuggestions = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/colleges?page=1&limit=20`);
+      const res = await fetch(`${apiUrl}/colleges/search?query=university&limit=20`);
       if (res.ok) {
-        const result = await res.json();
-        const data = Array.isArray(result) ? result : result.data || [];
-
+        const data: ApiCollege[] = await res.json();
         if (Array.isArray(data)) {
-          const formatted = data.map((uni: ApiCollege) => ({
+          const formatted = data.map((uni) => ({
             value: Number(uni.unitid),
             label: `${uni.school_name} (${uni.city || ''}, ${uni.state || ''})`,
             college: {
@@ -66,7 +64,7 @@ export default function CompareSearch({
     }
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/colleges/search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`${apiUrl}/colleges/search?query=${encodeURIComponent(query)}&limit=30`);
       if (res.ok) {
         const result = await res.json();
         const data = Array.isArray(result) ? result : result.data || [];
@@ -146,7 +144,7 @@ export default function CompareSearch({
   const selectedLabeledValues: LabeledValue[] = useMemo(() => {
     return selectedColleges.map((c) => ({
       value: c.unitid,
-      label: c.school_name,
+      label: `${c.school_name} (${c.city || ''}, ${c.state || ''})`,
     }));
   }, [selectedColleges]);
 
@@ -208,7 +206,7 @@ export default function CompareSearch({
           label: opt.label,
           disabled: !selectedIds.includes(opt.value) && selectedIds.length >= 5
         }))}
-        popupClassName="compare-search-dropdown"
+        classNames={{ popup: { root: 'compare-search-dropdown' } }}
       />
     </div>
   );
