@@ -22,11 +22,10 @@ export default function TabNavigation() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap px-5 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab
+              className={`whitespace-nowrap px-5 py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
                   ? "border-blue-600 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-900"
-              }`}
+                }`}
             >
               {tab}
             </button>

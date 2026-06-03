@@ -18,7 +18,7 @@ const Navbar = () => {
             setCompareCount(parsed.length);
             return;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       setCompareCount(0);
     };

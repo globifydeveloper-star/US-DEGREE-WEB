@@ -1,13 +1,5 @@
 import React from 'react';
-
-interface AdmissionsTabContentProps {
-  name: string;
-  admissionRate: string;
-  applicants: string;
-  satReadingWriting: string;
-  satMath: string;
-  satAverage: string;
-}
+import { AdmissionsTabContentProps } from '@/types/admissiontab-content';
 
 const parseRange = (rangeStr: string, defaultMin: number, defaultMax: number) => {
   if (!rangeStr || rangeStr === 'N/A') return { min: defaultMin, max: defaultMax };

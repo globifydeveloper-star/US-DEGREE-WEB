@@ -4,20 +4,11 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Select, Spin, message } from 'antd';
 import { ComparedCollege } from '@/types/compare';
 import { Search } from 'lucide-react';
-
+import { ApiCollege } from '@/types/compare-search';
 interface CompareSearchProps {
   selectedColleges: ComparedCollege[];
   onAddCollege: (college: ComparedCollege) => void;
   onRemoveCollege: (id: number) => void;
-}
-
-interface ApiCollege {
-  unitid: number;
-  school_name: string;
-  city: string;
-  state: string;
-  school_type?: string;
-  school_url?: string;
 }
 
 type LabeledValue = { value: number; label: string };

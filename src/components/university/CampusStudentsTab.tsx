@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface CampusStudentsTabProps {
-  campusData: any;
-  fafsaApplications?: number | null;
-}
+import { CampusStudentsTabProps } from '@/types/campusstudents-tab';
 
 export default function CampusStudentsTab({ campusData, fafsaApplications }: CampusStudentsTabProps) {
   // Extract values with robust mock fallbacks if database details are missing or null

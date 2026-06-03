@@ -1,11 +1,6 @@
 import React from 'react';
+import { ProgramDetailProps } from '@/types/programdetail';
 
-interface ProgramDetailProps {
-  degree: string;
-  cipCode: string;
-  school: string;
-  description: string;
-}
 
 export default function ProgramDetail({ degree, cipCode, school, description }: ProgramDetailProps) {
   return (

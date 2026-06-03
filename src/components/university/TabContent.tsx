@@ -51,8 +51,8 @@ export default function TabContent({ data }: { data: any }) {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${activeTab === tab
-                    ? "text-[#2563EB]"
-                    : "text-[#64748B] hover:text-gray-900"
+                  ? "text-[#2563EB]"
+                  : "text-[#64748B] hover:text-gray-900"
                   }`}
               >
                 {tab}
@@ -73,7 +73,7 @@ export default function TabContent({ data }: { data: any }) {
                 name={data.name}
                 description={data.description}
               />
-              
+
               <StatsGrid
                 totalStudents={data.totalStudents}
                 facultyRatio={data.facultyRatio}

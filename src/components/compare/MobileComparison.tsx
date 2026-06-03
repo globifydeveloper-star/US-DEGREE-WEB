@@ -38,13 +38,13 @@ export default function MobileComparison({
       <Tabs
         defaultActiveKey={comparedColleges[0].id}
         type="line"
-        animated={{ InkBar: true, TabPane: true }}
+        animated={{ inkBar: true, tabPane: true }}
         className="mobile-compare-tabs"
         items={comparedColleges.map((college) => {
           const isBestValue = highlights.bestValueId === college.id;
           const isHighSalary = highlights.highestSalaryId === college.id;
           const isLowestCost = highlights.lowestTuitionId === college.id;
-          
+
           return {
             key: college.id,
             label: (
@@ -256,7 +256,7 @@ export default function MobileComparison({
                   >
                     View Full Details
                   </Button>
-                  
+
                   {college.website && (
                     <a
                       href={college.website}

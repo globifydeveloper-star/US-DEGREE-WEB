@@ -182,7 +182,7 @@ export default function ResultCard({
         message.warning("You can compare a maximum of 5 colleges simultaneously.");
         return;
       }
-      
+
       const [cityPart, statePart] = location.split(',').map(s => s.trim());
       const newCollege = {
         unitid: Number(id),

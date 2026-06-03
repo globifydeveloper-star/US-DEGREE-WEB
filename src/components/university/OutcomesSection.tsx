@@ -1,5 +1,5 @@
 import React from 'react';
-import {OutcomesSectionProps} from "@/types/outcomes-section"
+import { OutcomesSectionProps } from "@/types/outcomes-section"
 
 export default function OutcomesSection({
   salaryYear1,
@@ -11,7 +11,7 @@ export default function OutcomesSection({
   debtIncomeRatio,
   programTitle
 }: OutcomesSectionProps) {
-  
+
   const formatCurrency = (val: number | string | null | undefined): string => {
     if (val === null || val === undefined) return "N/A";
     const num = Number(val);
@@ -44,10 +44,10 @@ export default function OutcomesSection({
 
   // 1. Median Salary values
   // AFTER
-const s1 = salaryYear1 != null ? parseNumber(salaryYear1) : null;
-const s5 = salaryYear5 != null ? parseNumber(salaryYear5) : null;
-const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
-    
+  const s1 = salaryYear1 != null ? parseNumber(salaryYear1) : null;
+  const s5 = salaryYear5 != null ? parseNumber(salaryYear5) : null;
+  const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
+
   // 2. Employment Rate
   const parsedEmp = parseNumber(empFactor) || 0.94;
 
@@ -55,7 +55,7 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
   const rawRatio = parseNumber(debtIncomeRatio) || 0.40;
   // Multiplier is 1 / ratio, e.g. 1 / 0.4 = 2.5
   const multiplier = rawRatio > 0 ? (1 / rawRatio).toFixed(1) : "2.5";
-  
+
   // Early-career salary (1st year earnings or fallback to $45k if very low)
   const earlyEarnings = s1 != null && s1 > 20000 ? s1 : 45000;
   // Average debt = earlyEarnings * rawRatio
@@ -116,43 +116,43 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
   // 5. In-Demand Roles lists tailored to program titles
   const isBusiness = programTitle?.toLowerCase().includes("bus") || programTitle?.toLowerCase().includes("fin") || programTitle?.toLowerCase().includes("econ");
   const isHealth = programTitle?.toLowerCase().includes("health") || programTitle?.toLowerCase().includes("bio") || programTitle?.toLowerCase().includes("nurs");
-  
+
   const roles = isBusiness
     ? ["Investment Banker", "Financial Analyst", "Consultant", "Product Manager", "Business Analyst", "Operations Manager"]
     : isHealth
-    ? ["Clinical Research Associate", "Healthcare Administrator", "Medical Technologist", "Bioinformatics Specialist", "Consultant"]
-    : ["Software Engineer", "Product Manager", "Data Scientist", "Investment Banker", "Consultant", "UX Designer"];
+      ? ["Clinical Research Associate", "Healthcare Administrator", "Medical Technologist", "Bioinformatics Specialist", "Consultant"]
+      : ["Software Engineer", "Product Manager", "Data Scientist", "Investment Banker", "Consultant", "UX Designer"];
 
   return (
     <div className="flex flex-col gap-10 py-6 max-w-4xl">
-      
+
       {/* 1. Median Salary Section */}
       <div>
         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-4">MEDIAN SALARY</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* 1 Year */}
-<div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-  <p className="text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
-  <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-    {s1 != null ? formatCurrency(s1) : <span className="text-gray-300 text-xl">No data</span>}
-  </p>
-</div>
+          <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+            <p className="text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
+            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
+              {s1 != null ? formatCurrency(s1) : <span className="text-gray-300 text-xl">No data</span>}
+            </p>
+          </div>
 
-{/* 5 Year */}
-<div className="bg-[#FEE2E2]/80 border border-red-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-  <p className="text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
-  <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-    {s5 != null ? formatCurrency(s5) : <span className="text-gray-300 text-xl">No data</span>}
-  </p>
-</div>
+          {/* 5 Year */}
+          <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+            <p className="text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
+            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
+              {s5 != null ? formatCurrency(s5) : <span className="text-gray-300 text-xl">No data</span>}
+            </p>
+          </div>
 
-{/* 10 Year */}
-<div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-  <p className="text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
-  <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-    {s10 != null ? formatCurrency(s10) : <span className="text-gray-300 text-xl">No data</span>}
-  </p>
-</div>
+          {/* 10 Year */}
+          <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+            <p className="text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
+            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
+              {s10 != null ? formatCurrency(s10) : <span className="text-gray-300 text-xl">No data</span>}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -167,8 +167,8 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
             </p>
           </div>
           <div className="w-full bg-gray-100 h-2.5 rounded-full mt-2">
-            <div 
-              className="bg-[#2563EB] h-2.5 rounded-full transition-all duration-500" 
+            <div
+              className="bg-[#2563EB] h-2.5 rounded-full transition-all duration-500"
               style={{ width: `${parsedEmp < 2 ? parsedEmp * 100 : parsedEmp}%` }}
             />
           </div>
@@ -193,8 +193,8 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
           {hasSalaryData ? (
             <>
               <div className="w-full overflow-x-auto">
-                <svg 
-                  viewBox={`0 0 ${width} ${height}`} 
+                <svg
+                  viewBox={`0 0 ${width} ${height}`}
                   className="w-full min-w-[500px] h-auto overflow-visible"
                 >
                   <defs>
@@ -203,24 +203,24 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
                       <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
                     </linearGradient>
                   </defs>
-    
+
                   {/* Y Axis Grid Lines & Labels */}
-                  {[minVal, (minVal + maxVal)/2, maxVal].map((yVal, i) => {
+                  {[minVal, (minVal + maxVal) / 2, maxVal].map((yVal, i) => {
                     const y = height - paddingBottom - ((yVal - minVal) * (height - paddingTop - paddingBottom) / safeDiff);
                     return (
                       <g key={i}>
-                        <line 
-                          x1={paddingLeft} 
-                          y1={y} 
-                          x2={width - paddingRight} 
-                          y2={y} 
-                          stroke="#F3F4F6" 
+                        <line
+                          x1={paddingLeft}
+                          y1={y}
+                          x2={width - paddingRight}
+                          y2={y}
+                          stroke="#F3F4F6"
                           strokeWidth="1.5"
                         />
-                        <text 
-                          x={paddingLeft - 10} 
-                          y={y + 4} 
-                          textAnchor="end" 
+                        <text
+                          x={paddingLeft - 10}
+                          y={y + 4}
+                          textAnchor="end"
                           className="text-[10px] font-black text-gray-400"
                         >
                           {formatCurrency(yVal)}
@@ -228,39 +228,39 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
                       </g>
                     );
                   })}
-    
+
                   {/* Curve Area Fill */}
                   <path d={fillD} fill="url(#chartGradient)" />
-    
+
                   {/* Curve Line */}
-                  <path 
-                    d={pathD} 
-                    fill="none" 
-                    stroke="#3B82F6" 
-                    strokeWidth="3.5" 
+                  <path
+                    d={pathD}
+                    fill="none"
+                    stroke="#3B82F6"
+                    strokeWidth="3.5"
                     strokeLinecap="round"
                   />
-    
+
                   {/* Data points */}
                   {coords.map((coord, i) => (
-                    <circle 
-                      key={i} 
-                      cx={coord.x} 
-                      cy={coord.y} 
-                      r="5" 
-                      fill="#FFFFFF" 
-                      stroke="#3B82F6" 
+                    <circle
+                      key={i}
+                      cx={coord.x}
+                      cy={coord.y}
+                      r="5"
+                      fill="#FFFFFF"
+                      stroke="#3B82F6"
                       strokeWidth="3.5"
                     />
                   ))}
-    
+
                   {/* X Axis Labels */}
                   {coords.map((coord, i) => (
-                    <text 
-                      key={i} 
-                      x={coord.x} 
-                      y={height - paddingBottom + 18} 
-                      textAnchor="middle" 
+                    <text
+                      key={i}
+                      x={coord.x}
+                      y={height - paddingBottom + 18}
+                      textAnchor="middle"
                       className="text-[9px] font-black fill-gray-400 uppercase tracking-wider"
                     >
                       {trajectoryPoints[i].label}
@@ -268,7 +268,7 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
                   ))}
                 </svg>
               </div>
-              
+
               <div className="flex justify-center items-center gap-2 mt-4">
                 <span className="w-2.5 h-2.5 bg-[#3B82F6] rounded-full" />
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Projected Growth</span>
@@ -291,7 +291,7 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
         <h2 className="text-xl font-bold text-gray-900 mb-4">In-Demand Roles</h2>
         <div className="flex flex-wrap gap-2.5">
           {roles.map((role, i) => (
-            <span 
+            <span
               key={i}
               className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors rounded-full text-xs font-semibold cursor-default"
             >
@@ -316,13 +316,13 @@ const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
 
           {/* Dynamic ratio bar */}
           <div className="w-full h-8 rounded-xl overflow-hidden flex font-bold text-[10px] text-white">
-            <div 
+            <div
               className="bg-[#EF4444] flex items-center justify-center transition-all duration-500"
               style={{ width: `${rawRatio * 100}%` }}
             >
               Debt
             </div>
-            <div 
+            <div
               className="bg-[#2563EB] flex items-center justify-center flex-1 transition-all duration-500"
             >
               Income

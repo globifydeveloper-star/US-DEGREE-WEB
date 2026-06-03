@@ -33,8 +33,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             key={page}
             onClick={() => onPageChange(page)}
             className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition ${currentPage === page
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 font-medium'
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-gray-600 hover:bg-gray-100 font-medium'
               }`}
           >
             {page}
