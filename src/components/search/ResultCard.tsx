@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
+import { message } from 'antd';
 import UserSatPopup from './UserSatPopup';
 import { ResultCardProps } from '@/types/result-card';
 
@@ -98,6 +99,7 @@ export default function ResultCard({
   location,
   degree,
   schoolType,
+  schoolUrl,
   admissionRate,
   avgGpa,
   satAct,
@@ -124,36 +126,77 @@ export default function ResultCard({
   const shouldShowFit = isCalculated && hasSatData;
 
   const [isCompared, setIsCompared] = useState(false);
+  const [isCompareLimitReached, setIsCompareLimitReached] = useState(false);
 
   useEffect(() => {
-    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    setIsCompared(list.includes(String(id)));
+    const checkCompareState = () => {
+      const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+      if (Array.isArray(list)) {
+        const isComp = list.some((c: any) => {
+          if (typeof c === 'object' && c !== null) {
+            return Number(c.unitid) === Number(id);
+          }
+          return String(c) === String(id);
+        });
+        setIsCompared(isComp);
+        setIsCompareLimitReached(list.length >= 5);
+      } else {
+        setIsCompared(false);
+        setIsCompareLimitReached(false);
+      }
+    };
+
+    checkCompareState();
 
     const handleUpdate = () => {
-      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-      setIsCompared(updatedList.includes(String(id)));
+      checkCompareState();
     };
 
     window.addEventListener('compared-colleges-updated', handleUpdate);
     return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
   }, [id]);
 
-  const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
+  const handleCompareClick = () => {
     let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    if (checked) {
+    if (!Array.isArray(list)) {
+      list = [];
+    }
+
+    const isComp = list.some((c: any) => {
+      if (typeof c === 'object' && c !== null) {
+        return Number(c.unitid) === Number(id);
+      }
+      return String(c) === String(id);
+    });
+
+    if (isComp) {
+      list = list.filter((c: any) => {
+        if (typeof c === 'object' && c !== null) {
+          return Number(c.unitid) !== Number(id);
+        }
+        return String(c) !== String(id);
+      });
+      message.success(`${university} removed from comparison list.`);
+    } else {
       if (list.length >= 5) {
-        alert("You can compare a maximum of 5 colleges simultaneously.");
+        message.warning("You can compare a maximum of 5 colleges simultaneously.");
         return;
       }
-      if (!list.includes(String(id))) {
-        list.push(String(id));
-      }
-    } else {
-      list = list.filter((cid: string) => cid !== String(id));
+      
+      const [cityPart, statePart] = location.split(',').map(s => s.trim());
+      const newCollege = {
+        unitid: Number(id),
+        school_name: university,
+        city: cityPart || '',
+        state: statePart || '',
+        school_type: schoolType || '',
+        school_url: schoolUrl || ''
+      };
+      list.push(newCollege);
+      message.success(`${university} added to comparison list.`);
     }
+
     localStorage.setItem('compared_colleges', JSON.stringify(list));
-    setIsCompared(checked);
     window.dispatchEvent(new Event('compared-colleges-updated'));
   };
 
@@ -450,15 +493,29 @@ export default function ResultCard({
 
       {/* Footer Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isCompared}
-            onChange={handleCompareChange}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-          />
-          <span className="text-[11px] font-medium text-gray-600">Compare</span>
-        </label>
+        <button
+          onClick={handleCompareClick}
+          disabled={!isCompared && isCompareLimitReached}
+          className={`
+            px-4 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5
+            ${isCompared
+              ? 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800'
+              : !isCompared && isCompareLimitReached
+                ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-white border border-blue-600 text-blue-600 hover:bg-blue-50'
+            }
+          `}
+        >
+          {isCompared ? (
+            <>
+              <span className="text-green-600 font-bold">✓</span> Added
+            </>
+          ) : (
+            <>
+              <span className="text-blue-600 font-bold">⚖</span> Compare
+            </>
+          )}
+        </button>
 
         <div className="flex gap-2 w-full sm:w-auto">
           <button className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition">

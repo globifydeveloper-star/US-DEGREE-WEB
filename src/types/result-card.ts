@@ -17,4 +17,5 @@ export interface ResultCardProps {
   medianSalary?: string;
   roi?: string;
   logoColor: string;
+  schoolUrl?: string;
 }

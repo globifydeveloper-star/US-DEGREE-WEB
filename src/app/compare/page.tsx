@@ -5,51 +5,108 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CompareHeader from '@/components/compare/CompareHeader';
-import ComparisonTable, { College } from '@/components/compare/ComparisonTable';
-import {
-  Building2,
-  Plus,
-} from 'lucide-react';
-import {
-  Button,
-  Modal,
-  Select,
-  Spin,
-} from 'antd';
+import ComparisonTable from '@/components/compare/ComparisonTable';
+import CompareSearch from '@/components/compare/CompareSearch';
+import MobileComparison from '@/components/compare/MobileComparison';
+import EmptyCompareState from '@/components/compare/EmptyCompareState';
+import { College, ComparedCollege } from '@/types/compare';
+import { Building2 } from 'lucide-react';
+import { Modal, Spin } from 'antd';
 
 function CompareContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Selected college IDs to compare
-  const [comparedIds, setComparedIds] = useState<string[]>([]);
+  // Selected college objects from localStorage
+  const [comparedCollegesList, setComparedCollegesList] = useState<ComparedCollege[]>([]);
   const [comparedColleges, setComparedColleges] = useState<College[]>([]);
   
-  // Selection search data
-  const [allUniversities, setAllUniversities] = useState<{ id: string; name: string; city?: string; state?: string; schoolType?: string }[]>([]);
+  // Quick add recommendations loaded from first 20 colleges
+  const [allUniversities, setAllUniversities] = useState<{ id: string; name: string }[]>([]);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Get API URL
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-  // 1. Parse initial IDs from search parameters OR localStorage
+  // Check mobile viewport width
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 1. Sync state when URL params or localStorage changes
   useEffect(() => {
     const idsParam = searchParams.get('ids');
     if (idsParam) {
-      const ids = idsParam.split(',').filter(Boolean);
-      setComparedIds(ids);
-      localStorage.setItem('compared_colleges', JSON.stringify(ids));
+      const ids = idsParam.split(',').filter(Boolean).map(Number);
+      
+      const stored = localStorage.getItem('compared_colleges');
+      let currentList: ComparedCollege[] = [];
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            currentList = parsed.map((item: any) => {
+              if (typeof item === 'object' && item !== null) {
+                return item as ComparedCollege;
+              }
+              return {
+                unitid: Number(item),
+                school_name: `College ID ${item}`,
+                city: '',
+                state: '',
+                school_type: ''
+              } as ComparedCollege;
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      
+      // Filter/re-build list to match the URL ids
+      const filtered = ids.map(id => {
+        const found = currentList.find(c => c.unitid === id);
+        return found || {
+          unitid: id,
+          school_name: `Loading College ${id}...`,
+          city: '',
+          state: '',
+          school_type: ''
+        };
+      });
+      
+      setComparedCollegesList(filtered);
+      localStorage.setItem('compared_colleges', JSON.stringify(filtered));
     } else {
       const stored = localStorage.getItem('compared_colleges');
       if (stored) {
         try {
-          const ids = JSON.parse(stored);
-          if (Array.isArray(ids) && ids.length > 0) {
-            setComparedIds(ids);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const list = parsed.map((item: any) => {
+              if (typeof item === 'object' && item !== null) {
+                return item as ComparedCollege;
+              }
+              return {
+                unitid: Number(item),
+                school_name: `College ID ${item}`,
+                city: '',
+                state: '',
+                school_type: ''
+              } as ComparedCollege;
+            });
+            setComparedCollegesList(list);
+            
             // Sync to URL
             const params = new URLSearchParams();
-            params.set('ids', ids.join(','));
+            params.set('ids', list.map(c => c.unitid).join(','));
             router.replace(`/compare?${params.toString()}`);
             return;
           }
@@ -57,25 +114,55 @@ function CompareContent() {
           console.error(e);
         }
       }
-      setComparedIds([]);
+      setComparedCollegesList([]);
     }
   }, [searchParams, router]);
 
-  // 2. Fetch search database to populate the select component options
+  // Sync state if localStorage updates externally (e.g. from floating selection bar)
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      const stored = localStorage.getItem('compared_colleges');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const mapped: ComparedCollege[] = parsed.map((item: any) => {
+              if (typeof item === 'object' && item !== null) {
+                return item as ComparedCollege;
+              }
+              return {
+                unitid: Number(item),
+                school_name: `College ID ${item}`,
+                city: '',
+                state: '',
+                school_type: ''
+              } as ComparedCollege;
+            });
+            setComparedCollegesList(mapped);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    };
+
+    window.addEventListener('compared-colleges-updated', handleStorageUpdate);
+    return () => window.removeEventListener('compared-colleges-updated', handleStorageUpdate);
+  }, []);
+
+  // 2. Fetch search database to populate recommendations
   useEffect(() => {
     const fetchAllUniversitiesForSelect = async () => {
       try {
-        const res = await fetch(`${apiUrl}/search?type=universities`);
+        const res = await fetch(`${apiUrl}/colleges?page=1&limit=20`);
         if (res.ok) {
-          const data = await res.json();
+          const result = await res.json();
+          const data = Array.isArray(result) ? result : result.data || [];
           if (Array.isArray(data)) {
             setAllUniversities(
               data.map((uni: any) => ({
                 id: String(uni.unitid),
                 name: uni.school_name,
-                city: uni.city,
-                state: uni.state,
-                schoolType: uni.school_type || uni.college_type || "Public",
               }))
             );
           }
@@ -98,7 +185,7 @@ function CompareContent() {
 
   // 4. Fetch details for compared colleges dynamically
   useEffect(() => {
-    if (comparedIds.length === 0) {
+    if (comparedCollegesList.length === 0) {
       setComparedColleges([]);
       return;
     }
@@ -106,8 +193,39 @@ function CompareContent() {
     const fetchCollegesDetails = async () => {
       setIsDetailsLoading(true);
       try {
-        const fetchPromises = comparedIds.map(async (id) => {
-          // Fetch overview details, tuition fees and career outcomes
+        const collegeIds = comparedCollegesList.map(c => c.unitid);
+        
+        // Call POST /compare
+        let comparedMeta: ComparedCollege[] = [...comparedCollegesList];
+        try {
+          const compareRes = await fetch(`${apiUrl}/compare`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ college_ids: collegeIds }),
+          });
+          
+          if (compareRes.ok) {
+            const bodyJson = await compareRes.json();
+            const responseData = bodyJson.data || bodyJson;
+            if (Array.isArray(responseData)) {
+              comparedMeta = responseData.map((item: any) => ({
+                unitid: Number(item.unitid),
+                school_name: item.school_name || `College ID ${item.unitid}`,
+                city: item.city || '',
+                state: item.state || '',
+                school_type: item.school_type || '',
+                school_url: item.school_url || ''
+              }));
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch POST /compare:", err);
+        }
+
+        // Fetch overview, tuition, outcomes in parallel for each college ID
+        const fetchPromises = collegeIds.map(async (id) => {
           const [overviewRes, tuitionRes, outcomesRes] = await Promise.all([
             fetch(`${apiUrl}/overview/${id}/default`),
             fetch(`${apiUrl}/tuition/${id}`),
@@ -122,19 +240,20 @@ function CompareContent() {
           if (tuitionRes.ok) tuitionData = await tuitionRes.json();
           if (outcomesRes.ok) outcomesData = await outcomesRes.json();
 
-          // Resolve school basic info from allUniversities
-          const matchedUni = allUniversities.find(uni => String(uni.id) === String(id));
+          // Resolve school basic info from comparedMeta
+          const matchedUni = comparedMeta.find(uni => Number(uni.unitid) === Number(id)) || 
+                             comparedCollegesList.find(uni => Number(uni.unitid) === Number(id));
 
-          const name = matchedUni?.name || overviewData?.school_name || overviewData?.school?.school_name || overviewData?.school?.name || "Unknown University";
-          const control = matchedUni?.schoolType || overviewData?.school?.control || "Public";
+          const name = matchedUni?.school_name || overviewData?.school?.school_name || "Unknown University";
+          const control = matchedUni?.school_type || overviewData?.school?.control || "Public";
           const isPrivate = control.toLowerCase().includes("private");
           const state = matchedUni?.state || overviewData?.school?.state || "US";
           const city = matchedUni?.city || overviewData?.school?.city || "";
           
           let website = "https://www.google.com";
-          if (overviewData?.school?.school_url) {
-            const url = overviewData.school.school_url;
-            website = url.startsWith("http") ? url : `https://${url}`;
+          const rawUrl = matchedUni?.school_url || overviewData?.school?.school_url;
+          if (rawUrl) {
+            website = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
           }
 
           // Tuition fees
@@ -176,7 +295,7 @@ function CompareContent() {
             : null;
 
           return {
-            id,
+            id: String(id),
             name,
             shortName: name.replace("University", "").replace("Institute of Technology", "").trim(),
             logo: `https://logo.clearbit.com/${new URL(website).hostname}`,
@@ -206,7 +325,7 @@ function CompareContent() {
     };
 
     fetchCollegesDetails();
-  }, [comparedIds, apiUrl, allUniversities]);
+  }, [comparedCollegesList, apiUrl]);
 
   // Comparison Metrics calculations for highlighting winners
   const highlights = useMemo(() => {
@@ -230,7 +349,6 @@ function CompareContent() {
       bestValueId: '',
     };
 
-    // Keep track of all valid values to check for differences
     const tuitionValues: number[] = [];
     const graduationValues: number[] = [];
     const salaryValues: number[] = [];
@@ -272,7 +390,6 @@ function CompareContent() {
       }
     });
 
-    // Verify differences: if max === min, there is no difference, so don't highlight
     const hasTuitionDiff = tuitionValues.length > 1 && Math.max(...tuitionValues) !== Math.min(...tuitionValues);
     const hasGradDiff = graduationValues.length > 1 && Math.max(...graduationValues) !== Math.min(...graduationValues);
     const hasSalaryDiff = salaryValues.length > 1 && Math.max(...salaryValues) !== Math.min(...salaryValues);
@@ -286,7 +403,7 @@ function CompareContent() {
     };
   }, [comparedColleges]);
 
-  // Averages for lower/higher calculations
+  // Averages for calculations
   const averages = useMemo(() => {
     if (comparedColleges.length === 0)
       return { tuition: 0, graduationRate: 0, medianSalary: 0 };
@@ -306,25 +423,47 @@ function CompareContent() {
     };
   }, [comparedColleges]);
 
-  const handleAddCollege = (id: string) => {
-    if (comparedIds.includes(id)) return;
-    if (comparedIds.length >= 5) {
+  const handleAddCollege = (college: ComparedCollege) => {
+    if (comparedCollegesList.some((c) => c.unitid === college.unitid)) return;
+    if (comparedCollegesList.length >= 5) {
       setIsLimitModalOpen(true);
       return;
     }
-    const updatedIds = [...comparedIds, id];
-    setComparedIds(updatedIds);
-    localStorage.setItem('compared_colleges', JSON.stringify(updatedIds));
+    const updated = [...comparedCollegesList, college];
+    setComparedCollegesList(updated);
+    localStorage.setItem('compared_colleges', JSON.stringify(updated));
     window.dispatchEvent(new Event('compared-colleges-updated'));
-    syncUrlParams(updatedIds);
+    syncUrlParams(updated.map(c => String(c.unitid)));
   };
 
-  const handleRemoveCollege = (id: string) => {
-    const updatedIds = comparedIds.filter((cid) => cid !== id);
-    setComparedIds(updatedIds);
-    localStorage.setItem('compared_colleges', JSON.stringify(updatedIds));
+  const handleRemoveCollege = (id: number) => {
+    const updated = comparedCollegesList.filter((c) => c.unitid !== id);
+    setComparedCollegesList(updated);
+    localStorage.setItem('compared_colleges', JSON.stringify(updated));
     window.dispatchEvent(new Event('compared-colleges-updated'));
-    syncUrlParams(updatedIds);
+    syncUrlParams(updated.map(c => String(c.unitid)));
+  };
+
+  const handleQuickAdd = async (id: string) => {
+    // Quick Add fetch
+    try {
+      const res = await fetch(`${apiUrl}/overview/${id}/default`);
+      if (res.ok) {
+        const details = await res.json();
+        const schoolName = details?.school_name || details?.school?.school_name || `College ID ${id}`;
+        const newCollege: ComparedCollege = {
+          unitid: Number(id),
+          school_name: schoolName,
+          city: details?.school?.city || '',
+          state: details?.school?.state || '',
+          school_type: details?.school?.control || 'Public',
+          school_url: details?.school?.school_url || ''
+        };
+        handleAddCollege(newCollege);
+      }
+    } catch (e) {
+      console.error('Failed to quick add college:', e);
+    }
   };
 
   return (
@@ -345,7 +484,7 @@ function CompareContent() {
                 Comparing
               </p>
               <p className="font-extrabold text-slate-800 text-lg">
-                {comparedColleges.length} of 5 colleges selected
+                {comparedCollegesList.length} of 5 colleges selected
               </p>
             </div>
           </div>
@@ -354,42 +493,30 @@ function CompareContent() {
             <span className="text-sm font-black text-slate-500 ml-1">
               Add College:
             </span>
-            <Select
-              showSearch
-              className="w-full md:w-80 h-12"
-              placeholder="Search or Select a College..."
-              value={null}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              onChange={(value) => {
-                if (value) handleAddCollege(value);
-              }}
-              options={allUniversities.map((c) => ({
-                value: c.id,
-                label: c.name,
-                disabled: comparedIds.includes(c.id),
-              }))}
-            />
-            {comparedColleges.length > 0 && (
-              <Button
-                type="text"
-                danger
-                className="font-bold flex items-center gap-1.5"
+            <div className="w-full md:w-80">
+              <CompareSearch
+                selectedColleges={comparedCollegesList}
+                onAddCollege={handleAddCollege}
+                onRemoveCollege={handleRemoveCollege}
+              />
+            </div>
+            {comparedCollegesList.length > 0 && (
+              <button
+                className="font-bold text-red-500 hover:text-red-700 text-xs px-3 py-2 rounded-lg transition-colors cursor-pointer"
                 onClick={() => {
-                  setComparedIds([]);
+                  setComparedCollegesList([]);
                   localStorage.setItem('compared_colleges', JSON.stringify([]));
                   window.dispatchEvent(new Event('compared-colleges-updated'));
                   syncUrlParams([]);
                 }}
               >
                 Clear all
-              </Button>
+              </button>
             )}
           </div>
         </div>
 
-        {/* 3. Main canvas (Loading spinner, Comparison table, or Empty state) */}
+        {/* 3. Main canvas (Loading spinner, Comparison tables, or Empty state) */}
         {isDetailsLoading ? (
           <div className="flex justify-center items-center py-24 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
             <div className="flex flex-col items-center gap-4">
@@ -398,41 +525,25 @@ function CompareContent() {
             </div>
           </div>
         ) : comparedColleges.length === 0 ? (
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-16 text-center max-w-2xl mx-auto my-12">
-            <div className="w-24 h-24 bg-blue-50 text-[#3F51B5] rounded-full flex items-center justify-center mx-auto mb-6">
-              <Building2 className="w-12 h-12" />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2">
-              No colleges selected for comparison
-            </h3>
-            <p className="text-gray-500 font-medium mb-10 max-w-md mx-auto leading-relaxed">
-              Add up to 5 universities from the database search selector to instantly evaluate and discover your best academic and financial match.
-            </p>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">
-                Quick Add Recommendations
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                {allUniversities.slice(0, 4).map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => handleAddCollege(c.id)}
-                    className="px-5 py-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-[#3F51B5] hover:bg-white text-sm font-bold text-slate-700 flex items-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow"
-                  >
-                    {c.name}
-                    <Plus className="w-3.5 h-3.5 text-blue-500" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <EmptyCompareState
+            onQuickAdd={handleQuickAdd}
+            quickAddOptions={allUniversities.slice(0, 4)}
+          />
+        ) : isMobile ? (
+          <MobileComparison
+            comparedColleges={comparedColleges}
+            averages={averages}
+            highlights={highlights}
+            onRemove={(id) => handleRemoveCollege(Number(id))}
+            onViewDetails={(id: string) => router.push(`/university/${id}`)}
+          />
         ) : (
           <ComparisonTable
             comparedColleges={comparedColleges}
             averages={averages}
             highlights={highlights}
-            onRemove={handleRemoveCollege}
-            onViewDetails={(id) => router.push(`/university/${id}`)}
+            onRemove={(id) => handleRemoveCollege(Number(id))}
+            onViewDetails={(id: string) => router.push(`/university/${id}`)}
           />
         )}
 
@@ -471,3 +582,4 @@ export default function ComparePage() {
     </main>
   );
 }
+

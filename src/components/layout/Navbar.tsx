@@ -1,11 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [compareCount, setCompareCount] = useState(0);
+
+  useEffect(() => {
+    const checkCount = () => {
+      const stored = localStorage.getItem('compared_colleges');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setCompareCount(parsed.length);
+            return;
+          }
+        } catch (e) {}
+      }
+      setCompareCount(0);
+    };
+
+    checkCount();
+    window.addEventListener('compared-colleges-updated', checkCount);
+    return () => window.removeEventListener('compared-colleges-updated', checkCount);
+  }, []);
 
   return (
     <nav className="h-[70px] bg-white sticky top-0 z-50 border-t-[4px] border-[#f0f2f5] shadow-sm flex justify-center">
@@ -25,8 +46,8 @@ const Navbar = () => {
             <Link href="/" className="hover:text-[#2b55ff] transition-colors">
               Home
             </Link>
-            <Link href="/compare" className="hover:text-[#2b55ff] transition-colors">
-              Compare Colleges
+            <Link href="/compare" className="hover:text-[#2b55ff] transition-colors flex items-center gap-1.5">
+              Compare Colleges {compareCount > 0 && <span className="bg-blue-600 text-white text-[10px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0">{compareCount}</span>}
             </Link>
             <Link href="/courses" className="hover:text-[#2b55ff] transition-colors">
               Courses
@@ -67,7 +88,9 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="absolute top-[50px] left-0 w-full bg-white border-b border-[#f0f2f5] shadow-lg lg:hidden flex flex-col p-6 gap-6 text-[#4b5563] font-medium animate-in slide-in-from-top-2">
           <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-          <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)}>Compare Colleges</Link>
+          <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-1.5">
+            Compare Colleges {compareCount > 0 && <span className="bg-blue-600 text-white text-[10px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0">{compareCount}</span>}
+          </Link>
           <Link href="/courses" onClick={() => setIsMobileMenuOpen(false)}>Courses</Link>
           <Link href="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
           <Link href="/mentors" onClick={() => setIsMobileMenuOpen(false)}>Mentors</Link>

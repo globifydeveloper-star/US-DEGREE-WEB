@@ -1,3 +1,12 @@
+export interface ComparedCollege {
+  unitid: number;
+  school_name: string;
+  city: string;
+  state: string;
+  school_type: string;
+  school_url?: string;
+}
+
 export interface College {
   id: string;
   name: string;
