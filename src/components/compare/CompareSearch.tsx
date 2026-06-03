@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Select, Spin, message } from 'antd';
 import { ComparedCollege } from '@/types/compare';
 import { Search } from 'lucide-react';
@@ -20,18 +20,22 @@ interface ApiCollege {
   school_url?: string;
 }
 
+type LabeledValue = { value: number; label: string };
+
 export default function CompareSearch({
   selectedColleges,
   onAddCollege,
   onRemoveCollege,
 }: CompareSearchProps) {
-  const [options, setOptions] = useState<{ value: number; label: string; college: ComparedCollege }[]>([]);
+  // Options fetched from API (dropdown suggestions)
+  const [fetchedOptions, setFetchedOptions] = useState<{ value: number; label: string; college: ComparedCollege }[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-  // Load default 20 colleges
+  // Load default 20 colleges on focus / initial
   const loadDefaultSuggestions = useCallback(async () => {
     setLoading(true);
     try {
@@ -39,7 +43,7 @@ export default function CompareSearch({
       if (res.ok) {
         const result = await res.json();
         const data = Array.isArray(result) ? result : result.data || [];
-        
+
         if (Array.isArray(data)) {
           const formatted = data.map((uni: ApiCollege) => ({
             value: Number(uni.unitid),
@@ -53,7 +57,7 @@ export default function CompareSearch({
               school_url: uni.school_url || ''
             }
           }));
-          setOptions(formatted);
+          setFetchedOptions(formatted);
         }
       }
     } catch (err) {
@@ -63,7 +67,7 @@ export default function CompareSearch({
     }
   }, [apiUrl]);
 
-  // Perform search query
+  // Perform search query against API
   const performSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       loadDefaultSuggestions();
@@ -74,9 +78,8 @@ export default function CompareSearch({
       const res = await fetch(`${apiUrl}/colleges/search?query=${encodeURIComponent(query)}`);
       if (res.ok) {
         const result = await res.json();
-        // Backend could return direct array or wrapped in { data: [...] }
         const data = Array.isArray(result) ? result : result.data || [];
-        
+
         if (Array.isArray(data)) {
           const formatted = data.map((uni: ApiCollege) => ({
             value: Number(uni.unitid),
@@ -90,59 +93,95 @@ export default function CompareSearch({
               school_url: uni.school_url || ''
             }
           }));
-          setOptions(formatted);
+          setFetchedOptions(formatted);
         } else {
-          setOptions([]);
+          setFetchedOptions([]);
         }
       } else {
-        setOptions([]);
+        setFetchedOptions([]);
       }
     } catch (err) {
       console.error('Search failed:', err);
-      setOptions([]);
+      setFetchedOptions([]);
     } finally {
       setLoading(false);
     }
   }, [apiUrl, loadDefaultSuggestions]);
 
-  // Debounced search trigger
-  useEffect(() => {
-    if (!searchText) {
-      loadDefaultSuggestions();
-      return;
+  // Debounced search - triggers API call when user types
+  const handleSearch = useCallback((val: string) => {
+    setSearchText(val);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
-    const delayDebounceFn = setTimeout(() => {
-      performSearch(searchText);
-    }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchText, performSearch, loadDefaultSuggestions]);
+    debounceRef.current = setTimeout(() => {
+      performSearch(val);
+    }, 400);
+  }, [performSearch]);
 
-  const handleChange = (values: number[]) => {
-    // Determine additions or removals
+  // Cleanup debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  // Build merged options: fetched API results + already-selected colleges (so their labels show correctly)
+  const mergedOptions = useMemo(() => {
+    const optionsMap = new Map<number, { value: number; label: string; college: ComparedCollege }>();
+
+    // Add selected colleges first so they always have labels
+    selectedColleges.forEach((c) => {
+      optionsMap.set(c.unitid, {
+        value: c.unitid,
+        label: `${c.school_name} (${c.city || ''}, ${c.state || ''})`,
+        college: c
+      });
+    });
+
+    // Add fetched options (overwrite with richer data if same ID)
+    fetchedOptions.forEach((opt) => {
+      optionsMap.set(opt.value, opt);
+    });
+
+    return Array.from(optionsMap.values());
+  }, [fetchedOptions, selectedColleges]);
+
+  // The value for labelInValue mode: array of { value, label } for selected colleges
+  const selectedLabeledValues: LabeledValue[] = useMemo(() => {
+    return selectedColleges.map((c) => ({
+      value: c.unitid,
+      label: c.school_name,
+    }));
+  }, [selectedColleges]);
+
+  const handleChange = (values: LabeledValue[]) => {
+    const newIds = values.map((v) => v.value);
     const currentIds = selectedColleges.map((c) => c.unitid);
-    
-    // Find removed IDs
-    const removedId = currentIds.find((id) => !values.includes(id));
+
+    // Find removed ID
+    const removedId = currentIds.find((id) => !newIds.includes(id));
     if (removedId !== undefined) {
       onRemoveCollege(removedId);
       return;
     }
 
     // Find added ID
-    const addedId = values.find((id) => !currentIds.includes(id));
+    const addedId = newIds.find((id) => !currentIds.includes(id));
     if (addedId !== undefined) {
       if (currentIds.length >= 5) {
         message.warning('You can compare a maximum of 5 colleges simultaneously.');
         return;
       }
-      
-      const targetOption = options.find((opt) => opt.value === addedId);
+
+      const targetOption = mergedOptions.find((opt) => opt.value === addedId);
       if (targetOption) {
         onAddCollege(targetOption.college);
       } else {
-        // If not in current options list, check if we can fetch its minimal info or fallback
-        // This is a safety fallback
         console.warn('Added college not found in options list:', addedId);
       }
     }
@@ -154,42 +193,31 @@ export default function CompareSearch({
     <div className="w-full">
       <Select
         mode="multiple"
+        labelInValue
         maxCount={5}
+        maxTagCount={0}
+        maxTagPlaceholder={(omittedValues) => (
+          <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-0.5 rounded-full">
+            {omittedValues.length} college{omittedValues.length !== 1 ? 's' : ''} selected
+          </span>
+        )}
         showSearch
-        value={selectedIds}
+        value={selectedLabeledValues}
         filterOption={false}
         placeholder="Search colleges to compare..."
-        className="w-full h-12 text-slate-800"
-        onSearch={(val) => setSearchText(val)}
+        className="w-full compare-search-select"
+        onSearch={handleSearch}
         onChange={handleChange}
         onFocus={loadDefaultSuggestions}
         loading={loading}
         notFoundContent={loading ? <Spin size="small" /> : 'No colleges found'}
         suffixIcon={<Search className="w-4 h-4 text-gray-400" />}
-        options={options.map((opt) => ({
+        options={mergedOptions.map((opt) => ({
           value: opt.value,
           label: opt.label,
-          // Disable option if selected and limit reached for other items
           disabled: !selectedIds.includes(opt.value) && selectedIds.length >= 5
         }))}
-        popupClassName="rounded-2xl shadow-xl overflow-hidden border border-gray-150 p-2"
-        tagRender={(props) => {
-          const { label, onClose } = props;
-          return (
-            <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold px-3 py-1 rounded-full m-1 max-w-[200px] truncate">
-              <span className="truncate">{label}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose();
-                }}
-                className="hover:text-red-500 font-extrabold text-slate-400 text-xs pl-1"
-              >
-                ×
-              </button>
-            </span>
-          );
-        }}
+        popupClassName="compare-search-dropdown"
       />
     </div>
   );

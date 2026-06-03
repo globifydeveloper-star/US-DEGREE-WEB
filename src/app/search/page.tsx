@@ -58,7 +58,8 @@ function SearchContent() {
   const handleCompareClick = () => {
     const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
     if (list.length > 0) {
-      router.push(`/compare?ids=${list.join(',')}`);
+      const ids = list.map((c: any) => (typeof c === 'object' && c !== null ? c.unitid : c));
+      router.push(`/compare?ids=${ids.join(',')}`);
     }
   };
 

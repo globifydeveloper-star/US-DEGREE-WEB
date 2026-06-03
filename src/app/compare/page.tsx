@@ -10,6 +10,7 @@ import CompareSearch from '@/components/compare/CompareSearch';
 import MobileComparison from '@/components/compare/MobileComparison';
 import EmptyCompareState from '@/components/compare/EmptyCompareState';
 import { College, ComparedCollege } from '@/types/compare';
+import CollegeDetailModal from '@/components/compare/CollegeDetailModal';
 import { Building2 } from 'lucide-react';
 import { Modal, Spin } from 'antd';
 
@@ -26,6 +27,7 @@ function CompareContent() {
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [detailCollege, setDetailCollege] = useState<College | null>(null);
 
   // Get API URL
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -218,6 +220,16 @@ function CompareContent() {
                 school_type: item.school_type || '',
                 school_url: item.school_url || ''
               }));
+
+              // Update comparedCollegesList with real names from API
+              // (fixes placeholder names like "Loading College 123...")
+              const hasPlaceholders = comparedCollegesList.some(
+                c => c.school_name.startsWith('Loading College') || c.school_name.startsWith('College ID')
+              );
+              if (hasPlaceholders) {
+                setComparedCollegesList(comparedMeta);
+                localStorage.setItem('compared_colleges', JSON.stringify(comparedMeta));
+              }
             }
           }
         } catch (err) {
@@ -277,9 +289,10 @@ function CompareContent() {
             ? Number(overviewData.admissions.sat_rw_max) + Number(overviewData.admissions.sat_math_max)
             : null;
 
-          // Graduation rate
-          const graduationRate = overviewData?.completion?.completion_rate !== null && overviewData?.completion?.completion_rate !== undefined
-            ? Number(overviewData.completion.completion_rate) / 100
+          // Graduation rate — normalise to 0-1 regardless of whether API returns 94 or 0.94
+          const rawCompletion = overviewData?.completion?.completion_rate;
+          const graduationRate = rawCompletion != null
+            ? (Number(rawCompletion) > 1 ? Number(rawCompletion) / 100 : Number(rawCompletion))
             : null;
 
           // Median 10yr salary outcomes
@@ -535,7 +548,10 @@ function CompareContent() {
             averages={averages}
             highlights={highlights}
             onRemove={(id) => handleRemoveCollege(Number(id))}
-            onViewDetails={(id: string) => router.push(`/university/${id}`)}
+            onViewDetails={(id: string) => {
+              const college = comparedColleges.find(c => c.id === id);
+              if (college) setDetailCollege(college);
+            }}
           />
         ) : (
           <ComparisonTable
@@ -543,9 +559,18 @@ function CompareContent() {
             averages={averages}
             highlights={highlights}
             onRemove={(id) => handleRemoveCollege(Number(id))}
-            onViewDetails={(id: string) => router.push(`/university/${id}`)}
+            onViewDetails={(id: string) => {
+              const college = comparedColleges.find(c => c.id === id);
+              if (college) setDetailCollege(college);
+            }}
           />
         )}
+
+        {/* College detail modal */}
+        <CollegeDetailModal
+          college={detailCollege}
+          onClose={() => setDetailCollege(null)}
+        />
 
         {/* 5. Limit reached warnings modal */}
         <Modal
