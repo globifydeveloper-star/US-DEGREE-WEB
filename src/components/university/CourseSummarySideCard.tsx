@@ -17,19 +17,14 @@ export default function CourseSummarySideCard({
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Citation Above Card */}
-      <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">
-        <HelpCircle size={13} className="text-slate-400 mt-0.5 shrink-0" />
-        <span>
-          Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.
-        </span>
-      </div>
+
 
       {/* Main Course Summary Card */}
       <div className="bg-white border border-[#EAEFF5] rounded-[32px] shadow-sm p-8 flex flex-col gap-6">
         <h3 className="text-[20px] font-black text-slate-900 tracking-tight leading-none">
           Course Summary
         </h3>
-        
+
         <div className="flex flex-col">
           <div className="flex items-center justify-between py-4 border-b border-slate-100">
             <span className="text-sm font-semibold text-slate-400">Degree</span>
@@ -59,6 +54,12 @@ export default function CourseSummarySideCard({
             Next intake: Fall 2025 • Deadline: Jan 15, 2025
           </p>
         </div>
+      </div>
+      <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">
+        <HelpCircle size={13} className="text-slate-400 mt-0.5 shrink-0" />
+        <span>
+          Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.
+        </span>
       </div>
     </div>
   );

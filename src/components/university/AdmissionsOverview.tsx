@@ -62,10 +62,10 @@ export default function AdmissionsOverview({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  const effectiveSalaryYear1 = salaryYear1 || 91200;
-  const effectiveSalaryYear10 = salaryYear10 || 149696;
-  const effectiveNetRoi = netRoi20Yr || 2100000;
-  const effectiveGrowthRate = growthRate || 62.5;
+  const effectiveSalaryYear1 = salaryYear1;
+  const effectiveSalaryYear10 = salaryYear10;
+  const effectiveNetRoi = netRoi20Yr;
+  const effectiveGrowthRate = growthRate;
 
   const competitiveness =
     parsedRate > 0
@@ -99,8 +99,8 @@ export default function AdmissionsOverview({
           className="flex flex-col items-center justify-center gap-5 py-10 px-8"
           style={{ background: '#F8FAFC', borderRadius: 20 }}
         >
-          <div 
-            style={{ width: 170, height: 170 }} 
+          <div
+            style={{ width: 170, height: 170 }}
             className="relative flex items-center justify-center"
           >
             <svg width="170" height="170" viewBox="0 0 170 170" className="w-full h-full">
