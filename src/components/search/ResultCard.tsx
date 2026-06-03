@@ -4,6 +4,7 @@ import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
 import { message } from 'antd';
 import UserSatPopup from './UserSatPopup';
 import { ResultCardProps } from '@/types/result-card';
+import StickerPrice from './StickerPrice';
 
 const parseAdmissionRate = (rateStr: string): number | null => {
   if (!rateStr || rateStr === 'N/A') return null;
