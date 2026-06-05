@@ -4,6 +4,7 @@ import { Bookmark, Share2, GitCompareArrows, MapPin, ExternalLink } from 'lucide
 import { UniversityHeroProps } from '@/types/university/UniversityHero';
 
 
+
 export default function UniversityHero({
   name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state', schoolUrl
 }: UniversityHeroProps) {
