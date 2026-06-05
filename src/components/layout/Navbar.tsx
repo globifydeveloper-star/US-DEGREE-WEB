@@ -115,14 +115,14 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <button 
-                  onClick={() => openAuthModal('login')} 
+                <button
+                  onClick={() => openAuthModal('login')}
                   className="hidden sm:inline text-[16px] font-medium text-[#4b5563] hover:text-[#2b55ff] transition-colors cursor-pointer"
                 >
                   Sign In
                 </button>
-                <button 
-                  onClick={() => openAuthModal('signup')} 
+                <button
+                  onClick={() => openAuthModal('signup')}
                   className="hidden sm:inline-flex bg-[#3b5bdb] hover:bg-[#364fc7] text-white px-6 sm:px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-md cursor-pointer"
                 >
                   Get Started
@@ -165,14 +165,14 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <button 
-                  onClick={() => { openAuthModal('login'); setIsMobileMenuOpen(false); }} 
+                <button
+                  onClick={() => { openAuthModal('login'); setIsMobileMenuOpen(false); }}
                   className="text-left text-[16px] font-medium text-[#4b5563] hover:text-[#2b55ff] transition-colors cursor-pointer"
                 >
                   Sign In
                 </button>
-                <button 
-                  onClick={() => { openAuthModal('signup'); setIsMobileMenuOpen(false); }} 
+                <button
+                  onClick={() => { openAuthModal('signup'); setIsMobileMenuOpen(false); }}
                   className="text-left text-[#3b5bdb] font-semibold cursor-pointer"
                 >
                   Get Started
@@ -184,11 +184,11 @@ const Navbar = () => {
       </nav>
 
       {/* Reusable Login/Signup Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
         initialMode={authMode}
-        onClose={() => setIsLoginModalOpen(false)} 
-        onSuccess={() => checkAuth()} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => checkAuth()}
       />
     </>
   );
