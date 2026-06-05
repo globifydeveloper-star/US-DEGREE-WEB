@@ -122,11 +122,13 @@ export default function TabContent({ data }: { data: any }) {
           {activeTab === "Outcomes & Careers" && (
             <OutcomesSection
               salaryYear1={data.salaryYear1}
+              salaryYear5={data.salaryYear5}
               salaryYear10={data.salaryYear10}
               netRoi20Yr={data.netRoi20Yr}
               growthRate={data.growthRate}
               empFactor={data.empFactor}
               debtIncomeRatio={data.debtIncomeRatio}
+              programTitle={data.degree}
             />
           )}
 

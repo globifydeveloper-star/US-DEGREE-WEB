@@ -1,11 +1,12 @@
-import React from 'react';
-import ProgramSearchBand from './ProgramSearchBand';
+import React, { useState } from 'react';
 
 interface ProgramsAcademicsTabProps {
   data: any;
 }
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [degreeLevel, setDegreeLevel] = useState('all');
 
   const name = data.name || "Stanford University";
   const admissionRate = data.admissionRate || "3.9%";

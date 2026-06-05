@@ -38,7 +38,7 @@ function SearchContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const itemsPerPage = 10;
+  const itemsPerPage = viewMode === 'grid' ? 12 : 10;
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [comparedCount, setComparedCount] = useState(0);
 
@@ -191,7 +191,7 @@ function SearchContent() {
               <>
                 <SearchHeaderSkeleton />
                 {viewMode === "grid" ? (
-                  <TileGridSkeleton count={6} />
+                  <TileGridSkeleton count={12} />
                 ) : (
                   <ResultListSkeleton count={5} />
                 )}

@@ -214,6 +214,7 @@ export default async function UniversityPage({
 
   // Outcomes & Careers statistics
   const salaryYear1 = outcomesData?.earnings?.year_1 || apiData?.earnings?.year_1 || (id === "1" ? 91200 : id === "2" ? 85000 : null);
+  const salaryYear5 = outcomesData?.earnings?.year_5 || apiData?.earnings?.year_5 || null;
   const salaryYear10 = outcomesData?.earnings?.year_10 || apiData?.earnings?.year_10 || (id === "1" ? 149696 : id === "2" ? 135000 : null);
   
   const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || (id === "1" ? 2100000 : id === "2" ? 1900000 : null);
@@ -264,6 +265,7 @@ export default async function UniversityPage({
 
     // Dynamic Outcomes
     salaryYear1,
+    salaryYear5,
     salaryYear10,
     netRoi20Yr,
     growthRate,
