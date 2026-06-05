@@ -6,6 +6,7 @@ import { Button } from 'antd';
 import CompareIconAnimation from '../search/CompareIconAnimation';
 
 
+
 export default function UniversityHero({
   id, name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state', schoolUrl, accreditor
 }: UniversityHeroProps) {
