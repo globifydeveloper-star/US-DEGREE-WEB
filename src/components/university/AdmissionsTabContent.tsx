@@ -176,12 +176,12 @@ export default function AdmissionsTabContent({
                 style={{ fontSize: 36 }}
               >
                 {parsedRate > 0 ? `${(parsedRate * animProgress).toFixed(1)}%` : admissionRate}
-              </span>
-            </div>
-          </div>
+              </span >
+            </div >
+          </div >
 
           {/* Badge + description */}
-          <div className="flex flex-col items-start gap-4">
+          < div className="flex flex-col items-start gap-4" >
             <div
               className="px-5 py-2 rounded-full inline-flex"
               style={{ background: '#2054FE' }}
@@ -193,13 +193,13 @@ export default function AdmissionsTabContent({
             <p className="text-base text-slate-500 font-poppins leading-relaxed max-w-xl">
               {description}
             </p>
-          </div>
+          </div >
 
-        </div>
-      </div>
+        </div >
+      </div >
 
       {/* ── 2. Standardized Test Scores ── */}
-      <div className="flex flex-col gap-10">
+      < div className="flex flex-col gap-10" >
         <h2
           className="text-2xl font-semibold font-poppins"
           style={{ color: '#F7221F' }}
@@ -282,8 +282,8 @@ export default function AdmissionsTabContent({
           </p>
 
         </div>
-      </div>
+      </div >
 
-    </div>
+    </div >
   );
 }
