@@ -17,6 +17,7 @@ export interface SearchResult {
   tuition_in_state?: number | string | null;
   school_min_range?: number | null;
   school_max_range?: number | null;
+  school_url?: string | null;
 }
 
 export interface SearchQueryParams {

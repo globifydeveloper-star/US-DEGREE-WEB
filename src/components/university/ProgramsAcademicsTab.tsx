@@ -6,26 +6,38 @@ interface ProgramsAcademicsTabProps {
 }
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
+  if (!data) return null;
 
-  const name = data.name || "Stanford University";
-  const admissionRate = data.admissionRate || "3.9%";
-  const totalStudents = data.totalStudents || 17680;
-  const completionRate = data.completionRate || "94%";
-  const facultyRatio = data.facultyRatio || "5:1";
+  const name = data.name || "N/A";
+  const admissionRate = data.admissionRate || "N/A";
+  const totalStudents = data.totalStudents;
+  const completionRate = data.completionRate || "N/A";
+  const facultyRatio = data.facultyRatio || "N/A";
+
+  const toPercentVal = (val: any) => {
+    if (val === null || val === undefined) return null;
+    const num = Number(val);
+    if (isNaN(num)) return null;
+    return num < 2 ? Math.round(num * 100) : Math.round(num);
+  };
+
+  const rawRepayment = data.campusData?.repayment?.all_borrowers_3yr;
+  const loanRepaymentVal = toPercentVal(rawRepayment);
+  const loanRepaymentDisplay = loanRepaymentVal !== null ? `${loanRepaymentVal}%` : "N/A";
 
   // Dynamic selective label
   const parsedRate = parseFloat(admissionRate);
   const selectiveLabel = !isNaN(parsedRate) && parsedRate > 0
     ? (parsedRate < 10 ? "Highly Selective" : parsedRate < 30 ? "Selective" : "Competitive")
-    : "Highly Selective";
+    : "N/A";
 
   // Dynamic tuition parser
-  let tuitionDisplay = "$62,484";
+  let tuitionDisplay = "N/A";
   if (data.tuitionFee && data.tuitionFee !== "N/A") {
     tuitionDisplay = data.tuitionFee;
-  } else if (data.tuitionInState) {
-    const parsed = parseFloat(String(data.tuitionInState).replace(/[^0-9.]/g, ''));
-    tuitionDisplay = isNaN(parsed) ? String(data.tuitionInState) : `$${Math.round(parsed).toLocaleString()}`;
+  } else if (data.tuitionData?.tuition?.tuition_in_state) {
+    const parsed = parseFloat(String(data.tuitionData.tuition.tuition_in_state).replace(/[^0-9.]/g, ''));
+    tuitionDisplay = isNaN(parsed) ? String(data.tuitionData.tuition.tuition_in_state) : `$${Math.round(parsed).toLocaleString()}`;
   }
 
 
@@ -53,7 +65,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
         <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">Total Enrollment</p>
           <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
-            {totalStudents.toLocaleString()}
+            {totalStudents != null ? totalStudents.toLocaleString() : "N/A"}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Undergrad & Grad</p>
         </div>
@@ -61,7 +73,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 2. Academic Excellence Section */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block">
           Academic Excellence
         </h2>
         <p className="text-xs text-gray-500 mb-6 font-medium">
@@ -110,7 +122,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
               </svg>
             </div>
             <div>
-              <p className="text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">68%</p>
+              <p className="text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">{loanRepaymentDisplay}</p>
               <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Loan Repayment Success (3-Year)</p>
               <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
                 Graduates actively repaying student loans within three years.
@@ -127,7 +139,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 3. Popular Fields of Study */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block">
           Popular Fields of Study
         </h2>
         <p className="text-xs text-gray-500 mb-6 font-medium leading-relaxed max-w-3xl">
@@ -195,7 +207,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 4. Comprehensive Degree Levels */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-6 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-6 inline-block">
           Comprehensive Degree Levels
         </h2>
 

@@ -168,6 +168,7 @@ function SearchContent() {
       medianSalary: hasValue(result.earnings_year_5) ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}` : undefined,
       roi: hasValue(result.roi_20yr) ? `$${Math.round(Number(result.roi_20yr) / 1000)}K` : undefined,
       logoColor: "bg-blue-600",
+      schoolUrl: result.school_url,
     };
   };
 

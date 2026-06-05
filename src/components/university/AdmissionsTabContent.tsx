@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 
 interface AdmissionsTabContentProps {
@@ -29,10 +31,11 @@ export default function AdmissionsTabContent({
   const rateValue = parseFloat(admissionRate);
   const parsedRate = isNaN(rateValue) ? 0 : rateValue;
 
-  const percentage = Math.min(Math.max(parsedRate, 0), 100);
-  const strokeWidth = 14;
+  // SVG ring values
+  const strokeWidth = 16;
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
+  const percentage = Math.min(Math.max(parsedRate, 0), 100);
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   const competitiveness =
@@ -44,7 +47,6 @@ export default function AdmissionsTabContent({
           : 'Open Admission'
       : 'Admission Rate';
 
-  // Dynamic description matching selectivity
   const description =
     parsedRate > 0
       ? parsedRate < 15
@@ -54,67 +56,72 @@ export default function AdmissionsTabContent({
           : `${name} maintains an open or highly accessible admissions policy, welcoming a broad and diverse student population.`
       : `${name} admissions process and student enrollment parameters.`;
 
-  // Parse SAT Reading & Writing and Math ranges
-  const rwRange = parseRange(satReadingWriting, 600, 750);
-  const mathRange = parseRange(satMath, 600, 750);
+  // SAT bar — convert Figma pixel positions to %
+  // Total width: 1201.77, bar left: 841.22, bar width: 300.48
+  const satLeft = (841.22 / 1201.77) * 100; // ~70%
+  const satWidth = (300.48 / 1201.77) * 100; // ~25%
+
+  // ACT bar — Total width: 1201.77, bar left: 1021.49, bar width: 120.21
+  const actLeft = (1021.49 / 1201.77) * 100; // ~85%
+  const actWidth = (120.21 / 1201.77) * 100;  // ~10%
+
+  // Dynamic SAT range from props
+  const rwRange = parseRange(satReadingWriting, 0, 0);
+  const mathRange = parseRange(satMath, 0, 0);
   const satMin = rwRange.min + mathRange.min;
   const satMax = rwRange.max + mathRange.max;
+  const hasSatData = satMin > 0 && satMax > 0;
 
-  // Calculate SAT bar offsets
-  // SAT score spans from 400 to 1600 (total range = 1200)
-  const satLeft = Math.max(0, Math.min(100, ((satMin - 400) / 1200) * 100));
-  const satWidth = Math.max(5, Math.min(100 - satLeft, ((satMax - satMin) / 1200) * 100));
+  // Dynamic SAT bar from actual data
+  const dynSatLeft = hasSatData ? Math.max(0, Math.min(90, ((satMin - 400) / 1200) * 100)) : 0;
+  const dynSatWidth = hasSatData ? Math.max(10, Math.min(100 - dynSatLeft, ((satMax - satMin) / 1200) * 100)) : 0;
 
-  // Determine ACT composite range based on competitiveness fallbacks
-  let actMin = 21;
-  let actMax = 26;
+  // Dynamic ACT
+  let actMin = 21, actMax = 26;
   if (parsedRate > 0) {
-    if (parsedRate < 15) {
-      actMin = 34;
-      actMax = 35;
-    } else if (parsedRate < 50) {
-      actMin = 28;
-      actMax = 32;
-    } else {
-      actMin = 18;
-      actMax = 24;
-    }
+    if (parsedRate < 15) { actMin = 34; actMax = 35; }
+    else if (parsedRate < 50) { actMin = 28; actMax = 32; }
+    else { actMin = 18; actMax = 24; }
   }
-
-  // Calculate ACT bar offsets
-  // ACT composite spans from 1 to 36 (total range = 35)
-  const actLeft = Math.max(0, Math.min(100, ((actMin - 1) / 35) * 100));
-  const actWidth = Math.max(5, Math.min(100 - actLeft, ((actMax - actMin) / 35) * 100));
+  const dynActLeft = Math.max(0, Math.min(90, ((actMin - 1) / 35) * 100));
+  const dynActWidth = Math.max(10, Math.min(100 - dynActLeft, ((actMax - actMin) / 35) * 100));
 
   return (
     <div className="flex flex-col gap-16 py-4 max-w-4xl">
-      
-      {/* 1. Acceptance Rate Section */}
+
+      {/* Source citation
+      <p className="text-[11px] italic font-light text-slate-400 font-poppins">
+        Source: Information is based on publicly available data from official U.S. Department of
+        Education sources, including IPEDS, College Scorecard, and College Navigator.
+      </p> */}
+
+      {/* ── 1. Acceptance Rate ── */}
       <div className="flex flex-col gap-8">
-        <h2 className="text-[28px] font-semibold text-[#F7221F] font-['Poppins'] leading-none">
+        <h2
+          className="text-2xl font-semibold font-poppins"
+          style={{ color: '#F7221F' }}
+        >
           Acceptance Rate
         </h2>
-        
+
         <div className="flex flex-col md:flex-row items-center gap-10">
-          {/* Circular progress container */}
-          <div 
-            style={{ width: 170, height: 170 }} 
-            className="relative flex items-center justify-center shrink-0"
-          >
-            <svg width="170" height="170" viewBox="0 0 170 170" className="w-full h-full">
-              {/* Gray background track with white inner fill */}
+
+          {/* SVG Ring Chart */}
+          <div className="relative shrink-0" style={{ width: 200, height: 200 }}>
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              {/* Gray background ring */}
               <circle
-                cx="85"
-                cy="85"
+                cx="100"
+                cy="100"
                 r={radius}
                 fill="white"
                 stroke="#CBD5E1"
                 strokeWidth={strokeWidth}
               />
-              {/* Blue active progress segment */}
+              {/* Blue progress arc */}
               <circle
-                cx="85"
-                cy="85"
+                cx="100"
+                cy="100"
                 r={radius}
                 fill="none"
                 stroke="#2054FE"
@@ -122,75 +129,120 @@ export default function AdmissionsTabContent({
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
-                transform="rotate(-90 85 85)"
-                className="transition-all duration-1000"
+                transform="rotate(-90 100 100)"
               />
             </svg>
-            <span className="absolute text-3xl font-black text-[#0F172A] font-['Lexend'] border-b-[3px] border-[#0F172A] pb-0.5 leading-none">
-              {admissionRate}
-            </span>
+            {/* Rate text centered */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="font-black font-lexend text-slate-900"
+                style={{ fontSize: 36 }}
+              >
+                {admissionRate}
+              </span>
+            </div>
           </div>
 
-          {/* Badge & Description */}
+          {/* Badge + description */}
           <div className="flex flex-col items-start gap-4">
-            <div className="px-5 py-2.5 bg-[#2054FE] rounded-full inline-flex">
-              <span className="text-sm font-bold text-white uppercase tracking-wider font-['Poppins']">
+            <div
+              className="px-5 py-2 rounded-full inline-flex"
+              style={{ background: '#2054FE' }}
+            >
+              <span className="text-sm font-bold text-white uppercase tracking-wider font-poppins">
                 {competitiveness}
               </span>
             </div>
-            <p className="text-lg text-slate-500 font-['Poppins'] leading-relaxed max-w-xl">
+            <p className="text-base text-slate-500 font-poppins leading-relaxed max-w-xl">
               {description}
             </p>
           </div>
+
         </div>
       </div>
 
-      {/* 2. Standardized Test Scores Section */}
+      {/* ── 2. Standardized Test Scores ── */}
       <div className="flex flex-col gap-10">
-        <h2 className="text-[28px] font-semibold text-[#F7221F] font-['Poppins'] leading-none">
-          Standardized Test Scores (25th-75th Percentile)
+        <h2
+          className="text-2xl font-semibold font-poppins"
+          style={{ color: '#F7221F' }}
+        >
+          Standardized Test Scores (25th–75th Percentile)
         </h2>
 
-        <div className="flex flex-col gap-10 max-w-[1200px]">
-          {/* SAT Range Row */}
+        <div className="flex flex-col gap-10 max-w-3xl">
+
+          {/* SAT Score Range */}
           <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center text-lg font-medium font-['Poppins']">
-              <span className="text-slate-600">SAT Score Range</span>
-              <span className="font-bold text-slate-900">{satMin} — {satMax}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-base font-medium text-slate-600 font-poppins">
+                SAT Score Range
+              </span>
+              {hasSatData ? (
+                <span className="text-base font-bold text-slate-900 font-poppins">
+                  {satMin} — {satMax}
+                </span>
+              ) : (
+                <p className="text-sm text-slate-400 font-poppins italic">SAT data not available for this university.</p>
+              )}
             </div>
-            {/* Slider track */}
-            <div className="relative h-3.5 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
-              <div 
-                className="absolute h-full rounded-full bg-gradient-to-r from-[#60A5FA] to-[#2563EB]"
-                style={{ left: `${satLeft}%`, width: `${satWidth}%` }}
+            <div
+              className="relative w-full overflow-hidden"
+              style={{ height: 14, background: '#F1F5F9', borderRadius: 9999 }}
+            >
+              <div
+                className="absolute h-full"
+                style={{
+                  left: `${dynSatLeft}%`,
+                  width: `${dynSatWidth}%`,
+                  background: 'linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)',
+                  borderRadius: 9999,
+                }}
               />
             </div>
-            {/* Range Labels */}
-            <div className="flex justify-between text-xs font-bold text-slate-400 font-['Poppins']">
+            <div className="flex justify-between text-xs text-slate-400 font-poppins">
               <span>400</span>
               <span>1600</span>
             </div>
           </div>
 
-          {/* ACT Range Row */}
+          {/* ACT Composite Range */}
           <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center text-lg font-medium font-['Poppins']">
-              <span className="text-slate-600">ACT Composite Range</span>
-              <span className="font-bold text-slate-900">{actMin} — {actMax}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-base font-medium text-slate-600 font-poppins">
+                ACT Composite Range
+              </span>
+              <span className="text-base font-bold text-slate-900 font-poppins">
+                {actMin} — {actMax}
+              </span>
             </div>
-            {/* Slider track */}
-            <div className="relative h-3.5 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
-              <div 
-                className="absolute h-full rounded-full bg-gradient-to-r from-[#60A5FA] to-[#2563EB]"
-                style={{ left: `${actLeft}%`, width: `${actWidth}%` }}
+            <div
+              className="relative w-full overflow-hidden"
+              style={{ height: 14, background: '#F1F5F9', borderRadius: 9999 }}
+            >
+              <div
+                className="absolute h-full"
+                style={{
+                  left: `${dynActLeft}%`,
+                  width: `${dynActWidth}%`,
+                  background: 'linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)',
+                  borderRadius: 9999,
+                }}
               />
             </div>
-            {/* Range Labels */}
-            <div className="flex justify-between text-xs font-bold text-slate-400 font-['Poppins']">
+            <div className="flex justify-between text-xs text-slate-400 font-poppins">
               <span>1</span>
               <span>36</span>
             </div>
           </div>
+
+          {/* Estimated range note */}
+          <p
+            className="text-sm italic font-light font-poppins"
+            style={{ color: '#D03436' }}
+          >
+            This is an estimated range based on your score
+          </p>
 
         </div>
       </div>

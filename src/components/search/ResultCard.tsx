@@ -23,6 +23,7 @@ export interface ResultCardProps {
   medianSalary?: string;
   roi?: string;
   logoColor: string;
+  schoolUrl?: string | null;
 }
 
 const parseAdmissionRate = (rateStr: string): number | null => {
@@ -130,8 +131,14 @@ export default function ResultCard({
   estCost,
   avgSalary,
   medianSalary,
-  logoColor
+  logoColor,
+  schoolUrl
 }: ResultCardProps) {
+  const formattedSchoolUrl = schoolUrl
+    ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+      ? schoolUrl.trim()
+      : `https://${schoolUrl.trim()}`)
+    : "";
   const hasSatData = satAct && satAct !== 'N/A';
 
   const [isCalculated, setIsCalculated] = useState(false);
@@ -485,9 +492,23 @@ export default function ResultCard({
         </label>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition">
-            Visit Website
-          </button>
+          {formattedSchoolUrl ? (
+            <a
+              href={formattedSchoolUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center flex items-center justify-center"
+            >
+              Visit Website
+            </a>
+          ) : (
+            <button
+              disabled
+              className="flex-1 sm:flex-none border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[11px] font-bold cursor-not-allowed text-center"
+            >
+              Visit Website
+            </button>
+          )}
           <Link
             href={universityHref}
             className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center"
