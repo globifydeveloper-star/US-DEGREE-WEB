@@ -147,9 +147,9 @@ export default function Hero() {
                 text-[#111827]
               ">
                 The Neutral Way to
-                Choose a  <span className="text-[#3b5bdb]"> U.S. </span>
-                <br />
-                Degrees
+                Choose a  
+                <span className="text-[#3b5bdb]"> U.S. </span>
+                <span> Degrees </span>
               </h1>
 
               <p className="
@@ -162,6 +162,22 @@ export default function Hero() {
                 Navigate the complex world of American higher education with ease. Our
                 mission is to connect ambitious students with programs that fuel passion and
                 guarantee success.
+              </p>
+
+              {/* Trust badges */}
+              <p className="
+                mb-6
+                flex flex-wrap items-center
+                gap-x-2 gap-y-1
+                text-[20px] sm:text-[25px]
+                text-[#1f2937]
+                tracking-[-0.01em]
+              ">
+                <span>Family-funded</span>
+                <span className="text-[#9ca3af] text-[8px] sm:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span>Conflict-free</span>
+                <span className="text-[#9ca3af] text-[8px] sm:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span>Built on verified data</span>
               </p>
             </div>
           </div>
@@ -187,8 +203,8 @@ export default function Hero() {
                 <button
                   onClick={() => setSearchType("programs")}
                   className={`px-6 py-2 rounded-full font-medium transition ${searchType === "programs"
-                      ? "bg-[#2563eb] text-white shadow"
-                      : "text-gray-600"
+                    ? "bg-[#2563eb] text-white shadow"
+                    : "text-gray-600"
                     }`}
                 >
                   Search Programs
@@ -197,8 +213,8 @@ export default function Hero() {
                 <button
                   onClick={() => setSearchType("universities")}
                   className={`px-6 py-2 rounded-full font-medium transition ${searchType === "universities"
-                      ? "bg-[#2563eb] text-white shadow"
-                      : "text-gray-600"
+                    ? "bg-[#2563eb] text-white shadow"
+                    : "text-gray-600"
                     }`}
                 >
                   Search Universities
@@ -208,8 +224,8 @@ export default function Hero() {
 
             <div
               className={`grid gap-5 ${searchType === "programs"
-                  ? "md:grid-cols-3"
-                  : "md:grid-cols-2"
+                ? "md:grid-cols-3"
+                : "md:grid-cols-2"
                 }`}
             >
               {/* Credential Field */}
