@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ProgramsAcademicsTabProps } from '@/types/university/ProgramsAcademicsTab';
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [degreeLevel, setDegreeLevel] = useState('all');
   if (!data) return null;
 
   const name = data.name || "N/A";
