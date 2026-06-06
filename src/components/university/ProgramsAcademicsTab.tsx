@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface ProgramsAcademicsTabProps {
   data: any;
@@ -41,22 +41,112 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
     tuitionDisplay = isNaN(parsed) ? String(data.tuitionData.tuition.tuition_in_state) : `$${Math.round(parsed).toLocaleString()}`;
   }
 
+  // ── Count-up animation for metric cards ──
+  const metricsRef = useRef<HTMLDivElement>(null);
+  const [metricsVisible, setMetricsVisible] = useState(false);
+  const [animAdmission, setAnimAdmission] = useState('0%');
+  const [animTuition, setAnimTuition] = useState('$0');
+  const [animEnrollment, setAnimEnrollment] = useState('0');
+
+  useEffect(() => {
+    const el = metricsRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !metricsVisible) {
+          setMetricsVisible(true);
+          const duration = 1200;
+          const steps = 60;
+          const stepTime = duration / steps;
+
+          // Parse target values
+          const admNum = parseFloat(admissionRate);
+          const tuitionNum = parseFloat(String(tuitionDisplay).replace(/[^0-9.]/g, ''));
+          const enrollNum = totalStudents ?? 0;
+
+          let step = 0;
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            if (!isNaN(admNum) && admNum > 0) {
+              const v = (eased * admNum);
+              setAnimAdmission(`${v.toFixed(1)}%`);
+            }
+            if (!isNaN(tuitionNum) && tuitionNum > 0) {
+              const v = Math.round(eased * tuitionNum);
+              setAnimTuition(`$${v.toLocaleString()}`);
+            }
+            if (enrollNum > 0) {
+              const v = Math.round(eased * enrollNum);
+              setAnimEnrollment(v.toLocaleString());
+            }
+
+            if (step >= steps) {
+              clearInterval(timer);
+              // Set final exact values
+              setAnimAdmission(admissionRate);
+              setAnimTuition(tuitionDisplay);
+              setAnimEnrollment(totalStudents != null ? totalStudents.toLocaleString() : 'N/A');
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [metricsVisible, admissionRate, tuitionDisplay, totalStudents]);
+
+  // ── Grow-in animation for program bars ──
+  const barsRef = useRef<HTMLDivElement>(null);
+  const [barsVisible, setBarsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = barsRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !barsVisible) {
+          setBarsVisible(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [barsVisible]);
+
+  const programBars = [
+    { label: 'Computer Science', pct: 16, color: '#10B981', delay: '0s' },
+    { label: 'Biology / Biological Sciences', pct: 12, color: '#EC4899', delay: '0.15s' },
+    { label: 'Economics', pct: 11, color: '#EF4444', delay: '0.3s' },
+    { label: 'Management Science & Engineering', pct: 9, color: '#06B6D4', delay: '0.45s' },
+    { label: 'Symbolic Systems', pct: 7, color: '#F97316', delay: '0.6s' },
+  ];
+
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
 
-      {/* 1. Top Row of 3 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      {/* 1. Top Row of 3 Metric Cards — Count-up animation */}
+      <div ref={metricsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Acceptance Rate */}
         <div className="bg-[#EEF2FF] border border-[#E0E7FF]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#4F46E5] uppercase tracking-wider mb-1">Acceptance Rate</p>
-          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">{admissionRate}</p>
+          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
+            {metricsVisible ? animAdmission : '0%'}
+          </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">{selectiveLabel}</p>
         </div>
 
         {/* Tuition (EST.) */}
         <div className="bg-[#FEFCE8] border border-[#FEF9C3]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#CA8A04] uppercase tracking-wider mb-1">Tuition (EST.)</p>
-          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">{tuitionDisplay}</p>
+          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
+            {metricsVisible ? animTuition : '$0'}
+          </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Per Academic Year</p>
         </div>
 
@@ -64,7 +154,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
         <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">Total Enrollment</p>
           <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
-            {totalStudents != null ? totalStudents.toLocaleString() : "N/A"}
+            {metricsVisible ? animEnrollment : '0'}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Undergrad & Grad</p>
         </div>
@@ -140,62 +230,26 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
           {name} students pursue diverse interests, with a strong focus on interdisciplinary programs that bridge technology, human systems, and global economics.
         </p>
 
-        {/* Progress bar lists */}
-        <div className="flex flex-col gap-4.5 bg-white border border-gray-150 rounded-3xl p-8 shadow-sm">
-          {/* CS */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-gray-900">
-              <span>Computer Science</span>
-              <span>16%</span>
+        {/* Animated progress bar lists */}
+        <div ref={barsRef} className="flex flex-col gap-4.5 bg-white border border-gray-150 rounded-3xl p-8 shadow-sm">
+          {programBars.map((bar) => (
+            <div key={bar.label} className="space-y-2">
+              <div className="flex justify-between text-xs font-bold text-gray-900">
+                <span>{bar.label}</span>
+                <span>{bar.pct}%</span>
+              </div>
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    backgroundColor: bar.color,
+                    width: barsVisible ? `${bar.pct}%` : '0%',
+                    transition: `width 1s cubic-bezier(0.4, 0, 0.2, 1) ${bar.delay}`,
+                  }}
+                />
+              </div>
             </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#10B981] rounded-full transition-all duration-1000" style={{ width: '16%' }} />
-            </div>
-          </div>
-
-          {/* Biology */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-gray-900">
-              <span>Biology / Biological Sciences</span>
-              <span>12%</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#EC4899] rounded-full transition-all duration-1000" style={{ width: '12%' }} />
-            </div>
-          </div>
-
-          {/* Economics */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-gray-900">
-              <span>Economics</span>
-              <span>11%</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#EF4444] rounded-full transition-all duration-1000" style={{ width: '11%' }} />
-            </div>
-          </div>
-
-          {/* MSE */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-gray-900">
-              <span>Management Science & Engineering</span>
-              <span>9%</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#06B6D4] rounded-full transition-all duration-1000" style={{ width: '9%' }} />
-            </div>
-          </div>
-
-          {/* Symbolic Systems */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs font-bold text-gray-900">
-              <span>Symbolic Systems</span>
-              <span>7%</span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#F97316] rounded-full transition-all duration-1000" style={{ width: '7%' }} />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 

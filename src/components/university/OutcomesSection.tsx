@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useRef, useState, useId } from 'react';
 
 interface OutcomesSectionProps {
   salaryYear1?: number | string | null;
@@ -25,6 +27,45 @@ export default function OutcomesSection({
   avgSalary,
   programTitle
 }: OutcomesSectionProps) {
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartGradientId = useId();
+  const chartClipId = useId();
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animProgress, setAnimProgress] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1000;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            setAnimProgress(eased);
+
+            if (step >= steps) {
+              clearInterval(timer);
+              setAnimProgress(1);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated]);
 
   const formatCurrency = (val: number | string | null | undefined): string => {
     if (val === null || val === undefined) return "N/A";
@@ -109,10 +150,13 @@ export default function OutcomesSection({
   const diffVal = maxVal - minVal;
   const safeDiff = diffVal === 0 ? 1 : diffVal;
 
-  // Map values to coordinates
+  const baselineY = height - paddingBottom;
+
+  // Map values to coordinates, scaled by animProgress
   const coords = trajectoryPoints.map((pt, i) => {
     const x = paddingLeft + (i * (width - paddingLeft - paddingRight) / (trajectoryPoints.length - 1));
-    const y = height - paddingBottom - ((pt.val - minVal) * (height - paddingTop - paddingBottom) / safeDiff);
+    const targetY = height - paddingBottom - ((pt.val - minVal) * (height - paddingTop - paddingBottom) / safeDiff);
+    const y = baselineY + (targetY - baselineY) * animProgress;
     return { x, y };
   });
 
@@ -142,7 +186,7 @@ export default function OutcomesSection({
       : ["Software Engineer", "Product Manager", "Data Scientist", "Investment Banker", "Consultant", "UX Designer"];
 
   return (
-    <div className="flex flex-col gap-10 py-6 max-w-4xl">
+    <div ref={containerRef} className="flex flex-col gap-10 py-6 max-w-4xl">
 
       {/* 1. Median Salary Section */}
       <div>
@@ -152,7 +196,7 @@ export default function OutcomesSection({
           <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
             <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s1 != null ? formatCurrency(s1) : <span className="text-gray-300 text-xl">No data</span>}
+              {s1 != null ? formatCurrency(s1 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
             </p>
           </div>
 
@@ -160,7 +204,7 @@ export default function OutcomesSection({
           <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
             <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s5 != null ? formatCurrency(s5) : <span className="text-gray-300 text-xl">No data</span>}
+              {s5 != null ? formatCurrency(s5 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
             </p>
           </div>
 
@@ -168,7 +212,7 @@ export default function OutcomesSection({
           <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
             <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s10 != null ? formatCurrency(s10) : <span className="text-gray-300 text-xl">No data</span>}
+              {s10 != null ? formatCurrency(s10 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
             </p>
           </div>
         </div>
@@ -186,8 +230,8 @@ export default function OutcomesSection({
           </div>
           <div className="w-full bg-gray-100 h-2.5 rounded-full mt-2">
             <div
-              className="bg-[#2563EB] h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${parsedEmp < 2 ? parsedEmp * 100 : parsedEmp}%` }}
+              className="bg-[#2563EB] h-2.5 rounded-full"
+              style={{ width: `${(parsedEmp < 2 ? parsedEmp * 100 : parsedEmp) * animProgress}%` }}
             />
           </div>
         </div>
@@ -216,10 +260,13 @@ export default function OutcomesSection({
                   className="w-full min-w-[500px] h-auto overflow-visible"
                 >
                   <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
                       <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
                     </linearGradient>
+                    <clipPath id={chartClipId}>
+                      <rect x="0" y="0" width={width * animProgress} height={height} />
+                    </clipPath>
                   </defs>
 
                   {/* Y Axis Grid Lines & Labels */}
@@ -248,7 +295,7 @@ export default function OutcomesSection({
                   })}
 
                   {/* Curve Area Fill */}
-                  <path d={fillD} fill="url(#chartGradient)" />
+                  <path d={fillD} fill={`url(#${chartGradientId})`} clipPath={`url(#${chartClipId})`} />
 
                   {/* Curve Line */}
                   <path
@@ -257,20 +304,27 @@ export default function OutcomesSection({
                     stroke="#3B82F6"
                     strokeWidth="3.5"
                     strokeLinecap="round"
+                    clipPath={`url(#${chartClipId})`}
                   />
 
                   {/* Data points */}
-                  {coords.map((coord, i) => (
-                    <circle
-                      key={i}
-                      cx={coord.x}
-                      cy={coord.y}
-                      r="5"
-                      fill="#FFFFFF"
-                      stroke="#3B82F6"
-                      strokeWidth="3.5"
-                    />
-                  ))}
+                  {coords.map((coord, i) => {
+                    const dotVisible = (width * animProgress) >= coord.x;
+                    return (
+                      <circle
+                        key={i}
+                        cx={coord.x}
+                        cy={coord.y}
+                        r={dotVisible ? 5 : 0}
+                        fill="#FFFFFF"
+                        stroke="#3B82F6"
+                        strokeWidth="3.5"
+                        style={{
+                          transition: 'r 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        }}
+                      />
+                    );
+                  })}
 
                   {/* X Axis Labels */}
                   {coords.map((coord, i) => (
@@ -328,20 +382,20 @@ export default function OutcomesSection({
               {Number(multiplier) >= 2.0 ? "HIGH ROI POTENTIAL" : "GOOD VALUE"}
             </span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              1:{multiplier} Debt-to-income
+              1:{(Number(multiplier) * animProgress).toFixed(1)} Debt-to-income
             </span>
           </div>
 
           {/* Dynamic ratio bar */}
           <div className="w-full h-8 rounded-xl overflow-hidden flex font-bold text-[10px] text-white">
             <div
-              className="bg-[#EF4444] flex items-center justify-center transition-all duration-500"
-              style={{ width: `${rawRatio * 100}%` }}
+              className="bg-[#EF4444] flex items-center justify-center"
+              style={{ width: `${rawRatio * 100 * animProgress}%` }}
             >
               Debt
             </div>
             <div
-              className="bg-[#2563EB] flex items-center justify-center flex-1 transition-all duration-500"
+              className="bg-[#2563EB] flex items-center justify-center flex-1"
             >
               Income
             </div>
@@ -349,17 +403,21 @@ export default function OutcomesSection({
 
           <div className="flex justify-between items-center px-1">
             <div className="flex flex-col">
-              <span className="text-sm font-black text-gray-900">{formatCurrency(avgDebt)}</span>
+              <span className="text-sm font-black text-gray-900">
+                {avgDebt !== null ? formatCurrency(avgDebt * animProgress) : "N/A"}
+              </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average debt</span>
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-sm font-black text-gray-900">{formatCurrency(earlyEarnings)}</span>
+              <span className="text-sm font-black text-gray-900">
+                {earlyEarnings !== null ? formatCurrency(earlyEarnings * animProgress) : "N/A"}
+              </span>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average early-career earnings</span>
             </div>
           </div>
 
           <p className="text-xs text-gray-400 text-center font-medium border-t border-gray-50 pt-4">
-            Students typically earn ~{multiplier}x their debt after graduation
+            Students typically earn ~{(Number(multiplier) * animProgress).toFixed(1)}x their debt after graduation
           </p>
         </div>
       </div>

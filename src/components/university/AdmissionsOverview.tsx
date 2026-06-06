@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AdmissionsOverviewProps {
   admissionRate: string;
@@ -60,7 +60,6 @@ export default function AdmissionsOverview({
   const strokeWidth = 14;
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   const effectiveSalaryYear1 = salaryYear1;
   const effectiveSalaryYear10 = salaryYear10;
@@ -78,6 +77,119 @@ export default function AdmissionsOverview({
             : 'Open Admission'
       : 'Admission Rate';
 
+  // ── Animation state ──
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animatedPercent, setAnimatedPercent] = useState(0);
+  const [animatedOffset, setAnimatedOffset] = useState(circumference);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+
+          // Animate the stroke offset via CSS transition (handled inline)
+          setAnimatedOffset(circumference - (percentage / 100) * circumference);
+
+          // Count-up the percentage number
+          const duration = 1200; // ms
+          const steps = 60;
+          const stepTime = duration / steps;
+          let current = 0;
+          const increment = percentage / steps;
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= percentage) {
+              current = percentage;
+              clearInterval(timer);
+            }
+            setAnimatedPercent(parseFloat(current.toFixed(1)));
+          }, stepTime);
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated, percentage, circumference]);
+
+  // ── Compute SAT bar widths from score strings ──
+  const parseSatBarPercent = (rangeStr: string, maxScore: number): number => {
+    if (!rangeStr || rangeStr === 'N/A') return 75; // sensible fallback
+    const nums = rangeStr.match(/\d+/g);
+    if (!nums || nums.length === 0) return 75;
+    if (nums.length >= 2) {
+      // Range like "690 - 840" → use midpoint
+      const mid = (parseInt(nums[0]) + parseInt(nums[1])) / 2;
+      return Math.min(Math.round((mid / maxScore) * 100), 100);
+    }
+    // Single value like "1203"
+    return Math.min(Math.round((parseInt(nums[0]) / maxScore) * 100), 100);
+  };
+
+  const satRwBarPct = parseSatBarPercent(satReadingWriting, 800);
+  const satMathBarPct = parseSatBarPercent(satMath, 800);
+  const satAvgBarPct = parseSatBarPercent(satAverage, 1600);
+
+  // ── Outcomes card count-up animation ──
+  const outcomesRef = useRef<HTMLDivElement>(null);
+  const [outcomesAnimated, setOutcomesAnimated] = useState(false);
+  const [animSalary10, setAnimSalary10] = useState('$0');
+  const [animSalary1, setAnimSalary1] = useState('$0');
+  const [animRoi, setAnimRoi] = useState('$0');
+  const [animGrowth, setAnimGrowth] = useState('0%');
+
+  useEffect(() => {
+    const el = outcomesRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !outcomesAnimated) {
+          setOutcomesAnimated(true);
+
+          const sal10Target = Number(effectiveSalaryYear10) || 0;
+          const sal1Target = Number(effectiveSalaryYear1) || 0;
+          const roiTarget = Number(effectiveNetRoi) || 0;
+          const growthTarget = Number(effectiveGrowthRate) || 0;
+
+          const duration = 1200;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            if (sal10Target > 0) setAnimSalary10(formatCurrency(eased * sal10Target));
+            if (sal1Target > 0) setAnimSalary1(formatCurrency(eased * sal1Target));
+            if (roiTarget > 0) setAnimRoi(formatCurrency(eased * roiTarget, true));
+            if (growthTarget > 0) setAnimGrowth(formatPercent(eased * growthTarget));
+
+            if (step >= steps) {
+              clearInterval(timer);
+              setAnimSalary10(formatCurrency(effectiveSalaryYear10));
+              setAnimSalary1(formatCurrency(effectiveSalaryYear1));
+              setAnimRoi(formatCurrency(effectiveNetRoi, true));
+              setAnimGrowth(formatPercent(effectiveGrowthRate));
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [outcomesAnimated, effectiveSalaryYear10, effectiveSalaryYear1, effectiveNetRoi, effectiveGrowthRate]);
+
   return (
     <div className="mb-10 flex flex-col gap-8">
 
@@ -94,8 +206,9 @@ export default function AdmissionsOverview({
       {/* Acceptance Rate + SAT Bars */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
 
-        {/* Left — Circular progress loader card */}
+        {/* Left — Animated circular progress card */}
         <div
+          ref={cardRef}
           className="flex flex-col items-center justify-center gap-5 py-10 px-8"
           style={{ background: '#F8FAFC', borderRadius: 20 }}
         >
@@ -113,7 +226,7 @@ export default function AdmissionsOverview({
                 stroke="#CBD5E1"
                 strokeWidth={strokeWidth}
               />
-              {/* Blue active progress segment */}
+              {/* Blue active progress segment — animated via CSS transition */}
               <circle
                 cx="85"
                 cy="85"
@@ -122,14 +235,19 @@ export default function AdmissionsOverview({
                 stroke="#2054FE"
                 strokeWidth={strokeWidth}
                 strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
+                strokeDashoffset={animatedOffset}
                 strokeLinecap="round"
                 transform="rotate(-90 85 85)"
+                style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-3xl font-black font-lexend text-slate-900 border-b-[3px] border-slate-900 pb-0.5 leading-none">
-                {admissionRate}
+                {hasAnimated
+                  ? (animatedPercent >= percentage
+                    ? admissionRate
+                    : `${animatedPercent.toFixed(1)}%`)
+                  : '0%'}
               </span>
             </div>
           </div>
@@ -138,7 +256,7 @@ export default function AdmissionsOverview({
           </p>
         </div>
 
-        {/* Right — SAT bars */}
+        {/* Right — Animated SAT bars */}
         <div className="flex flex-col gap-6 justify-center">
 
           {/* SAT Reading & Writing */}
@@ -152,7 +270,13 @@ export default function AdmissionsOverview({
               </span>
             </div>
             <div className="h-3 rounded-full bg-[#E2E8F0] overflow-hidden">
-              <div className="h-full rounded-full bg-[#2054FE] w-[90%]" />
+              <div
+                className="h-full rounded-full bg-[#2054FE]"
+                style={{
+                  width: hasAnimated ? `${satRwBarPct}%` : '0%',
+                  transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
+                }}
+              />
             </div>
           </div>
 
@@ -163,7 +287,13 @@ export default function AdmissionsOverview({
               <span className="text-sm font-bold text-slate-900 font-lexend">{satMath}</span>
             </div>
             <div className="h-3 rounded-full bg-[#E2E8F0] overflow-hidden">
-              <div className="h-full rounded-full bg-[#2054FE] w-[95%]" />
+              <div
+                className="h-full rounded-full bg-[#2054FE]"
+                style={{
+                  width: hasAnimated ? `${satMathBarPct}%` : '0%',
+                  transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1) 0.5s',
+                }}
+              />
             </div>
           </div>
 
@@ -176,7 +306,13 @@ export default function AdmissionsOverview({
               {satAverage}
             </span>
             <div className="h-3 rounded-full bg-[#E2E8F0] overflow-hidden">
-              <div className="h-full rounded-full bg-[#2054FE] w-[95%]" />
+              <div
+                className="h-full rounded-full bg-[#2054FE]"
+                style={{
+                  width: hasAnimated ? `${satAvgBarPct}%` : '0%',
+                  transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1) 0.7s',
+                }}
+              />
             </div>
           </div>
 
@@ -190,8 +326,9 @@ export default function AdmissionsOverview({
         </p>
       )}
 
-      {/* Outcomes card */}
+      {/* Outcomes card — animated count-up */}
       <div
+        ref={outcomesRef}
         className="bg-white w-full p-6"
         style={{
           borderRadius: 20,
@@ -208,7 +345,7 @@ export default function AdmissionsOverview({
             style={{ borderRadius: 10, outline: '1.25px #E2E8F0 solid', minHeight: 120 }}
           >
             <p className="text-3xl font-black leading-none font-lexend" style={{ color: '#0AC69D' }}>
-              {formatCurrency(effectiveSalaryYear10)}+
+              {outcomesAnimated ? animSalary10 : '$0'}+
             </p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-lexend mt-3">
               Median Salary in 10<span className="align-super text-[7px]">th</span> Year
@@ -221,7 +358,7 @@ export default function AdmissionsOverview({
             style={{ borderRadius: 10, outline: '1.25px #E2E8F0 solid', minHeight: 120 }}
           >
             <p className="text-3xl font-black leading-none font-lexend" style={{ color: '#45A0D0' }}>
-              {formatCurrency(effectiveSalaryYear1)}
+              {outcomesAnimated ? animSalary1 : '$0'}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Median Salary in 1<span className="align-super text-[7px]">st</span> Year
@@ -237,7 +374,7 @@ export default function AdmissionsOverview({
               20-Year Net ROI
             </p>
             <p className="text-3xl font-black leading-none font-poppins" style={{ color: '#AB61FF' }}>
-              {formatCurrency(effectiveNetRoi, true)}
+              {outcomesAnimated ? animRoi : '$0'}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Lifetime Earnings Premium
@@ -250,7 +387,7 @@ export default function AdmissionsOverview({
             style={{ borderRadius: 10, outline: '1.25px #E2E8F0 solid', minHeight: 130 }}
           >
             <p className="text-3xl font-black leading-none font-poppins" style={{ color: '#F75659' }}>
-              {formatPercent(effectiveGrowthRate)}
+              {outcomesAnimated ? animGrowth : '0%'}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Growth Rate

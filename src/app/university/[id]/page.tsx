@@ -2,6 +2,7 @@ import React from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TabContent from "@/components/university/TabContent";
+import ScrollToTop from "@/components/university/ScrollToTop";
 
 // Mock data — fallback if API fetch fails or if id is 1 or 2 and backend lacks data
 const universityData: Record<string, {
@@ -300,6 +301,7 @@ export default async function UniversityPage({
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
+      <ScrollToTop />
       <Navbar />
 
       {/* Page Content with Tabs, Hero, and Sidebar */}

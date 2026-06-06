@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface TuitionCostsSectionProps {
   tuitionData?: {
@@ -48,6 +48,42 @@ export default function TuitionCostsSection({
   tuitionType: propTuitionType,
   setTuitionType: propSetTuitionType,
 }: TuitionCostsSectionProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animProgress, setAnimProgress] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1000;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            setAnimProgress(eased);
+
+            if (step >= steps) {
+              clearInterval(timer);
+              setAnimProgress(1);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated]);
   const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
   const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? 25000;
   const bookSupply = tuitionData?.tuition?.booksupply ?? 1200;
@@ -130,7 +166,7 @@ export default function TuitionCostsSection({
   };
 
   return (
-    <div className="flex flex-col gap-8 py-6 max-w-4xl">
+    <div ref={containerRef} className="flex flex-col gap-8 py-6 max-w-4xl">
 
       {/* ── 1. Cost of Attendance ── */}
       <div>
@@ -153,7 +189,7 @@ export default function TuitionCostsSection({
       {/* ── 2. Financial Aid Cards ── */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-6 flex flex-col gap-3">
-          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{aidPercentage}%</p>
+          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(aidPercentage * animProgress)}%</p>
           <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Receive Financial Aid
           </p>
@@ -162,12 +198,12 @@ export default function TuitionCostsSection({
             programs help lower overall tuition expenses and make college more accessible.
           </p>
           <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
-            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${aidPercentage}%` }} />
+            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${aidPercentage * animProgress}%` }} />
           </div>
         </div>
 
         <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-6 flex flex-col gap-3">
-          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{studentsWithLoan}%</p>
+          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(studentsWithLoan * animProgress)}%</p>
           <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Students with any loan
           </p>
@@ -176,7 +212,7 @@ export default function TuitionCostsSection({
             cost of schooling more manageable.
           </p>
           <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
-            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${studentsWithLoan}%` }} />
+            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${studentsWithLoan * animProgress}%` }} />
           </div>
         </div>
       </div>

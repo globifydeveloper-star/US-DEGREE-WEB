@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AdmissionsTabContentProps {
   name: string;
@@ -28,6 +28,43 @@ export default function AdmissionsTabContent({
   satMath,
   satAverage,
 }: AdmissionsTabContentProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animProgress, setAnimProgress] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1000;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            setAnimProgress(eased);
+
+            if (step >= steps) {
+              clearInterval(timer);
+              setAnimProgress(1);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated]);
+
   const rateValue = parseFloat(admissionRate);
   const parsedRate = isNaN(rateValue) ? 0 : rateValue;
 
@@ -36,7 +73,7 @@ export default function AdmissionsTabContent({
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const percentage = Math.min(Math.max(parsedRate, 0), 100);
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const strokeDashoffset = circumference - (percentage * animProgress / 100) * circumference;
 
   const competitiveness =
     parsedRate > 0
@@ -87,7 +124,7 @@ export default function AdmissionsTabContent({
   const dynActWidth = Math.max(10, Math.min(100 - dynActLeft, ((actMax - actMin) / 35) * 100));
 
   return (
-    <div className="flex flex-col gap-16 py-4 max-w-4xl">
+    <div ref={containerRef} className="flex flex-col gap-16 py-4 max-w-4xl">
 
       {/* Source citation
       <p className="text-[11px] italic font-light text-slate-400 font-poppins">
@@ -138,7 +175,7 @@ export default function AdmissionsTabContent({
                 className="font-black font-lexend text-slate-900"
                 style={{ fontSize: 36 }}
               >
-                {admissionRate}
+                {parsedRate > 0 ? `${(parsedRate * animProgress).toFixed(1)}%` : admissionRate}
               </span>
             </div>
           </div>
@@ -180,7 +217,7 @@ export default function AdmissionsTabContent({
               </span>
               {hasSatData ? (
                 <span className="text-base font-bold text-slate-900 font-poppins">
-                  {satMin} — {satMax}
+                  {400 + Math.round((satMin - 400) * animProgress)} — {400 + Math.round((satMax - 400) * animProgress)}
                 </span>
               ) : (
                 <p className="text-sm text-slate-400 font-poppins italic">SAT data not available for this university.</p>
@@ -194,7 +231,7 @@ export default function AdmissionsTabContent({
                 className="absolute h-full"
                 style={{
                   left: `${dynSatLeft}%`,
-                  width: `${dynSatWidth}%`,
+                  width: `${dynSatWidth * animProgress}%`,
                   background: 'linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)',
                   borderRadius: 9999,
                 }}
@@ -213,7 +250,7 @@ export default function AdmissionsTabContent({
                 ACT Composite Range
               </span>
               <span className="text-base font-bold text-slate-900 font-poppins">
-                {actMin} — {actMax}
+                {1 + Math.round((actMin - 1) * animProgress)} — {1 + Math.round((actMax - 1) * animProgress)}
               </span>
             </div>
             <div
@@ -224,7 +261,7 @@ export default function AdmissionsTabContent({
                 className="absolute h-full"
                 style={{
                   left: `${dynActLeft}%`,
-                  width: `${dynActWidth}%`,
+                  width: `${dynActWidth * animProgress}%`,
                   background: 'linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)',
                   borderRadius: 9999,
                 }}

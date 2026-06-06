@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useRef, useState } from 'react';
 
 interface StatsGridProps {
   totalStudents?: number | null;
@@ -8,6 +10,36 @@ interface StatsGridProps {
   fafsaApplications?: number | null;
   completionRate?: string | null;
 }
+
+/** Parse a numeric value from a display string like "17,249", "98%", "5:1", "20+" */
+const extractNumber = (val: string): number | null => {
+  // Handle ratio strings like "5:1" — extract the first number
+  if (val.includes(':')) {
+    const num = parseInt(val);
+    return isNaN(num) ? null : num;
+  }
+  const cleaned = val.replace(/[^0-9.]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? null : n;
+};
+
+/** Format an animated number back into its display form based on the label */
+const formatAnimValue = (label: string, current: number, final: string): string => {
+  if (label === 'TOTAL STUDENTS' || label === 'FAFSA APPLICATION') {
+    return Math.round(current).toLocaleString();
+  }
+  if (label === 'FACULTY RATIO') {
+    // "5:1" style — animate the left number
+    return `${Math.round(current)}:1`;
+  }
+  if (label === 'RETENTION RATE' || label === 'COMPLETION') {
+    return `${Math.round(current)}%`;
+  }
+  if (label === 'PROGRAMS') {
+    return `${Math.round(current)}+`;
+  }
+  return final;
+};
 
 export default function StatsGrid({
   totalStudents,
@@ -68,8 +100,58 @@ export default function StatsGrid({
     },
   ];
 
+  // ── Count-up animation state ──
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animValues, setAnimValues] = useState<string[]>(stats.map(() => '0'));
+
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+
+          const targets = stats.map((s) => extractNumber(s.value));
+          const duration = 1200;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            setAnimValues(
+              stats.map((s, i) => {
+                const target = targets[i];
+                if (target === null || s.value === 'N/A') return s.value;
+                return formatAnimValue(s.label, eased * target, s.value);
+              })
+            );
+
+            if (step >= steps) {
+              clearInterval(timer);
+              // Snap to final exact values
+              setAnimValues(stats.map((s) => s.value));
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAnimated]);
+
   return (
     <div
+      ref={gridRef}
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
@@ -77,7 +159,7 @@ export default function StatsGrid({
         padding: "8px 0",
       }}
     >
-      {stats.map((stat) => (
+      {stats.map((stat, i) => (
         <div
           key={stat.label}
           style={{
@@ -91,7 +173,7 @@ export default function StatsGrid({
             minHeight: "100px",
           }}
         >
-          {/* Label with underline */}
+          {/* Label */}
           <p
             style={{
               margin: 0,
@@ -100,7 +182,6 @@ export default function StatsGrid({
               letterSpacing: "0.08em",
               color: stat.accentColor,
               textTransform: "uppercase",
-              // borderBottom: `2px solid ${stat.accentColor}`,
               paddingBottom: "3px",
               display: "inline-block",
               alignSelf: "flex-start",
@@ -109,7 +190,7 @@ export default function StatsGrid({
             {stat.label}
           </p>
 
-          {/* Value */}
+          {/* Animated Value */}
           <p
             style={{
               margin: "12px 0 0",
@@ -120,16 +201,11 @@ export default function StatsGrid({
             }}
           >
             {stat.label === "FAFSA APPLICATION" ? (
-              <span
-                style={{
-                  // borderBottom: `4px solid ${stat.accentColor}`,
-                  paddingBottom: "2px",
-                }}
-              >
-                {stat.value}
+              <span style={{ paddingBottom: "2px" }}>
+                {hasAnimated ? animValues[i] : '0'}
               </span>
             ) : (
-              stat.value
+              hasAnimated ? animValues[i] : '0'
             )}
           </p>
         </div>

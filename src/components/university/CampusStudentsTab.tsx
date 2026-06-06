@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useRef, useState } from 'react';
 
 interface CampusStudentsTabProps {
   campusData: any;
@@ -6,6 +8,43 @@ interface CampusStudentsTabProps {
 }
 
 export default function CampusStudentsTab({ campusData, fafsaApplications }: CampusStudentsTabProps) {
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animProgress, setAnimProgress] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1000;
+          const steps = 60;
+          const stepTime = duration / steps;
+          let step = 0;
+
+          const timer = setInterval(() => {
+            step++;
+            const progress = Math.min(step / steps, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            setAnimProgress(eased);
+
+            if (step >= steps) {
+              clearInterval(timer);
+              setAnimProgress(1);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasAnimated]);
   // Extract values with robust mock fallbacks if database details are missing or null
   const sizeCategory = campusData?.campus?.size_category || "Large";
   const sizeCategorySub = sizeCategory.toLowerCase().includes("large") ? "Large (15,000+)" : sizeCategory;
@@ -70,7 +109,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
     : 22100;
 
   return (
-    <div className="flex flex-col gap-10 py-4 w-full">
+    <div ref={containerRef} className="flex flex-col gap-10 py-4 w-full">
       
       {/* 1. Enrolment & Size */}
       <div>
@@ -121,10 +160,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-700">
                 <span>Men (Students)</span>
-                <span>{menStudentsPct.toFixed(1)}%</span>
+                <span>{(menStudentsPct * animProgress).toFixed(1)}%</span>
               </div>
               <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#FF5A5A] rounded-full transition-all duration-1000" style={{ width: `${menStudentsPct}%` }} />
+                <div className="h-full bg-[#FF5A5A] rounded-full" style={{ width: `${menStudentsPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -132,10 +171,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-700">
                 <span>Men (Faculty)</span>
-                <span>{menFacultyPct.toFixed(1)}%</span>
+                <span>{(menFacultyPct * animProgress).toFixed(1)}%</span>
               </div>
               <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#FF5A5A] rounded-full transition-all duration-1000" style={{ width: `${menFacultyPct}%` }} />
+                <div className="h-full bg-[#FF5A5A] rounded-full" style={{ width: `${menFacultyPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -143,10 +182,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-700">
                 <span>Women (Students)</span>
-                <span>{womenStudentsPct.toFixed(1)}%</span>
+                <span>{(womenStudentsPct * animProgress).toFixed(1)}%</span>
               </div>
               <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#EC4899] rounded-full transition-all duration-1000" style={{ width: `${womenStudentsPct}%` }} />
+                <div className="h-full bg-[#EC4899] rounded-full" style={{ width: `${womenStudentsPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -154,10 +193,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-700">
                 <span>Women (Faculty)</span>
-                <span>{womenFacultyPct.toFixed(1)}%</span>
+                <span>{(womenFacultyPct * animProgress).toFixed(1)}%</span>
               </div>
               <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#EC4899] rounded-full transition-all duration-1000" style={{ width: `${womenFacultyPct}%` }} />
+                <div className="h-full bg-[#EC4899] rounded-full" style={{ width: `${womenFacultyPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -177,10 +216,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-900">
                 <span>All Borrowers - 3year Progress</span>
-                <span>{allBorrowersPct}%</span>
+                <span>{Math.round(allBorrowersPct * animProgress)}%</span>
               </div>
               <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#10B981] rounded-full transition-all duration-1000" style={{ width: `${allBorrowersPct}%` }} />
+                <div className="h-full bg-[#10B981] rounded-full" style={{ width: `${allBorrowersPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -188,10 +227,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-900">
                 <span>Graduates</span>
-                <span>{graduatesPct}%</span>
+                <span>{Math.round(graduatesPct * animProgress)}%</span>
               </div>
               <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#F59E0B] rounded-full transition-all duration-1000" style={{ width: `${graduatesPct}%` }} />
+                <div className="h-full bg-[#F59E0B] rounded-full" style={{ width: `${graduatesPct * animProgress}%` }} />
               </div>
             </div>
 
@@ -199,10 +238,10 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-900">
                 <span>Non - Completers</span>
-                <span>{nonCompletersPct}%</span>
+                <span>{Math.round(nonCompletersPct * animProgress)}%</span>
               </div>
               <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
-                <div className="h-full bg-[#3B82F6] rounded-full transition-all duration-1000" style={{ width: `${nonCompletersPct}%` }} />
+                <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: `${nonCompletersPct * animProgress}%` }} />
               </div>
             </div>
           </div>
@@ -271,7 +310,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                ${avgFamilyIncome.toLocaleString()}
+                ${Math.round(avgFamilyIncome * animProgress).toLocaleString()}
               </p>
               <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Avg family income</p>
             </div>
@@ -282,7 +321,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {choiceAidPct.toFixed(1)}%
+                {(choiceAidPct * animProgress).toFixed(1)}%
               </p>
               <p className="text-[11px] font-bold text-emerald-600 mb-0">Students with choice-aid</p>
             </div>
@@ -293,7 +332,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           <div className="bg-[#FFF1F2]/60 border border-[#FFE4E6]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {fafsaCount.toLocaleString()}
+                {Math.round(fafsaCount * animProgress).toLocaleString()}
               </p>
               <p className="text-[11px] font-bold text-rose-600 mb-0">FAFSA applications</p>
             </div>
