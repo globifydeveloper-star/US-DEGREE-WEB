@@ -1,12 +1,6 @@
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
-
-interface CourseSummarySideCardProps {
-  degree: string;
-  duration: string;
-  format: string;
-  financialAid: string;
-}
+import { CourseSummarySideCardProps } from '@/types/university/CourseSummarySideCard';
 
 export default function CourseSummarySideCard({
   degree,

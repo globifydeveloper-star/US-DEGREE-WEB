@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-interface ProgramsAcademicsTabProps {
-  data: any;
-}
+import { ProgramsAcademicsTabProps } from '@/types/university/ProgramsAcademicsTab';
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,9 +1,6 @@
 import React from 'react';
 
-interface AboutSectionProps {
-  name: string;
-  description: string;
-}
+import { AboutSectionProps } from '@/types/university/AboutSection';
 
 export default function AboutSection({ name, description }: AboutSectionProps) {
   return (

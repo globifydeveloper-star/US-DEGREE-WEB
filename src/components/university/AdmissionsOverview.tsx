@@ -1,18 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-
-interface AdmissionsOverviewProps {
-  admissionRate: string;
-  applicants: string;
-  satReadingWriting: string;
-  satMath: string;
-  satAverage: string;
-  salaryYear1?: number | string | null;
-  salaryYear10?: number | string | null;
-  netRoi20Yr?: number | string | null;
-  growthRate?: number | string | null;
-}
+import { AdmissionsOverviewProps } from '@/types/university/AdmissionsOverview';
 
 const parseDisplayNumber = (value: string) => Number(value.replace(/[^0-9.]/g, ''));
 
@@ -22,7 +11,7 @@ const formatDisplayNumber = (value: number): string => {
 };
 
 const formatCurrency = (value: number | string | null | undefined, compact = false): string => {
-  if (value === null || value === undefined) return 'N/A';
+  if (value === null || value === undefined) return 'N/A';  
   const n = Number(value);
   if (!Number.isFinite(n)) return String(value);
   if (compact && n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
