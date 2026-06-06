@@ -1,19 +1,7 @@
 "use client";
 import React from 'react';
 import { Bookmark, Share2, GitCompareArrows, MapPin, ExternalLink } from 'lucide-react';
-
-interface UniversityHeroProps {
-  name: string;
-  location: string;
-  type: string;
-  rank: string;
-  admissionRate: string;
-  tuitionFee: string;
-  logoColor: string;
-  tuitionData?: any;
-  tuitionType?: 'in_state' | 'out_state';
-  schoolUrl?: string | null;
-}
+import { UniversityHeroProps } from '@/types/university/UniversityHero';
 
 
 export default function UniversityHero({

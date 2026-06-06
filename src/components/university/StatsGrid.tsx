@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-
-interface StatsGridProps {
-  totalStudents?: number | null;
-  facultyRatio?: string | null;
-  retentionRate?: string | null;
-  programs?: number | null;
-  fafsaApplications?: number | null;
-  completionRate?: string | null;
-}
+import { StatsGridProps } from '@/types/university/StatsGrid';
 
 /** Parse a numeric value from a display string like "17,249", "98%", "5:1", "20+" */
 const extractNumber = (val: string): number | null => {

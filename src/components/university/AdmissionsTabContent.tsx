@@ -1,15 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-
-interface AdmissionsTabContentProps {
-  name: string;
-  admissionRate: string;
-  applicants: string;
-  satReadingWriting: string;
-  satMath: string;
-  satAverage: string;
-}
+import { AdmissionsTabContentProps } from '@/types/university/AdmissionsTabContent';
 
 const parseRange = (rangeStr: string, defaultMin: number, defaultMax: number) => {
   if (!rangeStr || rangeStr === 'N/A') return { min: defaultMin, max: defaultMax };
