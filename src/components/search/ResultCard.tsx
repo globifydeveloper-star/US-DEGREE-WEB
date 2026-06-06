@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
-import { message } from 'antd';
 import UserSatPopup from './UserSatPopup';
-import { ResultCardProps } from '@/types/result-card';
 import StickerPrice from './StickerPrice';
+
+export interface ResultCardProps {
+  id?: number | string;
+  cipCode?: string;
+  university: string;
+  location: string;
+  degree: string;
+  schoolType?: string;
+  admissionRate: string;
+  avgGpa: string;
+  satAct: string;
+  duration: string;
+  specializations: string;
+  matchScore: number;
+  gradRate: number;
+  avgSalary?: string;
+  estCost?: string;
+  medianSalary?: string;
+  roi?: string;
+  logoColor: string;
+  schoolUrl?: string | null;
+}
 
 const parseAdmissionRate = (rateStr: string): number | null => {
   if (!rateStr || rateStr === 'N/A') return null;
@@ -100,7 +120,6 @@ export default function ResultCard({
   location,
   degree,
   schoolType,
-  schoolUrl,
   admissionRate,
   avgGpa,
   satAct,
@@ -112,8 +131,14 @@ export default function ResultCard({
   estCost,
   avgSalary,
   medianSalary,
-  logoColor
+  logoColor,
+  schoolUrl
 }: ResultCardProps) {
+  const formattedSchoolUrl = schoolUrl
+    ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+      ? schoolUrl.trim()
+      : `https://${schoolUrl.trim()}`)
+    : "";
   const hasSatData = satAct && satAct !== 'N/A';
 
   const [isCalculated, setIsCalculated] = useState(false);
@@ -127,77 +152,36 @@ export default function ResultCard({
   const shouldShowFit = isCalculated && hasSatData;
 
   const [isCompared, setIsCompared] = useState(false);
-  const [isCompareLimitReached, setIsCompareLimitReached] = useState(false);
 
   useEffect(() => {
-    const checkCompareState = () => {
-      const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-      if (Array.isArray(list)) {
-        const isComp = list.some((c: any) => {
-          if (typeof c === 'object' && c !== null) {
-            return Number(c.unitid) === Number(id);
-          }
-          return String(c) === String(id);
-        });
-        setIsCompared(isComp);
-        setIsCompareLimitReached(list.length >= 5);
-      } else {
-        setIsCompared(false);
-        setIsCompareLimitReached(false);
-      }
-    };
-
-    checkCompareState();
+    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    setIsCompared(list.includes(String(id)));
 
     const handleUpdate = () => {
-      checkCompareState();
+      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+      setIsCompared(updatedList.includes(String(id)));
     };
 
     window.addEventListener('compared-colleges-updated', handleUpdate);
     return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
   }, [id]);
 
-  const handleCompareClick = () => {
+  const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
     let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    if (!Array.isArray(list)) {
-      list = [];
-    }
-
-    const isComp = list.some((c: any) => {
-      if (typeof c === 'object' && c !== null) {
-        return Number(c.unitid) === Number(id);
-      }
-      return String(c) === String(id);
-    });
-
-    if (isComp) {
-      list = list.filter((c: any) => {
-        if (typeof c === 'object' && c !== null) {
-          return Number(c.unitid) !== Number(id);
-        }
-        return String(c) !== String(id);
-      });
-      message.success(`${university} removed from comparison list.`);
-    } else {
+    if (checked) {
       if (list.length >= 5) {
-        message.warning("You can compare a maximum of 5 colleges simultaneously.");
+        alert("You can compare a maximum of 5 colleges simultaneously.");
         return;
       }
-
-      const [cityPart, statePart] = location.split(',').map(s => s.trim());
-      const newCollege = {
-        unitid: Number(id),
-        school_name: university,
-        city: cityPart || '',
-        state: statePart || '',
-        school_type: schoolType || '',
-        school_url: schoolUrl || ''
-      };
-      list.push(newCollege);
-      message.success(`${university} added to comparison list.`);
+      if (!list.includes(String(id))) {
+        list.push(String(id));
+      }
+    } else {
+      list = list.filter((cid: string) => cid !== String(id));
     }
-
     localStorage.setItem('compared_colleges', JSON.stringify(list));
+    setIsCompared(checked);
     window.dispatchEvent(new Event('compared-colleges-updated'));
   };
 
@@ -497,34 +481,34 @@ export default function ResultCard({
 
       {/* Footer Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <button
-          onClick={handleCompareClick}
-          disabled={!isCompared && isCompareLimitReached}
-          className={`
-            px-4 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5
-            ${isCompared
-              ? 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800'
-              : !isCompared && isCompareLimitReached
-                ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-white border border-blue-600 text-blue-600 hover:bg-blue-50'
-            }
-          `}
-        >
-          {isCompared ? (
-            <>
-              <span className="text-green-600 font-bold">✓</span> Added
-            </>
-          ) : (
-            <>
-              <span className="text-blue-600 font-bold">⚖</span> Compare
-            </>
-          )}
-        </button>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isCompared}
+            onChange={handleCompareChange}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+          />
+          <span className="text-[11px] font-medium text-gray-600">Compare</span>
+        </label>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <button className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition">
-            Visit Website
-          </button>
+          {formattedSchoolUrl ? (
+            <a
+              href={formattedSchoolUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center flex items-center justify-center"
+            >
+              Visit Website
+            </a>
+          ) : (
+            <button
+              disabled
+              className="flex-1 sm:flex-none border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[11px] font-bold cursor-not-allowed text-center"
+            >
+              Visit Website
+            </button>
+          )}
           <Link
             href={universityHref}
             className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center"

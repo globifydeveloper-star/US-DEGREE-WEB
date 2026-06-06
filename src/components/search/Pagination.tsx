@@ -61,7 +61,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         {pageNumbers.map((item, idx) =>
           item === 'ellipsis-start' || item === 'ellipsis-end' ? (
             <span
-              key={item}
+              key={`${item}-${idx}`}
               className="w-8 h-8 flex items-center justify-center text-gray-400"
             >
               <MoreHorizontal size={14} />
@@ -95,3 +95,4 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     </div>
   );
 }
+

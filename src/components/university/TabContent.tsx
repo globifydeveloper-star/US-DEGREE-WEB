@@ -40,6 +40,7 @@ export default function TabContent({ data }: { data: any }) {
         logoColor={data.logoColor}
         tuitionData={data.tuitionData}
         tuitionType={tuitionType}
+        schoolUrl={data.schoolUrl}
       />
       <TrustBanner />
 
@@ -86,7 +87,6 @@ export default function TabContent({ data }: { data: any }) {
               <ProgramDetail
                 degree={data.degree}
                 cipCode={data.cipCode}
-                school={data.school}
                 description={data.programDescription}
               />
 
@@ -128,7 +128,8 @@ export default function TabContent({ data }: { data: any }) {
               growthRate={data.growthRate}
               empFactor={data.empFactor}
               debtIncomeRatio={data.debtIncomeRatio}
-              programTitle={data.degree}
+              loanPrincipal={data.tuitionData?.financial_aid?.loan_principal}
+              avgSalary={data.avgSalary}
             />
           )}
 

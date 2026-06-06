@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Heart, MapPin } from 'lucide-react';
-import { ResultCardProps } from '@/types/result-card';
+import { ResultCardProps } from './ResultCard';
 
 export default function TileCard({
   id = 1,
@@ -58,10 +58,11 @@ export default function TileCard({
 
       {/* School type badge */}
       {schoolType && (
-        <span className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-full border ${schoolType.toLowerCase().includes('public')
+        <span className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+          schoolType.toLowerCase().includes('public')
             ? 'bg-green-50 border-green-100 text-green-700'
             : 'bg-purple-50 border-purple-100 text-purple-700'
-          }`}>
+        }`}>
           {schoolType.split(',')[0]}
         </span>
       )}

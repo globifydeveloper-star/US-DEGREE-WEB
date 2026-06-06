@@ -1,5 +1,17 @@
 import React from 'react';
-import { OutcomesSectionProps } from "@/types/outcomes-section"
+
+interface OutcomesSectionProps {
+  salaryYear1?: number | string | null;
+  salaryYear5?: number | string | null;
+  salaryYear10?: number | string | null;
+  netRoi20Yr?: number | string | null;
+  growthRate?: number | string | null;
+  empFactor?: number | string | null;
+  debtIncomeRatio?: number | string | null;
+  loanPrincipal?: number | string | null;
+  avgSalary?: number | string | null;
+  programTitle?: string;
+}
 
 export default function OutcomesSection({
   salaryYear1,
@@ -9,6 +21,8 @@ export default function OutcomesSection({
   growthRate,
   empFactor,
   debtIncomeRatio,
+  loanPrincipal,
+  avgSalary,
   programTitle
 }: OutcomesSectionProps) {
 
@@ -56,10 +70,14 @@ export default function OutcomesSection({
   // Multiplier is 1 / ratio, e.g. 1 / 0.4 = 2.5
   const multiplier = rawRatio > 0 ? (1 / rawRatio).toFixed(1) : "2.5";
 
-  // Early-career salary (1st year earnings or fallback to $45k if very low)
-  const earlyEarnings = s1 != null && s1 > 20000 ? s1 : 45000;
-  // Average debt = earlyEarnings * rawRatio
-  const avgDebt = Math.round(earlyEarnings * rawRatio);
+  // Early-career salary (avgSalary from DB, or fallback to s1/1st year earnings, fallback to $45k if very low)
+  const earlyEarnings = avgSalary !== undefined && avgSalary !== null && parseNumber(avgSalary) > 0
+    ? parseNumber(avgSalary)
+    : (s1 != null && s1 > 20000 ? s1 : null);
+  // Average debt = loanPrincipal from aid table (or fallback to earlyEarnings * rawRatio)
+  const avgDebt = loanPrincipal !== undefined && loanPrincipal !== null && parseNumber(loanPrincipal) > 0
+    ? parseNumber(loanPrincipal)
+    : (earlyEarnings !== null ? Math.round(earlyEarnings * rawRatio) : null);
 
   // 4. Projected Salary Trajectory SVG Calculations
   const hasSalaryData = s1 !== null || s5 !== null || s10 !== null;
@@ -179,7 +197,7 @@ export default function OutcomesSection({
           <div>
             <p className="text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-2">20-YEAR NET ROI</p>
             <p className="text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
-              {formatRoi(netRoi20Yr || 2100000)}
+              {formatRoi(netRoi20Yr || null)}
             </p>
             <p className="text-xs text-gray-400 font-medium">Lifetime earnings premium</p>
           </div>
