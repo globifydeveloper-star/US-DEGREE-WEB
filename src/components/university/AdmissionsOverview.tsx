@@ -1,7 +1,18 @@
 "use client";
 
 import React from 'react';
-import { AdmissionsOverviewProps, ScoreBarProps } from '@/types/admission-overview'
+
+interface AdmissionsOverviewProps {
+  admissionRate: string;
+  applicants: string;
+  satReadingWriting: string;
+  satMath: string;
+  satAverage: string;
+  salaryYear1?: number | string | null;
+  salaryYear10?: number | string | null;
+  netRoi20Yr?: number | string | null;
+  growthRate?: number | string | null;
+}
 
 const parseDisplayNumber = (value: string) => Number(value.replace(/[^0-9.]/g, ''));
 
@@ -28,24 +39,6 @@ const formatPercent = (value: number | string | null | undefined): string => {
   const pct = n < 2 ? n * 100 : n;
   return `${pct.toFixed(1).replace(/\.0$/, '')}%`;
 };
-
-function ScoreBar({ label, range, percent }: ScoreBarProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-bold text-slate-800 font-['Lexend'] border-b-[2px] border-[#2054FE] pb-0.5 inline-block">
-          {label}
-        </span>
-        <span className="text-sm font-bold text-slate-800 font-['Lexend'] border-b-[2px] border-[#2054FE] pb-0.5 inline-block">
-          {range}
-        </span>
-      </div>
-      <div className="h-3 rounded-full bg-slate-200 overflow-hidden">
-        <div className="h-full rounded-full bg-[#2054FE]" style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  );
-}
 
 export default function AdmissionsOverview({
   admissionRate,
@@ -263,6 +256,7 @@ export default function AdmissionsOverview({
               Growth Rate
             </p>
           </div>
+
         </div>
       </div>
 

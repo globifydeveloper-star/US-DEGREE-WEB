@@ -1,7 +1,41 @@
 "use client";
 
 import React, { useState } from 'react';
-import { TuitionCostsSectionProps } from '@/types/tuitioncost-section';
+
+interface TuitionCostsSectionProps {
+  tuitionData?: {
+    tuition: {
+      tuition_in_state: number | null;
+      tuition_out_state: number | null;
+      booksupply: number | null;
+    };
+    housing: {
+      roomboard_oncampus: number | null;
+      roomboard_offcampus: number | null;
+    };
+    expenses: {
+      otherexpense_oncampus: number | null;
+      otherexpense_offcampus: number | null;
+      otherexpense_withfamily: number | null;
+    };
+    financial_aid: {
+      aid_percentage: number | null;
+      students_with_any_loan: number | null;
+      loan_principal: number | null;
+    };
+    school_type: string | null;
+    net_price: {
+      income_0_30000: number | null;
+      income_30001_48000: number | null;
+      income_48001_75000: number | null;
+      income_75001_110000: number | null;
+      income_110001_plus: number | null;
+    };
+  } | null;
+  schoolName?: string;
+  tuitionType?: 'in_state' | 'out_state';
+  setTuitionType?: (type: 'in_state' | 'out_state') => void;
+}
 
 const fmt = (val: number): string => {
   if (!Number.isFinite(val)) return 'N/A';
@@ -46,9 +80,11 @@ export default function TuitionCostsSection({
 
   const [sliderValue, setSliderValue] = useState(23144);
   const [incomeRange, setIncomeRange] = useState<keyof typeof netPrices>('0-30000');
+  const [inputVal, setInputVal] = useState("23,144");
 
   const handleSliderChange = (val: number) => {
     setSliderValue(val);
+    setInputVal(val.toLocaleString());
     if (val <= 30000) setIncomeRange('0-30000');
     else if (val <= 48000) setIncomeRange('30001-48000');
     else if (val <= 75000) setIncomeRange('48001-75000');
@@ -62,7 +98,9 @@ export default function TuitionCostsSection({
       '0-30000': 15000, '30001-48000': 39000,
       '48001-75000': 61500, '75001-110000': 92500, '110001+': 130000,
     };
-    setSliderValue(midpoints[range]);
+    const val = midpoints[range];
+    setSliderValue(val);
+    setInputVal(val.toLocaleString());
   };
 
   const currentNetPrice = netPrices[incomeRange];
@@ -105,8 +143,8 @@ export default function TuitionCostsSection({
               className="rounded-xl p-4 flex flex-col justify-between min-h-[90px]"
               style={{ background: card.bg, outline: '1.27px #E2E8F0 solid' }}
             >
-              <p className="text-[10px] font-semibold text-slate-500 font-poppins">{card.label}</p>
-              <p className="text-xl font-bold font-poppins text-[#6D6D6D]">{fmt(card.value)}</p>
+              <p className="text-[10px] font-bold text-black font-poppins ">{card.label}</p>
+              <p className="text-xl font-bold font-poppins text-black">{fmt(card.value)}</p>
             </div>
           ))}
         </div>
@@ -161,7 +199,7 @@ export default function TuitionCostsSection({
               className={`flex justify-between items-center px-6 py-3 ${i < 4 ? 'border-b border-[#E2E8F0]' : ''
                 }`}
             >
-              <span className={`text-sm font-poppins ${row.bold ? 'font-semibold' : 'font-light'} text-black`}>
+              <span className={`text-sm font-poppins ${row.bold ? 'font-bold' : 'font-light'} text-black`}>
                 {row.label}
               </span>
               <span className={`text-sm text-[#334155] ${row.bold ? 'font-extrabold' : 'font-semibold'}`}>
@@ -178,19 +216,20 @@ export default function TuitionCostsSection({
         {/* Summary cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-[#FFE6C4] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[10px] font-semibold text-slate-500 font-poppins">Sticker price</p>
+            <p className="text-[10px] font-bold text-black font-poppins">Sticker price</p>
             <p className="text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}</p>
           </div>
-          <div className="bg-[#C0FFF0] rounded-xl p-4 flex flex-col gap-1">
-            <p className="text-[10px] font-semibold text-slate-500 font-poppins">Estimated Financial Aid</p>
-            <p className="text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}</p>
-          </div>
           <div className="bg-[#FFE2F5] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[10px] font-semibold text-slate-500 font-poppins">Your Net Price</p>
+            <p className="text-[10px] font-bold text-black font-poppins">Your Net Price</p>
             <p className="text-xl font-bold text-[#7C7C7C] font-poppins">
               {fmt(currentNetPrice)} <span className="text-xs font-bold">/ year</span>
             </p>
           </div>
+          <div className="bg-[#C0FFF0] rounded-xl p-4 flex flex-col gap-1">
+            <p className="text-[10px] font-bold text-black font-poppins">Estimated Financial Aid</p>
+            <p className="text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}</p>
+          </div>
+
         </div>
 
         <p className="text-sm font-normal text-black font-poppins">Net price by income bracket</p>
@@ -220,9 +259,46 @@ export default function TuitionCostsSection({
               className="absolute inset-0 w-full opacity-0 cursor-pointer"
             />
           </div>
-          <span className="text-base font-extrabold text-[#334155] whitespace-nowrap">
-            {fmt(sliderValue)}
-          </span>
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-inner w-32 shrink-0">
+            <span className="text-slate-400 font-bold text-sm">$</span>
+            <input
+              type="text"
+              value={inputVal}
+              onChange={(e) => {
+                const rawText = e.target.value;
+                setInputVal(rawText);
+                
+                // Parse numbers from the input text
+                const numeric = rawText.replace(/[^0-9]/g, '');
+                if (numeric) {
+                  const num = parseInt(numeric, 10);
+                  const clamped = Math.min(150000, Math.max(0, num));
+                  setSliderValue(clamped);
+                  // Update income range based on clamped value
+                  if (clamped <= 30000) setIncomeRange('0-30000');
+                  else if (clamped <= 48000) setIncomeRange('30001-48000');
+                  else if (clamped <= 75000) setIncomeRange('48001-75000');
+                  else if (clamped <= 110000) setIncomeRange('75001-110000');
+                  else setIncomeRange('110001+');
+                } else {
+                  setSliderValue(0);
+                  setIncomeRange('0-30000');
+                }
+              }}
+              onBlur={() => {
+                // Reformat cleanly with commas on blur
+                setInputVal(sliderValue.toLocaleString());
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setInputVal(sliderValue.toLocaleString());
+                  e.currentTarget.blur();
+                }
+              }}
+              className="w-full text-right font-extrabold text-[#334155] text-sm focus:outline-none bg-transparent"
+              placeholder="0"
+            />
+          </div>
         </div>
 
         {/* Bracket rows */}

@@ -1,6 +1,12 @@
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
-import { CourseSummarySideCardProps } from '@/types/coursesummary-sidecard';
+
+interface CourseSummarySideCardProps {
+  degree: string;
+  duration: string;
+  format: string;
+  financialAid: string;
+}
 
 export default function CourseSummarySideCard({
   degree,
@@ -44,9 +50,7 @@ export default function CourseSummarySideCard({
           <button className="w-full rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10">
             Apply Now
           </button>
-          <p className="text-[11px] font-bold text-slate-400 text-center">
-            Next intake: Fall 2025 • Deadline: Jan 15, 2025
-          </p>
+
         </div>
       </div>
       <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">

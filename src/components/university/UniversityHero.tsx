@@ -1,13 +1,31 @@
 "use client";
-
 import React from 'react';
-import { Bookmark, Share2, GitCompareArrows, MapPin } from 'lucide-react';
-import { UniversityHeroProps } from '@/types/university-hero';
+import { Bookmark, Share2, GitCompareArrows, MapPin, ExternalLink } from 'lucide-react';
+
+interface UniversityHeroProps {
+  name: string;
+  location: string;
+  type: string;
+  rank: string;
+  admissionRate: string;
+  tuitionFee: string;
+  logoColor: string;
+  tuitionData?: any;
+  tuitionType?: 'in_state' | 'out_state';
+  schoolUrl?: string | null;
+}
+
 
 export default function UniversityHero({
-  name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state'
+  name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state', schoolUrl
 }: UniversityHeroProps) {
   const isStanford = name.toLowerCase().includes("stanford");
+
+  const formattedSchoolUrl = schoolUrl
+    ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+      ? schoolUrl.trim()
+      : `https://${schoolUrl.trim()}`)
+    : "";
 
   // Fallbacks if database has nulls or if tuitionData is absent
   const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
@@ -49,9 +67,8 @@ export default function UniversityHero({
               />
             </div>
           ) : (
-            <div className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0`}>
-              <span className="text-4xl md:text-6xl font-bold">{name.charAt(0)}</span>
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider mt-1">{name.split(' ')[0]}</span>
+            <div className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0 overflow-hidden`}>
+              <img style={{ width: 250.83, height: 230.83, position: 'relative' }} src="/images/Colleges_105154_logo.png" />
             </div>
           )}
 
@@ -89,12 +106,21 @@ export default function UniversityHero({
           </div>
 
           <div className="flex items-center gap-6 mt-4 md:mt-0 font-medium">
+            {formattedSchoolUrl && (
+              <a
+                href={formattedSchoolUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-sm shrink-0"
+              >
+                <ExternalLink size={16} /> Visit Website
+              </a>
+            )}
+
             <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
               <Bookmark size={16} /> Save
             </button>
-            <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
-              <Share2 size={16} /> Share
-            </button>
+
             <button className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600 transition">
               <GitCompareArrows size={16} /> Add to Compare
             </button>

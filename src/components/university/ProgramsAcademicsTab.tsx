@@ -6,53 +6,44 @@ interface ProgramsAcademicsTabProps {
 }
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
+  if (!data) return null;
 
-  const name = data.name || "Stanford University";
-  const admissionRate = data.admissionRate || "3.9%";
-  const totalStudents = data.totalStudents || 17680;
-  const completionRate = data.completionRate || "94%";
-  const facultyRatio = data.facultyRatio || "5:1";
+  const name = data.name || "N/A";
+  const admissionRate = data.admissionRate || "N/A";
+  const totalStudents = data.totalStudents;
+  const completionRate = data.completionRate || "N/A";
+  const facultyRatio = data.facultyRatio || "N/A";
 
+  const toPercentVal = (val: any) => {
+    if (val === null || val === undefined) return null;
+    const num = Number(val);
+    if (isNaN(num)) return null;
+    return num < 2 ? Math.round(num * 100) : Math.round(num);
+  };
+
+  const rawRepayment = data.campusData?.repayment?.all_borrowers_3yr;
+  const loanRepaymentVal = toPercentVal(rawRepayment);
+  const loanRepaymentDisplay = loanRepaymentVal !== null ? `${loanRepaymentVal}%` : "N/A";
 
   // Dynamic selective label
   const parsedRate = parseFloat(admissionRate);
   const selectiveLabel = !isNaN(parsedRate) && parsedRate > 0
     ? (parsedRate < 10 ? "Highly Selective" : parsedRate < 30 ? "Selective" : "Competitive")
-    : "Highly Selective";
+    : "N/A";
 
   // Dynamic tuition parser
-  let tuitionDisplay = "$62,484";
+  let tuitionDisplay = "N/A";
   if (data.tuitionFee && data.tuitionFee !== "N/A") {
     tuitionDisplay = data.tuitionFee;
-  } else if (data.tuitionInState) {
-    const parsed = parseFloat(String(data.tuitionInState).replace(/[^0-9.]/g, ''));
-    tuitionDisplay = isNaN(parsed) ? String(data.tuitionInState) : `$${Math.round(parsed).toLocaleString()}`;
+  } else if (data.tuitionData?.tuition?.tuition_in_state) {
+    const parsed = parseFloat(String(data.tuitionData.tuition.tuition_in_state).replace(/[^0-9.]/g, ''));
+    tuitionDisplay = isNaN(parsed) ? String(data.tuitionData.tuition.tuition_in_state) : `$${Math.round(parsed).toLocaleString()}`;
   }
 
-  // Programs catalog list to display
-  const allPrograms = [
-    { name: "Aeronautics and Astronautics", school: "School of Engineering", level: "Graduate" },
-    { name: "Comparative Literature", school: "School of Humanities & Sciences", level: "Undergraduate" },
-    { name: "Computational Mathematics", school: "School of Humanities & Sciences", level: "Graduate" },
-    { name: "Energy Resources Engineering", school: "School of Earth Sciences", level: "Graduate" }
-  ];
 
-  // Filtering based on search query and degree level dropdown
-  const filteredPrograms = allPrograms.filter(prog => {
-    const matchesSearch = prog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      prog.school.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDegree = degreeLevel === "all" ||
-      (degreeLevel === "undergrad" && prog.level.toLowerCase().includes("undergrad")) ||
-      (degreeLevel === "grad" && prog.level.toLowerCase().includes("grad")) ||
-      (degreeLevel === "prof" && prog.level.toLowerCase().includes("prof"));
-
-    return matchesSearch && matchesDegree;
-  });
 
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
-
 
       {/* 1. Top Row of 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -74,7 +65,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
         <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">Total Enrollment</p>
           <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
-            {totalStudents.toLocaleString()}
+            {totalStudents != null ? totalStudents.toLocaleString() : "N/A"}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Undergrad & Grad</p>
         </div>
@@ -82,7 +73,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 2. Academic Excellence Section */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block">
           Academic Excellence
         </h2>
         <p className="text-xs text-gray-500 mb-6 font-medium">
@@ -131,7 +122,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
               </svg>
             </div>
             <div>
-              <p className="text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">68%</p>
+              <p className="text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">{loanRepaymentDisplay}</p>
               <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Loan Repayment Success (3-Year)</p>
               <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
                 Graduates actively repaying student loans within three years.
@@ -148,7 +139,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 3. Popular Fields of Study */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 inline-block">
           Popular Fields of Study
         </h2>
         <p className="text-xs text-gray-500 mb-6 font-medium leading-relaxed max-w-3xl">
@@ -216,7 +207,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
       {/* 4. Comprehensive Degree Levels */}
       <div>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-6 inline-block border-b-[6px] border-black pb-1 leading-none">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-6 inline-block">
           Comprehensive Degree Levels
         </h2>
 
@@ -292,70 +283,6 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
           </div>
         </div>
       </div>
-
-      {/* 5. Search All Programs */}
-      <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/50 rounded-[32px] p-6 sm:p-10 mt-2 shadow-sm">
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-1 text-center">
-          Search All Programs
-        </h2>
-        <p className="text-xs text-gray-500 mb-8 text-center font-medium">
-          Explore the complete catalog of {name}'s academic offerings across seven schools.
-        </p>
-
-        {/* Search widget row */}
-        <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-8">
-          <input
-            type="text"
-            placeholder="Search by keyword (e.g. Physics, Data Science...)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-5 py-3 border border-gray-250 rounded-[14px] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white font-medium text-gray-700 placeholder-gray-400"
-          />
-          <select
-            value={degreeLevel}
-            onChange={(e) => setDegreeLevel(e.target.value)}
-            className="px-5 py-3 border border-gray-250 rounded-[14px] text-xs bg-white shadow-sm font-semibold text-gray-700 focus:outline-none cursor-pointer"
-          >
-            <option value="all">Degree Level</option>
-            <option value="undergrad">Undergraduate</option>
-            <option value="grad">Graduate</option>
-            <option value="prof">Professional</option>
-          </select>
-          <button className="px-8 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-[14px] text-xs transition-colors shadow-sm">
-            Find
-          </button>
-        </div>
-
-        {/* List of cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredPrograms.map((prog, index) => (
-            <div
-              key={index}
-              className="bg-white border border-gray-150 hover:border-blue-400 hover:shadow-md transition-all rounded-2xl p-5 flex items-center justify-between cursor-pointer group"
-            >
-              <div>
-                <h3 className="text-xs font-black text-gray-950 group-hover:text-blue-650 transition-colors uppercase tracking-wide">
-                  {prog.name}
-                </h3>
-                <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-wider">
-                  {prog.school} • <span className="text-blue-500/80">{prog.level}</span>
-                </p>
-              </div>
-              <div className="text-gray-300 group-hover:text-blue-600 transition-colors ml-4 shrink-0">
-                <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          ))}
-          {filteredPrograms.length === 0 && (
-            <p className="text-center text-xs text-gray-400 font-medium py-6 col-span-2">
-              No matching programs found.
-            </p>
-          )}
-        </div>
-      </div>
-
     </div>
   );
 }

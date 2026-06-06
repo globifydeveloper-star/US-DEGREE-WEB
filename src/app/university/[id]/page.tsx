@@ -136,14 +136,25 @@ export default async function UniversityPage({
     console.error("Error fetching tuition details:", err);
   }
 
+  // 2d. Fetch college details (for school_url)
+  let collegeData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/colleges/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      collegeData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching college details:", err);
+  }
+
   // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
   const name = sParams.name || (universityData[id]?.name) || "Unknown University";
   const city = sParams.city || "";
   const state = sParams.state || "";
   const location = city && state ? `${city}, ${state}` : (city || state || "Unknown Location");
-  
+
   const type = sParams.type || (universityData[id]?.type) || "Private Research";
-  
+
   const admissionRateRaw = sParams.admissionRate || (apiData?.admissions?.admission_rate !== null && apiData?.admissions?.admission_rate !== undefined
     ? `${(Number(apiData.admissions.admission_rate) * 100).toFixed(1)}%`
     : null) || (universityData[id]?.admissionRate) || "N/A";
@@ -164,7 +175,7 @@ export default async function UniversityPage({
     : (sParams.tuition || (universityData[id]?.tuitionFee) || "N/A");
 
   const degree = sParams.degree || (universityData[id]?.degree) || "Bachelor's Degree";
-  
+
   const cipCode = resolvedCip || (universityData[id]?.cipCode) || "N/A";
 
   // Student body stats from API overview details
@@ -173,7 +184,7 @@ export default async function UniversityPage({
     : (id === "1" ? 17249 : id === "2" ? 43000 : null);
 
   const rawFacultyRatio = apiData?.students?.student_faculty_ratio;
-  const facultyRatio = rawFacultyRatio 
+  const facultyRatio = rawFacultyRatio
     ? (String(rawFacultyRatio).includes(":") ? String(rawFacultyRatio) : `${rawFacultyRatio}:1`)
     : (id === "1" ? "5:1" : id === "2" ? "18:1" : "N/A");
 
@@ -215,7 +226,7 @@ export default async function UniversityPage({
   // Outcomes & Careers statistics
   const salaryYear1 = outcomesData?.earnings?.year_1 || apiData?.earnings?.year_1 || (id === "1" ? 91200 : id === "2" ? 85000 : null);
   const salaryYear10 = outcomesData?.earnings?.year_10 || apiData?.earnings?.year_10 || (id === "1" ? 149696 : id === "2" ? 135000 : null);
-  
+
   const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || (id === "1" ? 2100000 : id === "2" ? 1900000 : null);
 
   const rawGrowth = outcomesData?.earnings?.growth_rate || apiData?.earnings?.growth_rate;
@@ -230,6 +241,15 @@ export default async function UniversityPage({
   const debtIncomeRatio = outcomesData?.debt_income_ratio?.debt_income_ratio !== null && outcomesData?.debt_income_ratio?.debt_income_ratio !== undefined
     ? Number(outcomesData.debt_income_ratio.debt_income_ratio)
     : (id === "1" ? 0.08 : id === "2" ? 0.12 : null);
+
+  const salaryYear5 = outcomesData?.earnings?.year_5 !== null && outcomesData?.earnings?.year_5 !== undefined
+    ? Number(outcomesData.earnings.year_5)
+    : null;
+
+  const avgSalary = outcomesData?.earnings?.avg_salary !== null && outcomesData?.earnings?.avg_salary !== undefined
+    ? Number(outcomesData.earnings.avg_salary)
+    : null;
+
 
   const data = {
     name,
@@ -246,7 +266,7 @@ export default async function UniversityPage({
     financialAid: "Available",
     cipCode,
     school: "College of Engineering",
-    programDescription: degree 
+    programDescription: degree
       ? `The ${degree} program at ${name} is designed to provide comprehensive, top-tier training in the discipline, combining foundational principles with modern applications.`
       : "Information about this program is currently being updated by the university.",
     applicants,
@@ -264,23 +284,28 @@ export default async function UniversityPage({
 
     // Dynamic Outcomes
     salaryYear1,
+    salaryYear5,
     salaryYear10,
     netRoi20Yr,
     growthRate,
     empFactor,
     debtIncomeRatio,
+    avgSalary,
 
     // Campus Data
     campusData,
 
     // Tuition Data
-    tuitionData
+    tuitionData,
+
+    // School URL
+    schoolUrl: collegeData?.school_url || null,
   };
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      
+
       {/* Page Content with Tabs, Hero, and Sidebar */}
       <TabContent data={data} />
 

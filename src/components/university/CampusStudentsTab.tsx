@@ -1,11 +1,15 @@
 import React from 'react';
-import { CampusStudentsTabProps } from '@/types/campusstudents-tab';
+
+interface CampusStudentsTabProps {
+  campusData: any;
+  fafsaApplications?: number | null;
+}
 
 export default function CampusStudentsTab({ campusData, fafsaApplications }: CampusStudentsTabProps) {
   // Extract values with robust mock fallbacks if database details are missing or null
   const sizeCategory = campusData?.campus?.size_category || "Large";
   const sizeCategorySub = sizeCategory.toLowerCase().includes("large") ? "Large (15,000+)" : sizeCategory;
-
+  
   const size = campusData?.campus?.size !== null && campusData?.campus?.size !== undefined
     ? Number(campusData.campus.size)
     : 38103;
@@ -59,7 +63,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
   // Income details fallbacks
   const avgFamilyIncome = 72340;
   const choiceAidPct = 29.0;
-
+  
   // Format dynamic FAFSA count
   const fafsaCount = fafsaApplications !== null && fafsaApplications !== undefined
     ? fafsaApplications
@@ -67,13 +71,13 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
 
   return (
     <div className="flex flex-col gap-10 py-4 w-full">
-
+      
       {/* 1. Enrolment & Size */}
       <div>
         <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
           Enrolment & Size
         </h2>
-
+        
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Size Category */}
           <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
@@ -112,7 +116,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
 
         <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
-
+            
             {/* Student Men */}
             <div className="space-y-2.5">
               <div className="flex justify-between text-xs font-bold text-slate-700">
@@ -207,7 +211,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
 
       {/* 4. Year 1 - Year 3 Change & Completers vs Non-Completers Tables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+        
         {/* Year 1 - Year 3 Change */}
         <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm flex flex-col gap-5">
           <h4 className="text-[16px] font-black text-slate-900 tracking-tight leading-none">
@@ -261,7 +265,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
         <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
           Income Details
         </h2>
-
+        
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {/* Average Family Income */}
           <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">

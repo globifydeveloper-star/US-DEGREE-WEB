@@ -11,7 +11,6 @@ import TileCard from "@/components/search/TileCard";
 import Pagination from "@/components/search/Pagination";
 import { ResultListSkeleton, TileGridSkeleton, SearchHeaderSkeleton } from "@/components/search/SearchSkeletons";
 import { SearchResult } from "@/types/search-details";
-import CompareSelectionBar from "@/components/compare/CompareSelectionBar";
 
 type ViewMode = 'list' | 'grid';
 
@@ -58,8 +57,7 @@ function SearchContent() {
   const handleCompareClick = () => {
     const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
     if (list.length > 0) {
-      const ids = list.map((c: any) => (typeof c === 'object' && c !== null ? c.unitid : c));
-      router.push(`/compare?ids=${ids.join(',')}`);
+      router.push(`/compare?ids=${list.join(',')}`);
     }
   };
 
@@ -170,7 +168,7 @@ function SearchContent() {
       medianSalary: hasValue(result.earnings_year_5) ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}` : undefined,
       roi: hasValue(result.roi_20yr) ? `$${Math.round(Number(result.roi_20yr) / 1000)}K` : undefined,
       logoColor: "bg-blue-600",
-      schoolUrl: (result as any).school_url || undefined,
+      schoolUrl: result.school_url,
     };
   };
 
@@ -286,7 +284,37 @@ right-6
           ↑
         </button>
       )}
-      <CompareSelectionBar />
+      {comparedCount > 0 && (
+        <button
+          onClick={handleCompareClick}
+          className="
+            fixed
+            bottom-6
+            left-6
+            z-50
+            flex
+            items-center
+            gap-2
+            px-5
+            py-3
+            rounded-full
+            bg-blue-600
+            hover:bg-blue-700
+            border
+            border-blue-500
+            shadow-lg
+            text-white
+            font-bold
+            text-xs
+            transition-all
+            duration-300
+            hover:scale-105
+            active:scale-95
+          "
+        >
+          <span>⚖️ Compare ({comparedCount}) Colleges</span>
+        </button>
+      )}
     </>
   );
 }
