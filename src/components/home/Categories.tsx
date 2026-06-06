@@ -1,17 +1,17 @@
-import React from "react";
 import Link from "next/link";
-import { 
-  Briefcase, 
-  Monitor, 
-  BrainCircuit, 
-  Settings, 
-  HeartPulse, 
-  PenTool 
+import {
+  Briefcase,
+  Monitor,
+  BrainCircuit,
+  Settings,
+  HeartPulse,
+  PenTool
 } from "lucide-react";
 
 const categories = [
   {
     title: "Business",
+    slug: "business",
     desc: "MBA, Finance, Management, and Entrepreneurship programs.",
     icon: Briefcase,
     iconColor: "text-orange-600",
@@ -19,6 +19,7 @@ const categories = [
   },
   {
     title: "Computer Science",
+    slug: "computer-science",
     desc: "AI, Software Engineering, Cybersecurity, and Data Science.",
     icon: Monitor,
     iconColor: "text-blue-600",
@@ -26,6 +27,7 @@ const categories = [
   },
   {
     title: "Psychology",
+    slug: "psychology",
     desc: "Clinical, Behavioral Sciences, and Counseling specializations.",
     icon: BrainCircuit,
     iconColor: "text-pink-600",
@@ -33,6 +35,7 @@ const categories = [
   },
   {
     title: "Mechanical Engineering",
+    slug: "mechanical-engineering",
     desc: "Robotics, Aerospace, and Material design programs.",
     icon: Settings,
     iconColor: "text-gray-600",
@@ -40,6 +43,7 @@ const categories = [
   },
   {
     title: "Public Health",
+    slug: "public-health",
     desc: "Epidemiology, Health Policy, and Global Health studies.",
     icon: HeartPulse,
     iconColor: "text-emerald-600",
@@ -47,6 +51,7 @@ const categories = [
   },
   {
     title: "Graphic Design",
+    slug: "graphic-design",
     desc: "Visual Arts, Digital Design, and Multimedia programs.",
     icon: PenTool,
     iconColor: "text-yellow-600",
@@ -72,9 +77,10 @@ export default function Categories() {
         {categories.map((cat, i) => {
           const Icon = cat.icon;
           return (
-            <div 
-              key={i} 
-              className={`p-8 rounded-3xl transition-transform hover:-translate-y-1 cursor-pointer ${cat.bg}`}
+            <Link
+              key={i}
+              href={`/search?category=${cat.slug}`}
+              className={`block p-8 rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${cat.bg}`}
             >
               <div className="mb-6">
                 <Icon className={cat.iconColor} size={28} strokeWidth={1.5} />
@@ -83,7 +89,7 @@ export default function Categories() {
               <p className="text-sm text-gray-600 leading-relaxed">
                 {cat.desc}
               </p>
-            </div>
+            </Link>
           );
         })}
         </div>

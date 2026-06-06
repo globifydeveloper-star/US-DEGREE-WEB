@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TopSearchBar from "@/components/search/TopSearchBar";
@@ -11,6 +12,29 @@ import TileCard from "@/components/search/TileCard";
 import Pagination from "@/components/search/Pagination";
 import { ResultListSkeleton, TileGridSkeleton, SearchHeaderSkeleton } from "@/components/search/SearchSkeletons";
 import { SearchResult } from "@/types/search-details";
+
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  "computer-science": [
+    "computer science", "software engineering", "cybersecurity",
+    "information technology", "data science", "artificial intelligence",
+  ],
+  business: [
+    "business", "finance", "accounting", "management", "marketing", "entrepreneurship",
+  ],
+  psychology: ["psychology", "behavioral science", "counseling"],
+  "mechanical-engineering": ["mechanical engineering", "robotics", "aerospace"],
+  "public-health": ["public health", "epidemiology", "health policy"],
+  "graphic-design": ["graphic design", "digital design", "visual arts", "multimedia"],
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "computer-science": "Computer Science",
+  business: "Business",
+  psychology: "Psychology",
+  "mechanical-engineering": "Mechanical Engineering",
+  "public-health": "Public Health",
+  "graphic-design": "Graphic Design",
+};
 
 type ViewMode = 'list' | 'grid';
 
@@ -38,6 +62,8 @@ function SearchContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const itemsPerPage = viewMode === 'grid' ? 12 : 10;
+  const category = searchParams.get("category") || "";
+  const categoryLabel = category ? (CATEGORY_LABELS[category] || category.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")) : "";
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [comparedCount, setComparedCount] = useState(0);
 
@@ -82,6 +108,17 @@ function SearchContent() {
 
         // Remove params that we'll filter client-side
         requestParams.delete("school_type");
+        requestParams.delete("category");
+
+        // When a category is selected but no explicit search title exists,
+        // send the primary category keyword as the title so the API returns
+        // relevant programs instead of an empty / unfiltered result set.
+        if (category && !requestParams.get("title")) {
+          const categoryKws = CATEGORY_KEYWORDS[category];
+          if (categoryKws && categoryKws.length > 0) {
+            requestParams.set("title", categoryKws[0]);
+          }
+        }
 
         // For multi-value params (comma-separated), send only the first value
         // to the API so it returns a broad set, then filter client-side for all values.
@@ -125,6 +162,16 @@ function SearchContent() {
             filteredData = filteredData.filter((item: SearchResult) =>
               selectedStates.some(st =>
                 item.state?.toLowerCase() === st.toLowerCase()
+              )
+            );
+          }
+
+          // Client-side filtering for category keywords
+          const categoryKws = category ? CATEGORY_KEYWORDS[category] : null;
+          if (categoryKws && categoryKws.length > 0) {
+            filteredData = filteredData.filter((item: SearchResult) =>
+              categoryKws.some(kw =>
+                item.program_title?.toLowerCase().includes(kw.toLowerCase())
               )
             );
           }
@@ -196,6 +243,22 @@ function SearchContent() {
               </>
             ) : (
               <>
+                {categoryLabel && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs text-gray-500">Category:</span>
+                    <button
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams.toString());
+                        params.delete("category");
+                        router.push(`/search?${params.toString()}`);
+                      }}
+                      className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-blue-100 transition-colors"
+                    >
+                      {categoryLabel}
+                      <X size={12} className="opacity-70" />
+                    </button>
+                  </div>
+                )}
                 <SearchHeader
                   view={viewMode}
                   onViewChange={setViewMode}
