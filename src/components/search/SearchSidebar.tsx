@@ -6,14 +6,35 @@ import { Slider } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SidebarSkeleton } from "./SearchSkeletons";
 
+const MOCK_STATES = [
+  { state_code: "CA", state_title: "California" },
+  { state_code: "NY", state_title: "New York" },
+  { state_code: "TX", state_title: "Texas" },
+  { state_code: "MA", state_title: "Massachusetts" },
+  { state_code: "WA", state_title: "Washington" },
+  { state_code: "IL", state_title: "Illinois" },
+  { state_code: "PA", state_title: "Pennsylvania" },
+  { state_code: "FL", state_title: "Florida" },
+  { state_code: "NC", state_title: "North Carolina" },
+  { state_code: "GA", state_title: "Georgia" }
+];
+
+const MOCK_CREDENTIALS = [
+  { id: 1, name: "Associate's Degree" },
+  { id: 2, name: "Bachelor's Degree" },
+  { id: 3, name: "Master's Degree" },
+  { id: 4, name: "Doctoral Degree" },
+  { id: 5, name: "Post-Baccalaureate Certificate" }
+];
+
 export default function SearchSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [states, setStates] = useState<{ state_code: string; state_title: string }[]>([]);
-  const [credentials, setCredentials] = useState<{ id: number; name: string }[]>([]);
+  const [states, setStates] = useState<{ state_code: string; state_title: string }[]>(MOCK_STATES);
+  const [credentials, setCredentials] = useState<{ id: number; name: string }[]>(MOCK_CREDENTIALS);
   const [searchState, setSearchState] = useState("");
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
@@ -64,13 +85,19 @@ export default function SearchSidebar() {
         // Fetch States
         const statesRes = await fetch(`${apiUrl}/states`);
         if (statesRes.ok) {
-          setStates(await statesRes.json());
+          const data = await statesRes.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setStates(data);
+          }
         }
 
         // Fetch Credentials
         const credsRes = await fetch(`${apiUrl}/credentials`);
         if (credsRes.ok) {
-          setCredentials(await credsRes.json());
+          const data = await credsRes.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setCredentials(data);
+          }
         }
       } catch (error) {
         console.error("Error fetching sidebar options:", error);

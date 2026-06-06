@@ -5,12 +5,41 @@ import { useRouter } from "next/navigation";
 import { Brain, GraduationCap, Search } from "lucide-react";
 import { Select } from "antd";
 
+const MOCK_STATES = [
+  { value: "CA", label: "California" },
+  { value: "NY", label: "New York" },
+  { value: "TX", label: "Texas" },
+  { value: "MA", label: "Massachusetts" },
+  { value: "WA", label: "Washington" },
+  { value: "IL", label: "Illinois" },
+  { value: "PA", label: "Pennsylvania" },
+  { value: "FL", label: "Florida" },
+  { value: "NC", label: "North Carolina" },
+  { value: "GA", label: "Georgia" }
+];
+
+const MOCK_LEVELS = [
+  { value: "Associate's Degree", label: "Associate's Degree" },
+  { value: "Bachelor's Degree", label: "Bachelor's Degree" },
+  { value: "Master's Degree", label: "Master's Degree" },
+  { value: "Doctoral Degree", label: "Doctoral Degree" },
+  { value: "Post-Baccalaureate Certificate", label: "Post-Baccalaureate Certificate" }
+];
+
+const MOCK_COURSES = [
+  { value: "Computer Science", label: "Computer Science" },
+  { value: "Biology / Biological Sciences", label: "Biology / Biological Sciences" },
+  { value: "Economics", label: "Economics" },
+  { value: "Management Science & Engineering", label: "Management Science & Engineering" },
+  { value: "Symbolic Systems", label: "Symbolic Systems" }
+];
+
 export default function Hero() {
   const router = useRouter();
 
-  const [levels, setLevels] = useState<{ value: string; label: string }[]>([]);
-  const [states, setStates] = useState<{ value: string; label: string }[]>([]);
-  const [courses, setCourses] = useState<{ value: string; label: string }[]>([]);
+  const [levels, setLevels] = useState<{ value: string; label: string }[]>(MOCK_LEVELS);
+  const [states, setStates] = useState<{ value: string; label: string }[]>(MOCK_STATES);
+  const [courses, setCourses] = useState<{ value: string; label: string }[]>(MOCK_COURSES);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -28,12 +57,14 @@ export default function Hero() {
         const statesRes = await fetch(`${apiUrl}/states`);
         if (statesRes.ok) {
           const data = await statesRes.json();
-          setStates(
-            data.map((state: { state_code: string; state_title: string }) => ({
-              value: state.state_code,
-              label: state.state_title,
-            }))
-          );
+          if (Array.isArray(data) && data.length > 0) {
+            setStates(
+              data.map((state: { state_code: string; state_title: string }) => ({
+                value: state.state_code,
+                label: state.state_title,
+              }))
+            );
+          }
         } else {
           console.error("Failed to fetch states:", await statesRes.text());
         }
@@ -41,12 +72,14 @@ export default function Hero() {
         const credsRes = await fetch(`${apiUrl}/credentials`);
         if (credsRes.ok) {
           const data = await credsRes.json();
-          setLevels(
-            data.map((credential: { id: number; name: string }) => ({
-              value: credential.name,
-              label: credential.name,
-            }))
-          );
+          if (Array.isArray(data) && data.length > 0) {
+            setLevels(
+              data.map((credential: { id: number; name: string }) => ({
+                value: credential.name,
+                label: credential.name,
+              }))
+            );
+          }
         } else {
           console.error("Failed to fetch credentials:", await credsRes.text());
         }
@@ -72,15 +105,19 @@ export default function Hero() {
 
       if (res.ok) {
         const data = await res.json();
-        setCourses(
-          data.map((item: { title: string }) => ({
-            value: item.title,
-            label: item.title,
-          }))
-        );
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(
+            data.map((item: { title: string }) => ({
+              value: item.title,
+              label: item.title,
+            }))
+          );
+        }
       }
     } catch (err) {
       console.error("Error fetching courses:", err);
+      // Keep MOCK_COURSES fallback if fetch fails
+      setCourses(MOCK_COURSES);
     } finally {
       setIsCoursesLoading(false);
     }
@@ -90,7 +127,7 @@ export default function Hero() {
     if (selectedLevel || selectedState) {
       fetchCourses();
     } else {
-      setCourses([]);
+      setCourses(MOCK_COURSES);
     }
   }, [selectedLevel, selectedState, fetchCourses]);
 
