@@ -247,7 +247,6 @@ export default async function UniversityPage({
     ? Number(outcomesData.earnings.avg_salary)
     : null;
 
-
   const data = {
     name,
     location,

@@ -41,8 +41,6 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
     tuitionDisplay = isNaN(parsed) ? String(data.tuitionData.tuition.tuition_in_state) : `$${Math.round(parsed).toLocaleString()}`;
   }
 
-
-
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
 
@@ -129,11 +127,6 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
                 Graduates actively repaying student loans within three years.
               </p>
             </div>
-            {/* Red dot indicator matching Figma */}
-            {/* <div className="absolute right-5 top-1/2 -translate-y-1/2 flex h-2.5 w-2.5">
-              <span className="ate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
-            </div> */}
           </div>
         </div>
       </div>
@@ -287,4 +280,3 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
     </div>
   );
 }
-
