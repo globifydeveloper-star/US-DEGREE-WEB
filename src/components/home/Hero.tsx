@@ -5,12 +5,41 @@ import { useRouter } from "next/navigation";
 import { Brain, GraduationCap, Search } from "lucide-react";
 import { Select } from "antd";
 
+const MOCK_STATES = [
+  { value: "CA", label: "California" },
+  { value: "NY", label: "New York" },
+  { value: "TX", label: "Texas" },
+  { value: "MA", label: "Massachusetts" },
+  { value: "WA", label: "Washington" },
+  { value: "IL", label: "Illinois" },
+  { value: "PA", label: "Pennsylvania" },
+  { value: "FL", label: "Florida" },
+  { value: "NC", label: "North Carolina" },
+  { value: "GA", label: "Georgia" }
+];
+
+const MOCK_LEVELS = [
+  { value: "Associate's Degree", label: "Associate's Degree" },
+  { value: "Bachelor's Degree", label: "Bachelor's Degree" },
+  { value: "Master's Degree", label: "Master's Degree" },
+  { value: "Doctoral Degree", label: "Doctoral Degree" },
+  { value: "Post-Baccalaureate Certificate", label: "Post-Baccalaureate Certificate" }
+];
+
+const MOCK_COURSES = [
+  { value: "Computer Science", label: "Computer Science" },
+  { value: "Biology / Biological Sciences", label: "Biology / Biological Sciences" },
+  { value: "Economics", label: "Economics" },
+  { value: "Management Science & Engineering", label: "Management Science & Engineering" },
+  { value: "Symbolic Systems", label: "Symbolic Systems" }
+];
+
 export default function Hero() {
   const router = useRouter();
 
-  const [levels, setLevels] = useState<{ value: string; label: string }[]>([]);
-  const [states, setStates] = useState<{ value: string; label: string }[]>([]);
-  const [courses, setCourses] = useState<{ value: string; label: string }[]>([]);
+  const [levels, setLevels] = useState<{ value: string; label: string }[]>(MOCK_LEVELS);
+  const [states, setStates] = useState<{ value: string; label: string }[]>(MOCK_STATES);
+  const [courses, setCourses] = useState<{ value: string; label: string }[]>(MOCK_COURSES);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -28,12 +57,14 @@ export default function Hero() {
         const statesRes = await fetch(`${apiUrl}/states`);
         if (statesRes.ok) {
           const data = await statesRes.json();
-          setStates(
-            data.map((state: { state_code: string; state_title: string }) => ({
-              value: state.state_code,
-              label: state.state_title,
-            }))
-          );
+          if (Array.isArray(data) && data.length > 0) {
+            setStates(
+              data.map((state: { state_code: string; state_title: string }) => ({
+                value: state.state_code,
+                label: state.state_title,
+              }))
+            );
+          }
         } else {
           console.error("Failed to fetch states:", await statesRes.text());
         }
@@ -41,12 +72,14 @@ export default function Hero() {
         const credsRes = await fetch(`${apiUrl}/credentials`);
         if (credsRes.ok) {
           const data = await credsRes.json();
-          setLevels(
-            data.map((credential: { id: number; name: string }) => ({
-              value: credential.name,
-              label: credential.name,
-            }))
-          );
+          if (Array.isArray(data) && data.length > 0) {
+            setLevels(
+              data.map((credential: { id: number; name: string }) => ({
+                value: credential.name,
+                label: credential.name,
+              }))
+            );
+          }
         } else {
           console.error("Failed to fetch credentials:", await credsRes.text());
         }
@@ -72,15 +105,19 @@ export default function Hero() {
 
       if (res.ok) {
         const data = await res.json();
-        setCourses(
-          data.map((item: { title: string }) => ({
-            value: item.title,
-            label: item.title,
-          }))
-        );
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(
+            data.map((item: { title: string }) => ({
+              value: item.title,
+              label: item.title,
+            }))
+          );
+        }
       }
     } catch (err) {
       console.error("Error fetching courses:", err);
+      // Keep MOCK_COURSES fallback if fetch fails
+      setCourses(MOCK_COURSES);
     } finally {
       setIsCoursesLoading(false);
     }
@@ -90,7 +127,7 @@ export default function Hero() {
     if (selectedLevel || selectedState) {
       fetchCourses();
     } else {
-      setCourses([]);
+      setCourses(MOCK_COURSES);
     }
   }, [selectedLevel, selectedState, fetchCourses]);
 
@@ -147,9 +184,9 @@ export default function Hero() {
                 text-[#111827]
               ">
                 The Neutral Way to
-                Choose a  <span className="text-[#3b5bdb]"> U.S. </span>
-                <br />
-                Degrees
+                Choose a  
+                <span className="text-[#3b5bdb]"> U.S. </span>
+                <span> Degrees </span>
               </h1>
 
               <p className="
@@ -162,6 +199,22 @@ export default function Hero() {
                 Navigate the complex world of American higher education with ease. Our
                 mission is to connect ambitious students with programs that fuel passion and
                 guarantee success.
+              </p>
+
+              {/* Trust badges */}
+              <p className="
+                mb-6
+                flex flex-wrap items-center
+                gap-x-2 gap-y-1
+                text-[20px] sm:text-[25px]
+                text-[#1f2937]
+                tracking-[-0.01em]
+              ">
+                <span>Family-funded</span>
+                <span className="text-[#9ca3af] text-[8px] sm:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span>Conflict-free</span>
+                <span className="text-[#9ca3af] text-[8px] sm:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span>Built on verified data</span>
               </p>
             </div>
           </div>
@@ -187,8 +240,8 @@ export default function Hero() {
                 <button
                   onClick={() => setSearchType("programs")}
                   className={`px-6 py-2 rounded-full font-medium transition ${searchType === "programs"
-                      ? "bg-[#2563eb] text-white shadow"
-                      : "text-gray-600"
+                    ? "bg-[#2563eb] text-white shadow"
+                    : "text-gray-600"
                     }`}
                 >
                   Search Programs
@@ -197,8 +250,8 @@ export default function Hero() {
                 <button
                   onClick={() => setSearchType("universities")}
                   className={`px-6 py-2 rounded-full font-medium transition ${searchType === "universities"
-                      ? "bg-[#2563eb] text-white shadow"
-                      : "text-gray-600"
+                    ? "bg-[#2563eb] text-white shadow"
+                    : "text-gray-600"
                     }`}
                 >
                   Search Universities
@@ -208,8 +261,8 @@ export default function Hero() {
 
             <div
               className={`grid gap-5 ${searchType === "programs"
-                  ? "md:grid-cols-3"
-                  : "md:grid-cols-2"
+                ? "md:grid-cols-3"
+                : "md:grid-cols-2"
                 }`}
             >
               {/* Credential Field */}

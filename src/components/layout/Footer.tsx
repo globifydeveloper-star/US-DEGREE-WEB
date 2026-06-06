@@ -31,16 +31,6 @@ export default function Footer({ className = "mt-12" }: { className?: string }) 
 
           {/* Links Columns */}
           <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
-            {/* Learn */}
-            <div>
-              <h3 className="font-semibold text-white mb-6">Learn</h3>
-              <ul className="space-y-4 text-sm text-blue-100">
-                <li><Link href="/design" className="hover:text-white transition-colors">Design</Link></li>
-                <li><Link href="/development" className="hover:text-white transition-colors">Development</Link></li>
-                <li><Link href="/marketing" className="hover:text-white transition-colors">Marketing</Link></li>
-              </ul>
-            </div>
-
             {/* Resources */}
             <div>
               <h3 className="font-semibold text-white mb-6">Resources</h3>
@@ -56,7 +46,6 @@ export default function Footer({ className = "mt-12" }: { className?: string }) 
               <h3 className="font-semibold text-white mb-6">Company</h3>
               <ul className="space-y-4 text-sm text-blue-100">
                 <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/careers" className="hover:text-white transition-colors">Careers</Link></li>
               </ul>
             </div>
           </div>
