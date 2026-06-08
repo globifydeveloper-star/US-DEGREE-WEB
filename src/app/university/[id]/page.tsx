@@ -79,6 +79,16 @@ export default async function UniversityPage({
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+  const sanitizeSalary = (val: any) => {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim();
+    if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+      return null;
+    }
+    const num = Number(str.replace(/[^0-9.-]/g, ''));
+    return isNaN(num) ? null : num;
+  };
+
   // 1. Gather all data we can fetch from the backend overview endpoint
   let apiData: any = null;
   if (sParams.cip) {
@@ -225,9 +235,15 @@ export default async function UniversityPage({
     : (universityData[id]?.applicants) || "N/A";
 
   // Outcomes & Careers statistics
-  const salaryYear1 = outcomesData?.earnings?.year_1 || apiData?.earnings?.year_1 || (id === "1" ? 91200 : id === "2" ? 85000 : null);
-  const salaryYear5 = outcomesData?.earnings?.year_5 || apiData?.earnings?.year_5 || null;
-  const salaryYear10 = outcomesData?.earnings?.year_10 || apiData?.earnings?.year_10 || (id === "1" ? 149696 : id === "2" ? 135000 : null);
+  const salaryYear1 = sanitizeSalary(outcomesData?.earnings?.year_1)
+    || sanitizeSalary(apiData?.earnings?.year_1)
+    || (id === "1" ? 91200 : id === "2" ? 85000 : null);
+  const salaryYear5 = sanitizeSalary(outcomesData?.earnings?.year_5)
+    || sanitizeSalary(apiData?.earnings?.year_5)
+    || null;
+  const salaryYear10 = sanitizeSalary(outcomesData?.earnings?.year_10)
+    || sanitizeSalary(apiData?.earnings?.year_10)
+    || (id === "1" ? 149696 : id === "2" ? 135000 : null);
 
   const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || (id === "1" ? 2100000 : id === "2" ? 1900000 : null);
 

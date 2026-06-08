@@ -169,6 +169,7 @@ export default function ResultCard({
   const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
     if (checked) {
       if (list.length >= 5) {
         alert("You can compare a maximum of 5 colleges simultaneously.");
@@ -176,11 +177,21 @@ export default function ResultCard({
       }
       if (!list.includes(String(id))) {
         list.push(String(id));
+        detailsList.push({
+          id: String(id),
+          name: university,
+          logoColor: logoColor || 'bg-blue-600',
+          location: location,
+          cipCode: cipCode || 'default',
+          schoolUrl: formattedSchoolUrl || ""
+        });
       }
     } else {
       list = list.filter((cid: string) => cid !== String(id));
+      detailsList = detailsList.filter((c: any) => c.id !== String(id));
     }
     localStorage.setItem('compared_colleges', JSON.stringify(list));
+    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
     setIsCompared(checked);
     window.dispatchEvent(new Event('compared-colleges-updated'));
   };
