@@ -11,6 +11,12 @@ const Navbar = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [compareCount, setCompareCount] = useState(0);
+
+  const checkCompareCount = () => {
+    const list = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("compared_colleges") || "[]") : [];
+    setCompareCount(list.length);
+  };
 
   const checkAuth = () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
@@ -26,9 +32,12 @@ const Navbar = () => {
 
   useEffect(() => {
     checkAuth();
+    checkCompareCount();
     window.addEventListener("auth-state-changed", checkAuth);
+    window.addEventListener("compared-colleges-updated", checkCompareCount);
     return () => {
       window.removeEventListener("auth-state-changed", checkAuth);
+      window.removeEventListener("compared-colleges-updated", checkCompareCount);
     };
   }, []);
 
@@ -66,8 +75,13 @@ const Navbar = () => {
               <Link href="/" className="hover:text-[#2b55ff] transition-colors">
                 Home
               </Link>
-              <Link href="/compare" className="hover:text-[#2b55ff] transition-colors">
-                Compare Colleges
+              <Link href="/compare" className="hover:text-[#2b55ff] transition-colors flex items-center gap-1.5">
+                <span>Compare Colleges</span>
+                {compareCount > 0 && (
+                  <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                    {compareCount}
+                  </span>
+                )}
               </Link>
               <Link href="/courses" className="hover:text-[#2b55ff] transition-colors">
                 Courses
@@ -130,7 +144,14 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div className="absolute top-[70px] left-0 w-full bg-white border-b border-[#f0f2f5] shadow-lg lg:hidden flex flex-col p-6 gap-6 text-[#4b5563] font-medium animate-in slide-in-from-top-2 z-50">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-            <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)}>Compare Colleges</Link>
+            <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between w-full">
+              <span>Compare Colleges</span>
+              {compareCount > 0 && (
+                <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                  {compareCount}
+                </span>
+              )}
+            </Link>
             <Link href="/courses" onClick={() => setIsMobileMenuOpen(false)}>Courses</Link>
             <Link href="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
             <Link href="/mentors" onClick={() => setIsMobileMenuOpen(false)}>Mentors</Link>

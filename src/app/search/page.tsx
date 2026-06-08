@@ -10,6 +10,7 @@ import SearchSidebar from "@/components/search/SearchSidebar";
 import ResultCard from "@/components/search/ResultCard";
 import TileCard from "@/components/search/TileCard";
 import Pagination from "@/components/search/Pagination";
+import CompareDeck from "@/components/search/CompareDeck";
 import { ResultListSkeleton, TileGridSkeleton, SearchHeaderSkeleton } from "@/components/search/SearchSkeletons";
 import { SearchResult } from "@/types/search-details";
 
@@ -65,27 +66,7 @@ function SearchContent() {
   const category = searchParams.get("category") || "";
   const categoryLabel = category ? (CATEGORY_LABELS[category] || category.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")) : "";
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [comparedCount, setComparedCount] = useState(0);
 
-  useEffect(() => {
-    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    setComparedCount(list.length);
-
-    const handleUpdate = () => {
-      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-      setComparedCount(updatedList.length);
-    };
-
-    window.addEventListener('compared-colleges-updated', handleUpdate);
-    return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
-  }, []);
-
-  const handleCompareClick = () => {
-    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    if (list.length > 0) {
-      router.push(`/compare?ids=${list.join(',')}`);
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -347,37 +328,7 @@ right-6
           ↑
         </button>
       )}
-      {comparedCount > 0 && (
-        <button
-          onClick={handleCompareClick}
-          className="
-            fixed
-            bottom-6
-            left-6
-            z-50
-            flex
-            items-center
-            gap-2
-            px-5
-            py-3
-            rounded-full
-            bg-blue-600
-            hover:bg-blue-700
-            border
-            border-blue-500
-            shadow-lg
-            text-white
-            font-bold
-            text-xs
-            transition-all
-            duration-300
-            hover:scale-105
-            active:scale-95
-          "
-        >
-          <span>⚖️ Compare ({comparedCount}) Colleges</span>
-        </button>
-      )}
+      <CompareDeck />
     </>
   );
 }
