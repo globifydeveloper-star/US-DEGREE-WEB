@@ -1,44 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import LoginModal from "../auth/LoginModal";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
-  const checkAuth = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
-    const email = typeof window !== 'undefined' ? localStorage.getItem("user_email") : null;
-    if (token) {
-      setIsLoggedIn(true);
-      setUserEmail(email || "User");
-    } else {
-      setIsLoggedIn(false);
-      setUserEmail("");
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
-    window.addEventListener("auth-state-changed", checkAuth);
-    return () => {
-      window.removeEventListener("auth-state-changed", checkAuth);
-    };
-  }, []);
-
-  const handleSignOut = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("user_name");
-    window.dispatchEvent(new Event("auth-state-changed"));
-    setIsLoggedIn(false);
-    setUserEmail("");
+  const handleSignOut = async () => {
+    await signOut(auth);
     setIsMobileMenuOpen(false);
   };
 
@@ -90,7 +68,7 @@ const Navbar = () => {
             {isLoggedIn ? (
               <>
                 <span className="hidden sm:inline text-[15px] font-semibold text-slate-600">
-                  Hi, {userEmail.split('@')[0]}
+                  Hi, {user?.displayName?.split(' ')[0] ?? user?.email?.split('@')[0]}
                 </span>
                 <button
                   onClick={handleSignOut}
@@ -139,7 +117,7 @@ const Navbar = () => {
             <hr className="border-[#f0f2f5]" />
             {isLoggedIn ? (
               <>
-                <span className="text-slate-600 font-semibold">Hi, {userEmail}</span>
+                <span className="text-slate-600 font-semibold">Hi, {user?.displayName ?? user?.email}</span>
                 <button onClick={handleSignOut} className="text-left text-[#f43f5e] font-semibold cursor-pointer">Sign Out</button>
               </>
             ) : (
@@ -167,7 +145,7 @@ const Navbar = () => {
         isOpen={isLoginModalOpen} 
         initialMode={authMode}
         onClose={() => setIsLoginModalOpen(false)} 
-        onSuccess={() => checkAuth()} 
+        onSuccess={() => setIsLoginModalOpen(false)}
       />
     </>
   );

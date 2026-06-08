@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, ShieldCheck, X, GraduationCap, User } from 'lucide-react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -114,6 +116,15 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       onClose();
     }, 1000);
   };
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      onSuccess(result.user.email!);
+      onClose();
+    } catch (err) {
+      setError('Google sign-in failed. Please try again.');
+    }
+  };
 
   return (
     <div
@@ -170,7 +181,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
         {/* Social logins */}
         <div className="grid grid-cols-3 gap-3 mb-5">
           <button
-            type="button"
+            type="button" onClick={handleGoogleSignIn}
             className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-98 transition-all text-xs font-bold text-slate-600 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
