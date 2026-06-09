@@ -1,4 +1,5 @@
 export interface UniversityHeroProps {
+  id?: string | number;
   name: string;
   location: string;
   type: string;
@@ -9,4 +10,5 @@ export interface UniversityHeroProps {
   tuitionData?: any;
   tuitionType?: 'in_state' | 'out_state';
   schoolUrl?: string | null;
+  accreditor?: string | null;
 }

@@ -158,6 +158,21 @@ export default async function UniversityPage({
     console.error("Error fetching college details:", err);
   }
 
+  // 2e. Fetch accreditor from search endpoint (since detail endpoints omit it)
+  let accreditorSearchData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/search?type=universities`, { cache: "no-store" });
+    if (res.ok) {
+      accreditorSearchData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching university list for accreditor:", err);
+  }
+  const matchedUni = Array.isArray(accreditorSearchData)
+    ? accreditorSearchData.find((uni: any) => String(uni.unitid) === String(id))
+    : null;
+  const fetchedAccreditor = matchedUni?.accreditor || null;
+
   // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
   const name = sParams.name || (universityData[id]?.name) || "Unknown University";
   const city = sParams.city || "";
@@ -265,6 +280,7 @@ export default async function UniversityPage({
     : null;
 
   const data = {
+    id,
     name,
     location,
     type,
@@ -313,6 +329,7 @@ export default async function UniversityPage({
 
     // School URL
     schoolUrl: collegeData?.school_url || null,
+    accreditor: collegeData?.accreditor || apiData?.school?.accreditor || fetchedAccreditor || null,
   };
 
   return (
