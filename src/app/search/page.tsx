@@ -84,7 +84,7 @@ function SearchContent() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = "/api/proxy";
         const requestParams = new URLSearchParams(searchParams.toString());
 
         // Remove params that we'll filter client-side

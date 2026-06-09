@@ -12,7 +12,7 @@ export default function StickerPrice({ id, estCost }: StickerPriceProps) {
     if (!id) return;
     const fetchStickerPrice = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = "/api/proxy";
         const res = await fetch(`${apiUrl}/tuition/${id}`);
         if (res.ok) {
           const data = await res.json();

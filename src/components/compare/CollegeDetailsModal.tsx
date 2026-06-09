@@ -63,7 +63,7 @@ export default function CollegeDetailsModal({
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = "/api/proxy";
 
       const sanitizeSalary = (val: any) => {
         if (val === null || val === undefined) return null;

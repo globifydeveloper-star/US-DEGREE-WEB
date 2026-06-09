@@ -52,7 +52,7 @@ export default function Hero() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = "/api/proxy";
 
         const statesRes = await fetch(`${apiUrl}/states`);
         if (statesRes.ok) {
@@ -100,7 +100,7 @@ export default function Hero() {
       if (selectedLevel) queryParams.append("credential_title", selectedLevel);
       if (selectedState) queryParams.append("state", selectedState);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = "/api/proxy";
       const res = await fetch(`${apiUrl}/courses?${queryParams.toString()}`);
 
       if (res.ok) {

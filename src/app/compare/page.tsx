@@ -35,7 +35,7 @@ function CompareContent() {
   const [collegeDetailsCache, setCollegeDetailsCache] = useState<Record<string, any>>({});
 
   // Get API URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = "/api/proxy";
 
   // 1. Parse initial IDs from search parameters OR localStorage
   useEffect(() => {
