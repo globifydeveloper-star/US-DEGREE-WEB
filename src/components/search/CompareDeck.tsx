@@ -26,7 +26,7 @@ export default function CompareDeck() {
     const missingIds = list.filter((id: string) => !existingIds.includes(String(id)));
 
     if (missingIds.length > 0) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+      const apiUrl = "/api/proxy";
       try {
         const fetchedDetails = await Promise.all(
           missingIds.map(async (id: string) => {
@@ -153,15 +153,8 @@ export default function CompareDeck() {
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-2rem)] max-w-4xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-2rem)] max-w-4xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 transform bg-white border border-slate-200/80 shadow-[0_10px_50px_rgba(0,0,0,0.15)] rounded-2xl ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
         }`}
-      style={{
-        background: 'rgba(255, 255, 255, 0)',
-        borderRadius: '16px',
-        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-      }}
     >
       {/* College List */}
       <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto degree-scrollbar py-1 pr-2">
