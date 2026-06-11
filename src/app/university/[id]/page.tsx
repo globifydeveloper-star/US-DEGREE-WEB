@@ -3,58 +3,10 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TabContent from "@/components/university/TabContent";
 import ScrollToTop from "@/components/university/ScrollToTop";
+import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 
-// Mock data — fallback if API fetch fails or if id is 1 or 2 and backend lacks data
-const universityData: Record<string, {
-  name: string; location: string; type: string; rank: string;
-  admissionRate: string; tuitionFee: string; logoColor: string;
-  description: string; degree: string; duration: string; format: string;
-  financialAid: string; cipCode: string; school: string; programDescription: string;
-  applicants: string; satReadingWriting: string; satMath: string; satAverage: string;
-}> = {
-  "1": {
-    name: "Stanford University",
-    location: "Stanford, CA",
-    type: "Private Research",
-    rank: "#1 National",
-    admissionRate: "4.3%",
-    tuitionFee: "$56,169",
-    logoColor: "bg-[#8c1515]",
-    description: "Stanford University is one of the world's leading research universities. It is known for its proximity to Silicon Valley and its entrepreneurial spirit. The campus spans 8,180 acres and is home to a diverse community of scholars.",
-    degree: "Bachelor of Science",
-    duration: "4 Years",
-    format: "Full-time, On-campus",
-    financialAid: "Available",
-    cipCode: "11.0701",
-    school: "School of Engineering",
-    programDescription: "The Computer Science major at Stanford focuses on the mathematical and scientific foundations of computing. Students engage in cutting-edge research and gain practical experience through projects and internships.",
-    applicants: "1,980",
-    satReadingWriting: "690 - 840",
-    satMath: "630 - 810",
-    satAverage: "1203",
-  },
-  "2": {
-    name: "UC Berkeley",
-    location: "Berkeley, CA",
-    type: "Public Research",
-    rank: "#4 National",
-    admissionRate: "11.4%",
-    tuitionFee: "$43,980",
-    logoColor: "bg-[#003262]",
-    description: "The University of California, Berkeley is a public research university and the flagship institution of the ten research universities affiliated with the University of California system. Founded in 1868, Berkeley has grown to instruct over 43,000 students.",
-    degree: "Bachelor of Science",
-    duration: "4 Years",
-    format: "Full-time, On-campus",
-    financialAid: "Available",
-    cipCode: "11.0701",
-    school: "College of Engineering",
-    programDescription: "UC Berkeley's EECS department is consistently ranked among the top computer science programs in the world, offering rigorous coursework combined with groundbreaking research opportunities.",
-    applicants: "5,700",
-    satReadingWriting: "660 - 780",
-    satMath: "680 - 800",
-    satAverage: "1380",
-  },
-};
+
 
 export default async function UniversityPage({
   params,
@@ -158,7 +110,18 @@ export default async function UniversityPage({
     console.error("Error fetching college details:", err);
   }
 
-  // 2e. Fetch accreditor from search endpoint (since detail endpoints omit it)
+  // 2e. Fetch programs details
+  let programsData: any = null;
+  try {
+    const res = await fetch(`${apiUrl}/programs/${id}`, { cache: "no-store" });
+    if (res.ok) {
+      programsData = await res.json();
+    }
+  } catch (err) {
+    console.error("Error fetching programs details:", err);
+  }
+
+  // 2f. Fetch accreditor from search endpoint (since detail endpoints omit it)
   let accreditorSearchData: any = null;
   try {
     const res = await fetch(`${apiUrl}/search?type=universities`, { cache: "no-store" });
@@ -173,17 +136,55 @@ export default async function UniversityPage({
     : null;
   const fetchedAccreditor = matchedUni?.accreditor || null;
 
-  // 3. Build the final data object, prioritizing sParams first, then apiData, then mock fallback
-  const name = sParams.name || (universityData[id]?.name) || "Unknown University";
-  const city = sParams.city || "";
-  const state = sParams.state || "";
+
+  // If no backend data is found for this university ID
+  if (!collegeData && !apiData) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex flex-col justify-between">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-20">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center transition-all duration-300 hover:shadow-2xl">
+            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500 animate-pulse">
+              <AlertCircle size={32} />
+            </div>
+            <h1 className="text-2xl font-extrabold text-slate-950 tracking-tight mb-3">
+              University Details Unavailable
+            </h1>
+            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+              We couldn't retrieve the details for this university (ID: <span className="font-semibold text-slate-800">{id}</span>). It may not exist in our database, or there might be a temporary network issue.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/search"
+                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+              >
+                Go to Search
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center px-6 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-xl transition-all duration-200 active:scale-95"
+              >
+                Go Home
+              </Link>
+            </div>
+          </div>
+        </div>
+        <Footer className="mt-0" />
+      </main>
+    );
+  }
+
+  // 3. Build the final data object, prioritizing sParams first, then apiData / collegeData
+  const name = sParams.name || collegeData?.school_name || "Unknown University";
+  const city = sParams.city || collegeData?.city || "";
+  const state = sParams.state || collegeData?.state || "";
   const location = city && state ? `${city}, ${state}` : (city || state || "Unknown Location");
 
-  const type = sParams.type || (universityData[id]?.type) || "Private Research";
+  const type = sParams.type || collegeData?.school_type || "Private Research";
 
   const admissionRateRaw = sParams.admissionRate || (apiData?.admissions?.admission_rate !== null && apiData?.admissions?.admission_rate !== undefined
     ? `${(Number(apiData.admissions.admission_rate) * 100).toFixed(1)}%`
-    : null) || (universityData[id]?.admissionRate) || "N/A";
+    : null) || "N/A";
 
   // Calculate real sticker price if tuitionData is available
   let calculatedStickerPriceString = "N/A";
@@ -198,56 +199,56 @@ export default async function UniversityPage({
 
   const tuitionRaw = tuitionData
     ? calculatedStickerPriceString
-    : (sParams.tuition || (universityData[id]?.tuitionFee) || "N/A");
+    : (sParams.tuition || "N/A");
 
-  const degree = sParams.degree || (universityData[id]?.degree) || "Bachelor's Degree";
+  const degree = sParams.degree || "Bachelor's Degree";
 
-  const cipCode = resolvedCip || (universityData[id]?.cipCode) || "N/A";
+  const cipCode = resolvedCip || "N/A";
 
   // Student body stats from API overview details
   const totalStudents = apiData?.students?.size !== null && apiData?.students?.size !== undefined
     ? Number(apiData.students.size)
-    : (id === "1" ? 17249 : id === "2" ? 43000 : null);
+    : null;
 
-  const rawFacultyRatio = apiData?.students?.student_faculty_ratio;
+  const rawFacultyRatio = campusData?.campus?.student_faculty_ratio || apiData?.students?.student_faculty_ratio;
   const facultyRatio = rawFacultyRatio
     ? (String(rawFacultyRatio).includes(":") ? String(rawFacultyRatio) : `${rawFacultyRatio}:1`)
-    : (id === "1" ? "5:1" : id === "2" ? "18:1" : "N/A");
+    : "N/A";
 
   const rawRetention = apiData?.students?.retention_rate;
   const retentionRate = rawRetention !== null && rawRetention !== undefined
     ? `${(Number(rawRetention) * 100).toFixed(0)}%`
-    : (id === "1" ? "98%" : id === "2" ? "97%" : "N/A");
+    : "N/A";
 
   const programs = apiData?.school?.program_count !== null && apiData?.school?.program_count !== undefined
     ? Number(apiData.school.program_count)
-    : (id === "1" ? 20 : id === "2" ? 150 : null);
+    : null;
 
   const fafsaApplications = apiData?.students?.fafsa_applications !== null && apiData?.students?.fafsa_applications !== undefined
     ? Number(apiData.students.fafsa_applications)
-    : (id === "1" ? 2412 : id === "2" ? 5700 : null);
+    : null;
 
   const rawCompletion = apiData?.completion?.completion_rate;
   const completionRate = rawCompletion !== null && rawCompletion !== undefined
     ? `${Number(rawCompletion).toFixed(0)}%`
-    : (id === "1" ? "94%" : id === "2" ? "92%" : "N/A");
+    : "N/A";
 
-  // SAT & Student metrics from API if present, otherwise mock fallbacks
+  // SAT & Student metrics from API if present
   const satAverage = apiData?.admissions?.sat_avg_overall !== null && apiData?.admissions?.sat_avg_overall !== undefined
     ? String(apiData.admissions.sat_avg_overall)
-    : (universityData[id]?.satAverage) || "N/A";
+    : "N/A";
 
   const satReadingWriting = apiData?.admissions?.sat_rw_min !== null && apiData?.admissions?.sat_rw_max !== null && apiData?.admissions?.sat_rw_min !== undefined && apiData?.admissions?.sat_rw_max !== undefined
     ? `${apiData.admissions.sat_rw_min} - ${apiData.admissions.sat_rw_max}`
-    : (universityData[id]?.satReadingWriting) || "N/A";
+    : "N/A";
 
   const satMath = apiData?.admissions?.sat_math_min !== null && apiData?.admissions?.sat_math_max !== null && apiData?.admissions?.sat_math_min !== undefined && apiData?.admissions?.sat_math_max !== undefined
     ? `${apiData.admissions.sat_math_min} - ${apiData.admissions.sat_math_max}`
-    : (universityData[id]?.satMath) || "N/A";
+    : "N/A";
 
   const applicants = apiData?.students?.fafsa_applications
     ? String(apiData.students.fafsa_applications)
-    : (universityData[id]?.applicants) || "N/A";
+    : "N/A";
 
   // Outcomes & Careers statistics
   const salaryYear1 = sanitizeSalary(outcomesData?.earnings?.year_1)
@@ -260,20 +261,20 @@ export default async function UniversityPage({
     || sanitizeSalary(apiData?.earnings?.year_10)
     || (id === "1" ? 149696 : id === "2" ? 135000 : null);
 
-  const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || (id === "1" ? 2100000 : id === "2" ? 1900000 : null);
+  const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || null;
 
   const rawGrowth = outcomesData?.earnings?.growth_rate || apiData?.earnings?.growth_rate;
   const growthRate = rawGrowth !== undefined && rawGrowth !== null
     ? Number(rawGrowth)
-    : (salaryYear1 && salaryYear10 ? ((Number(salaryYear10) - Number(salaryYear1)) / Number(salaryYear1)) * 100 : (id === "1" ? 62.5 : id === "2" ? 58.8 : null));
+    : (salaryYear1 && salaryYear10 ? ((Number(salaryYear10) - Number(salaryYear1)) / Number(salaryYear1)) * 100 : null);
 
   const empFactor = outcomesData?.completion?.emp_factor !== null && outcomesData?.completion?.emp_factor !== undefined
     ? Number(outcomesData.completion.emp_factor)
-    : (id === "1" ? 0.95 : id === "2" ? 0.91 : null);
+    : null;
 
   const debtIncomeRatio = outcomesData?.debt_income_ratio?.debt_income_ratio !== null && outcomesData?.debt_income_ratio?.debt_income_ratio !== undefined
     ? Number(outcomesData.debt_income_ratio.debt_income_ratio)
-    : (id === "1" ? 0.08 : id === "2" ? 0.12 : null);
+    : null;
 
   const avgSalary = outcomesData?.earnings?.avg_salary !== null && outcomesData?.earnings?.avg_salary !== undefined
     ? Number(outcomesData.earnings.avg_salary)
@@ -287,8 +288,8 @@ export default async function UniversityPage({
     rank: "#1 National",
     admissionRate: admissionRateRaw,
     tuitionFee: tuitionRaw,
-    logoColor: id === "2" ? "bg-[#003262]" : "bg-blue-600",
-    description: `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
+    logoColor: "bg-blue-600",
+    description: apiData?.school?.school_description || `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
     degree,
     duration: "4 Years",
     format: "Full-time, On-campus",
@@ -326,6 +327,9 @@ export default async function UniversityPage({
 
     // Tuition Data
     tuitionData,
+
+    // Programs Data
+    programsData,
 
     // School URL
     schoolUrl: collegeData?.school_url || null,
