@@ -7,6 +7,7 @@ import { ResultListSkeleton, SearchHeaderSkeleton, SidebarSkeleton } from '@/com
 
 export default function SearchLoading() {
   return (
+
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
       <div className="flex-1">
