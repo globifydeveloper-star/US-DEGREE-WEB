@@ -28,15 +28,22 @@ const Navbar = () => {
 
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState('');
 
   const handleResendEmail = async () => {
     setResending(true);
+    setResendError('');
     try {
       await resendVerificationEmail();
       setResent(true);
       setTimeout(() => setResent(false), 5000);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err.message?.includes('auth/too-many-requests')) {
+        setResendError('Please wait a minute before requesting another verification email.');
+      } else {
+        setResendError('Failed to resend verification email. Please try again.');
+      }
+      setTimeout(() => setResendError(''), 5000);
     } finally {
       setResending(false);
     }
@@ -68,7 +75,7 @@ const Navbar = () => {
   return (
     <>
       {isLoggedIn && !user?.emailVerified && (
-        <div className="bg-[#3b5bdb] text-white text-[13px] font-semibold py-2.5 px-4 flex items-center justify-center gap-2 select-none w-full relative z-[60] text-center">
+        <div className="bg-[#3b5bdb] text-white text-[13px] font-semibold py-2.5 px-4 flex items-center justify-center gap-2 select-none w-full relative z-[60] text-center flex-wrap">
           <span>Please verify your email address to secure your account.</span>
           <button 
             onClick={handleResendEmail} 
@@ -78,6 +85,7 @@ const Navbar = () => {
             {resending ? 'Sending...' : 'Resend link'}
           </button>
           {resent && <span className="text-emerald-300 font-bold ml-2">✓ Verification email sent!</span>}
+          {resendError && <span className="text-rose-300 font-bold ml-2">⚠️ {resendError}</span>}
         </div>
       )}
       <nav className="h-[70px] bg-white sticky top-0 z-50 border-t-[4px] border-[#f0f2f5] shadow-sm flex justify-center w-full">
