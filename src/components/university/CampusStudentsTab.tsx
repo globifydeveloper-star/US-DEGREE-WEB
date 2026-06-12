@@ -139,8 +139,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           {/* Total Students */}
           <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{size !== null ? size.toLocaleString() : "Not Available"}</p>
-              <p className="text-[11px] font-bold text-emerald-600 mb-0">Total Students</p>
+              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{size !== null ? size.toLocaleString() : "N/A"}</p>
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Total Students</p>
           </div>
@@ -148,25 +147,19 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           {/* Grad Students */}
           <div className="bg-[#EBF3FF]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{gradStudents !== null ? gradStudents.toLocaleString() : "Not Available"}</p>
+              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{gradStudents !== null ? gradStudents.toLocaleString() : "N/A"}</p>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Grad Students</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Graduate Students</p>
           </div>
 
-          {/* Student-to-Faculty Ratio */}
-          <div className="bg-rose-50/20 border border-rose-100/60 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          {/* Average Family Income */}
+          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {facultyRatioNum !== null ? `${facultyRatioNum}:1` : "N/A"}
+                {avgFamilyIncome !== null ? `$${Math.round(avgFamilyIncome * animProgress).toLocaleString()}` : "N/A"}
               </p>
-              <div className="h-2 bg-[#EAEFF5] rounded-full overflow-hidden w-full">
-                <div
-                  className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                  style={{ width: facultyRatioNum !== null ? `${Math.min((facultyRatioNum / 35) * 100, 100) * animProgress}%` : "0%" }}
-                />
-              </div>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Faculty Ratio</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Avg family income</p>
           </div>
         </div>
       </div>
@@ -321,49 +314,6 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           </div>
         </div>
       </div>
-
-      {/* 5. Income Details */}
-      <div>
-        <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
-          Income Details
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {/* Average Family Income */}
-          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {avgFamilyIncome !== null ? `$${Math.round(avgFamilyIncome * animProgress).toLocaleString()}` : "N/A"}
-              </p>
-              <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Avg family income</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Avg family income</p>
-          </div>
-
-          {/* Students with Choice-Aid */}
-          <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {choiceAidPct !== null ? `${(choiceAidPct * animProgress).toFixed(1)}%` : "N/A"}
-              </p>
-              <p className="text-[11px] font-bold text-emerald-600 mb-0">Students with choice-aid</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Students with choice-aid</p>
-          </div>
-
-          {/* FAFSA Applications */}
-          <div className="bg-[#FFF1F2]/60 border border-[#FFE4E6]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {fafsaCount === "N/A" ? "N/A" : Math.round(Number(fafsaCount) * animProgress).toLocaleString()}
-              </p>
-              <p className="text-[11px] font-bold text-rose-600 mb-0">FAFSA applications</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">FAFSA applications</p>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
