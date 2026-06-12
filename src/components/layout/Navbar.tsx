@@ -28,15 +28,22 @@ const Navbar = () => {
 
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState('');
 
   const handleResendEmail = async () => {
     setResending(true);
+    setResendError('');
     try {
       await resendVerificationEmail();
       setResent(true);
       setTimeout(() => setResent(false), 5000);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err.message?.includes('auth/too-many-requests')) {
+        setResendError('Please wait a minute before requesting another verification email.');
+      } else {
+        setResendError('Failed to resend verification email. Please try again.');
+      }
+      setTimeout(() => setResendError(''), 5000);
     } finally {
       setResending(false);
     }
@@ -78,6 +85,7 @@ const Navbar = () => {
             {resending ? 'Sending...' : 'Resend link'}
           </button>
           {resent && <span className="text-emerald-300 font-bold ml-2">✓ Verification email sent!</span>}
+          {resendError && <span className="text-rose-300 font-bold ml-2">⚠️ {resendError}</span>}
         </div>
       )}
       <nav className="h-[70px] bg-white sticky top-0 z-50 border-t-[4px] border-[#f0f2f5] shadow-sm flex justify-center w-full">
