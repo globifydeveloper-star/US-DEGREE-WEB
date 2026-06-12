@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import LoginModal from "../auth/LoginModal";
 
@@ -25,11 +23,40 @@ const Navbar = () => {
       window.removeEventListener("compared-colleges-updated", checkCompareCount);
     };
   }, []);
-  const { user } = useAuth();
+  const { user, logout, resendVerificationEmail, checkVerificationStatus } = useAuth();
   const isLoggedIn = !!user;
 
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  const handleResendEmail = async () => {
+    setResending(true);
+    try {
+      await resendVerificationEmail();
+      setResent(true);
+      setTimeout(() => setResent(false), 5000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && !user.emailVerified) {
+      const interval = setInterval(async () => {
+        try {
+          await checkVerificationStatus();
+        } catch (e) {
+          console.error("Background check failed:", e);
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [user, checkVerificationStatus]);
+
   const handleSignOut = async () => {
-    await signOut(auth);
+    await logout();
     setIsMobileMenuOpen(false);
   };
 
@@ -40,6 +67,19 @@ const Navbar = () => {
 
   return (
     <>
+      {isLoggedIn && !user?.emailVerified && (
+        <div className="bg-[#3b5bdb] text-white text-[13px] font-semibold py-2.5 px-4 flex items-center justify-center gap-2 select-none w-full relative z-[60] text-center">
+          <span>Please verify your email address to secure your account.</span>
+          <button 
+            onClick={handleResendEmail} 
+            disabled={resending}
+            className="underline hover:opacity-90 font-bold ml-2 cursor-pointer disabled:opacity-50"
+          >
+            {resending ? 'Sending...' : 'Resend link'}
+          </button>
+          {resent && <span className="text-emerald-300 font-bold ml-2">✓ Verification email sent!</span>}
+        </div>
+      )}
       <nav className="h-[70px] bg-white sticky top-0 z-50 border-t-[4px] border-[#f0f2f5] shadow-sm flex justify-center w-full">
         <div className="w-full max-w-[2080px] px-6 sm:px-10 lg:px-[36px] h-full flex items-center justify-between">
           <div className="flex items-center gap-4 lg:gap-16">
