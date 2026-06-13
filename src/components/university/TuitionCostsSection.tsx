@@ -63,6 +63,15 @@ export default function TuitionCostsSection({
     ? Math.round(tuitionData.financial_aid.students_with_any_loan * 100)
     : 50;
 
+  const getLoanMessage = (pct: number) => {
+    if (pct <= 19) return "Relatively few students rely on loans to help finance their education";
+    if (pct <= 39) return "Some students use loans as part of their education funding strategy.";
+    if (pct <= 59) return "Student loans are a common source of funding for many students.";
+    if (pct <= 79) return "A large share of students rely on loans to support their educational costs.";
+    return "Student loans play a major role in helping most students finance their education.";
+  };
+  const loanMessage = getLoanMessage(studentsWithLoan);
+
   const netPrices = {
     '0-30000': tuitionData?.net_price?.income_0_30000 ?? 8500,
     '30001-48000': tuitionData?.net_price?.income_30001_48000 ?? 9500,
@@ -109,14 +118,14 @@ export default function TuitionCostsSection({
   const currentFinAid = Math.max(0, activeStickerPrice - currentNetPrice);
 
   const costCards = [
-    { label: 'tuition_in_state', value: activeTuition, bg: '#F5F3FF' },
-    { label: 'tuition_out_state', value: tuitionOutState, bg: '#C6D4FF' },
-    { label: 'booksupply', value: bookSupply, bg: '#FEDDDD' },
-    { label: 'roomboard_oncampus', value: roomBoardOnCampus, bg: '#C6FFF2' },
-    { label: 'roomboard_offcampus', value: roomBoardOffCampus, bg: '#EFC8FF' },
-    { label: 'otherexpense_oncampus', value: otherExpenseOnCampus, bg: '#FFEDB2' },
-    { label: 'otherexpense_offcampus', value: otherExpenseOffCampus, bg: '#FFD0C0' },
-    { label: 'otherexpense_withfamily', value: otherExpenseWithFamily, bg: '#CEFFD0' },
+    { label: 'Tuition In State', value: activeTuition, bg: '#F5F3FF' },
+    { label: 'Tuition Out State', value: tuitionOutState, bg: '#C6D4FF' },
+    { label: 'Book & Supply', value: bookSupply, bg: '#FEDDDD' },
+    { label: 'Room & Board On Campus', value: roomBoardOnCampus, bg: '#C6FFF2' },
+    { label: 'Room & Board Off Campus', value: roomBoardOffCampus, bg: '#EFC8FF' },
+    { label: 'Other Expenses On Campus', value: otherExpenseOnCampus, bg: '#FFEDB2' },
+    { label: 'Other Expenses Off Campus', value: otherExpenseOffCampus, bg: '#FFD0C0' },
+    { label: 'Other Expenses With Family', value: otherExpenseWithFamily, bg: '#CEFFD0' },
   ];
 
   const brackets: Array<keyof typeof netPrices> = [
@@ -174,8 +183,7 @@ export default function TuitionCostsSection({
             Students with any loan
           </p>
           <p className="text-xs text-slate-500 font-poppins leading-relaxed">
-            Many students rely on loans to afford their education. These loans help make the
-            cost of schooling more manageable.
+            {loanMessage}
           </p>
           <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
             <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${studentsWithLoan * animProgress}%` }} />
@@ -194,7 +202,7 @@ export default function TuitionCostsSection({
             { label: 'In-state tuition fees', value: activeTuition, bold: false },
             { label: 'Room & board', value: roomBoardOnCampus, bold: false },
             { label: 'Other on-campus expenses', value: otherExpenseOnCampus, bold: false },
-            { label: 'Total sticker price', value: activeStickerPrice, bold: true },
+            { label: 'Total sticker price', value: activeStickerPrice, bold: true  },
           ].map((row, i) => (
             <div
               key={i}
@@ -219,22 +227,26 @@ export default function TuitionCostsSection({
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-[#FFE6C4] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
             <p className="text-[10px] font-bold text-black font-poppins">Sticker price</p>
-            <p className="text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}</p>
+            <p className="text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}
+              <span className="text-xs font-bold">/ year</span>
+            </p>
           </div>
           <div className="bg-[#FFE2F5] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[10px] font-bold text-black font-poppins">Your Net Price</p>
+            <p className="text-[10px] font-bold text-black font-poppins">Estimated Financial Aid</p>
             <p className="text-xl font-bold text-[#7C7C7C] font-poppins">
               {fmt(currentNetPrice)} <span className="text-xs font-bold">/ year</span>
             </p>
           </div>
           <div className="bg-[#C0FFF0] rounded-xl p-4 flex flex-col gap-1">
-            <p className="text-[10px] font-bold text-black font-poppins">Estimated Financial Aid</p>
-            <p className="text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}</p>
+            <p className="text-[10px] font-bold text-black font-poppins">Your Net Price</p>
+            <p className="text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}
+              <span className="text-xs font-bold">/ year</span>
+            </p>
           </div>
 
         </div>
 
-        <p className="text-sm font-normal text-black font-poppins">Net price by income bracket</p>
+        <p className="text-sm font-normal text-black font-poppins">Net price by income bracket (per year)</p>
 
         {/* Slider */}
         <div
@@ -242,7 +254,7 @@ export default function TuitionCostsSection({
           style={{ background: 'rgba(251,147,147,0.35)', boxShadow: '4px 4px 4px rgba(0,0,0,0.15)' }}
         >
           <span className="text-sm font-normal text-black font-poppins whitespace-nowrap">
-            Family income
+            Approximate Family income
           </span>
           <div className="flex-1 relative h-2.5">
             <div className="w-full h-full rounded-full bg-white overflow-hidden">
@@ -261,7 +273,7 @@ export default function TuitionCostsSection({
               className="absolute inset-0 w-full opacity-0 cursor-pointer"
             />
           </div>
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-inner w-32 shrink-0">
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-inner w-[150px] shrink-0">
             <span className="text-slate-400 font-bold text-sm">$</span>
             <input
               type="text"
@@ -300,6 +312,7 @@ export default function TuitionCostsSection({
               className="w-full text-right font-extrabold text-[#334155] text-sm focus:outline-none bg-transparent"
               placeholder="0"
             />
+            <span className="text-slate-400 font-bold text-xs whitespace-nowrap">/ Year</span>
           </div>
         </div>
 

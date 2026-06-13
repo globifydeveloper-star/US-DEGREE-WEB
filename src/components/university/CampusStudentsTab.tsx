@@ -113,12 +113,12 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           Enrolment & Size
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
           {/* Size Category */}
           <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{sizeCategory}</p>
-              <p className="text-[11px] font-bold text-[#2563EB] mb-0">{sizeCategorySub}</p>
+              {/* <p className="text-[11px] font-bold text-[#2563EB] mb-0">{sizeCategorySub}</p> */}
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Size Category</p>
           </div>
@@ -127,19 +127,29 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{size.toLocaleString()}</p>
-              <p className="text-[11px] font-bold text-emerald-600 mb-0">Total Students</p>
+              {/* <p className="text-[11px] font-bold text-emerald-600 mb-0">Total Students</p> */}
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Total Students</p>
           </div>
 
           {/* Grad Students */}
-          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          <div className="bg-[#EBF3FF]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
             <div>
               <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{gradStudents.toLocaleString()}</p>
-              <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Grad Students</p>
+              {/* <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Grad Students</p> */}
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Grad Students</p>
           </div>
+          <div className="bg-[#E6F4EA]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+            <div>
+              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
+                ${Math.round(avgFamilyIncome * animProgress).toLocaleString()}
+              </p>
+              {/* <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Avg family income</p> */}
+            </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Average family income</p>
+          </div>
+
         </div>
       </div>
 
@@ -254,11 +264,11 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
           </h4>
           <div className="flex flex-col">
             <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Borrowers year 1</span>
+              <span>Loan Borrowers in year 1</span>
               <span className="text-slate-900 font-extrabold">{yr1.toLocaleString()}</span>
             </div>
             <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Still Repaying Year 3</span>
+              <span>Still Repaying on Year 3</span>
               <span className="text-slate-900 font-extrabold">{yr3.toLocaleString()}</span>
             </div>
             <div className="flex justify-between pt-3 text-xs font-black text-slate-900">
@@ -281,7 +291,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
               <span className="text-slate-900 font-extrabold">{yr3Completers.toLocaleString()}</span>
             </div>
             <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Non-Completers</span>
+              <span>Non-Completers Repaying</span>
               <span className="text-slate-900 font-extrabold">{yr3NonCompleters.toLocaleString()}</span>
             </div>
             <div className="flex justify-between pt-3 text-xs font-black text-slate-900">
@@ -292,51 +302,7 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
             </div>
           </div>
         </div>
-
       </div>
-
-      {/* 5. Income Details */}
-      <div>
-        <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
-          Income Details
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {/* Average Family Income */}
-          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                ${Math.round(avgFamilyIncome * animProgress).toLocaleString()}
-              </p>
-              <p className="text-[11px] font-bold text-[#F59E0B] mb-0">Avg family income</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Avg family income</p>
-          </div>
-
-          {/* Students with Choice-Aid */}
-          <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {(choiceAidPct * animProgress).toFixed(1)}%
-              </p>
-              <p className="text-[11px] font-bold text-emerald-600 mb-0">Students with choice-aid</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Students with choice-aid</p>
-          </div>
-
-          {/* FAFSA Applications */}
-          <div className="bg-[#FFF1F2]/60 border border-[#FFE4E6]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
-            <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
-                {Math.round(fafsaCount * animProgress).toLocaleString()}
-              </p>
-              <p className="text-[11px] font-bold text-rose-600 mb-0">FAFSA applications</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">FAFSA applications</p>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }

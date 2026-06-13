@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Clock, BookOpen, MapPin, X } from 'lucide-react';
+import { Heart, Clock, BookOpen, MapPin, X, GitCompareArrows } from 'lucide-react';
 import UserSatPopup from './UserSatPopup';
 import StickerPrice from './StickerPrice';
+import { Button } from 'antd';
+import CompareIconAnimation from './CompareIconAnimation';
 
 export interface ResultCardProps {
   id?: number | string;
@@ -152,6 +154,7 @@ export default function ResultCard({
   const shouldShowFit = isCalculated && hasSatData;
 
   const [isCompared, setIsCompared] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
@@ -166,22 +169,33 @@ export default function ResultCard({
     return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
   }, [id]);
 
-  const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
+  const toggleCompare = () => {
     let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    if (checked) {
+    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
+    const nextState = !isCompared;
+    if (nextState) {
       if (list.length >= 5) {
         alert("You can compare a maximum of 5 colleges simultaneously.");
         return;
       }
       if (!list.includes(String(id))) {
         list.push(String(id));
+        detailsList.push({
+          id: String(id),
+          name: university,
+          logoColor: logoColor || 'bg-blue-600',
+          location: location,
+          cipCode: cipCode || 'default',
+          schoolUrl: formattedSchoolUrl || ""
+        });
       }
     } else {
       list = list.filter((cid: string) => cid !== String(id));
+      detailsList = detailsList.filter((c: any) => c.id !== String(id));
     }
     localStorage.setItem('compared_colleges', JSON.stringify(list));
-    setIsCompared(checked);
+    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
+    setIsCompared(nextState);
     window.dispatchEvent(new Event('compared-colleges-updated'));
   };
 
@@ -481,15 +495,20 @@ export default function ResultCard({
 
       {/* Footer Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isCompared}
-            onChange={handleCompareChange}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-          />
-          <span className="text-[11px] font-medium text-gray-600">Compare</span>
-        </label>
+        <Button
+          type={isCompared ? "primary" : "default"}
+          onClick={toggleCompare}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`flex items-center gap-1.5 h-8 text-[11px] font-bold rounded-full transition-all duration-300 ${
+            isCompared 
+              ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 scale-105 shadow-sm' 
+              : 'text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600 hover:scale-105'
+          }`}
+          icon={<CompareIconAnimation active={isCompared} hovered={isHovered} />}
+        >
+          {isCompared ? "Added to Compare" : "Compare"}
+        </Button>
 
         <div className="flex gap-2 w-full sm:w-auto">
           {formattedSchoolUrl ? (

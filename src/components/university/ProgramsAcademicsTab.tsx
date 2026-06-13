@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ProgramsAcademicsTabProps } from '@/types/university/ProgramsAcademicsTab';
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [degreeLevel, setDegreeLevel] = useState('all');
   if (!data) return null;
 
   const name = data.name || "N/A";
@@ -193,9 +191,9 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
             </div>
             <div>
               <p className="text-3xl font-black text-[#1D4ED8] tracking-tight mb-0.5">{facultyRatio}</p>
-              <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Faculty-Student Ratio</p>
+              <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Student-Faculty Ratio</p>
               <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
-                Unparalleled access to Nobel laureates and industry pioneers in intimate learning environments.
+                Helps estimate the level of faculty availability and potential for personalized instruction
               </p>
             </div>
           </div>

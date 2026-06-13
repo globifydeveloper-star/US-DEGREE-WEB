@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, MapPin } from 'lucide-react';
 import { ResultCardProps } from './ResultCard';
@@ -16,6 +16,7 @@ export default function TileCard({
   estCost,
   roi,
   logoColor,
+  schoolUrl,
 }: ResultCardProps) {
   const universityHref = {
     pathname: `/university/${id}`,
@@ -31,6 +32,57 @@ export default function TileCard({
       avgSalary: avgSalary,
       roi: roi,
     }
+  };
+
+  const [isCompared, setIsCompared] = useState(false);
+
+  useEffect(() => {
+    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    setIsCompared(list.includes(String(id)));
+
+    const handleUpdate = () => {
+      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+      setIsCompared(updatedList.includes(String(id)));
+    };
+
+    window.addEventListener('compared-colleges-updated', handleUpdate);
+    return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
+  }, [id]);
+
+  const handleCompareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
+    if (checked) {
+      if (list.length >= 5) {
+        alert("You can compare a maximum of 5 colleges simultaneously.");
+        return;
+      }
+      if (!list.includes(String(id))) {
+        list.push(String(id));
+        const formattedSchoolUrl = schoolUrl
+          ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+            ? schoolUrl.trim()
+            : `https://${schoolUrl.trim()}`)
+          : "";
+
+        detailsList.push({
+          id: String(id),
+          name: university,
+          logoColor: logoColor || 'bg-blue-600',
+          location: location,
+          cipCode: cipCode || 'default',
+          schoolUrl: formattedSchoolUrl
+        });
+      }
+    } else {
+      list = list.filter((cid: string) => cid !== String(id));
+      detailsList = detailsList.filter((c: any) => c.id !== String(id));
+    }
+    localStorage.setItem('compared_colleges', JSON.stringify(list));
+    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
+    setIsCompared(checked);
+    window.dispatchEvent(new Event('compared-colleges-updated'));
   };
 
   return (
@@ -90,13 +142,24 @@ export default function TileCard({
         </div>
       </div>
 
-      {/* CTA */}
-      <Link
-        href={universityHref}
-        className="mt-auto block text-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-[11px] font-bold transition"
-      >
-        View Details
-      </Link>
+      {/* Actions */}
+      <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-50 pt-3">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isCompared}
+            onChange={handleCompareChange}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+          />
+          <span className="text-[11px] font-medium text-gray-600">Compare</span>
+        </label>
+        <Link
+          href={universityHref}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap"
+        >
+          View Details
+        </Link>
+      </div>
     </div>
   );
 }

@@ -64,34 +64,31 @@ export default function Categories() {
     <section className="px-6 sm:px-10 lg:px-[86px] py-16 flex justify-center">
       <div className="w-full max-w-[2380px]">
         <div className="flex flex-col sm:flex-row items-center justify-between mb-10">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Popular Categories</h2>
-          <p className="text-sm text-gray-500">Explore the most in-demand fields of study across the United States.</p>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Popular Categories</h2>
+            <p className="text-sm text-gray-500">Explore the most in-demand fields of study across the United States.</p>
+          </div>
         </div>
-        <Link href="/categories" className="text-blue-600 font-medium text-sm hover:underline mt-4 sm:mt-0 flex items-center gap-1">
-          Browse all 40+ categories ↗
-        </Link>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat, i) => {
-          const Icon = cat.icon;
-          return (
-            <Link
-              key={i}
-              href={`/search?category=${cat.slug}`}
-              className={`block p-8 rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${cat.bg}`}
-            >
-              <div className="mb-6">
-                <Icon className={cat.iconColor} size={28} strokeWidth={1.5} />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{cat.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {cat.desc}
-              </p>
-            </Link>
-          );
-        })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.map((cat, i) => {
+            const Icon = cat.icon;
+            return (
+              <Link
+                key={i}
+                href={`/search?category=${cat.slug}`}
+                className={`block p-8 rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${cat.bg}`}
+              >
+                <div className="mb-6">
+                  <Icon className={cat.iconColor} size={28} strokeWidth={1.5} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{cat.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {cat.desc}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

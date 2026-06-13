@@ -87,9 +87,19 @@ export default function OutcomesSection({
 
   // 1. Median Salary values
   // AFTER
-  const s1 = salaryYear1 != null ? parseNumber(salaryYear1) : null;
-  const s5 = salaryYear5 != null ? parseNumber(salaryYear5) : null;
-  const s10 = salaryYear10 != null ? parseNumber(salaryYear10) : null;
+  const sanitizeSalary = (val: any) => {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim();
+    if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+      return null;
+    }
+    const num = Number(str.replace(/[^0-9.-]/g, ''));
+    return isNaN(num) ? null : num;
+  };
+
+  const s1 = sanitizeSalary(salaryYear1);
+  const s5 = sanitizeSalary(salaryYear5);
+  const s10 = sanitizeSalary(salaryYear10);
 
   // 2. Employment Rate
   const parsedEmp = parseNumber(empFactor) || 0.94;

@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CompareHeader from '@/components/compare/CompareHeader';
-import ComparisonTable, { College } from '@/components/compare/ComparisonTable';
+import ComparisonTable from '@/components/compare/ComparisonTable';
+import { College } from '@/types/university/ComparisonTable';
+import CollegeDetailsModal from '@/components/compare/CollegeDetailsModal';
 import {
   Building2,
   Plus,
@@ -24,14 +26,16 @@ function CompareContent() {
   // Selected college IDs to compare
   const [comparedIds, setComparedIds] = useState<string[]>([]);
   const [comparedColleges, setComparedColleges] = useState<College[]>([]);
-  
+
   // Selection search data
   const [allUniversities, setAllUniversities] = useState<{ id: string; name: string; city?: string; state?: string; schoolType?: string }[]>([]);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [activeModalId, setActiveModalId] = useState<string | null>(null);
+  const [collegeDetailsCache, setCollegeDetailsCache] = useState<Record<string, any>>({});
 
   // Get API URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = "/api/proxy";
 
   // 1. Parse initial IDs from search parameters OR localStorage
   useEffect(() => {
@@ -105,22 +109,47 @@ function CompareContent() {
 
     const fetchCollegesDetails = async () => {
       setIsDetailsLoading(true);
+      const sanitizeSalary = (val: any) => {
+        if (val === null || val === undefined) return null;
+        const str = String(val).trim();
+        if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+          return null;
+        }
+        const num = Number(str.replace(/[^0-9.-]/g, ''));
+        return isNaN(num) ? null : num;
+      };
+      let storedDetails: any[] = [];
+      try {
+        const stored = localStorage.getItem('compared_colleges_details');
+        if (stored) {
+          storedDetails = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Error reading stored details:", e);
+      }
+
       try {
         const fetchPromises = comparedIds.map(async (id) => {
-          // Fetch overview details, tuition fees and career outcomes
-          const [overviewRes, tuitionRes, outcomesRes] = await Promise.all([
-            fetch(`${apiUrl}/overview/${id}/default`),
+          const matchedStored = storedDetails.find((d: any) => String(d.id) === String(id));
+          const cipCode = matchedStored?.cipCode || "default";
+
+          // Fetch overview details, tuition fees, career outcomes, and college details (for school_url)
+          const [overviewRes, tuitionRes, outcomesRes, collegeRes] = await Promise.all([
+            fetch(`${apiUrl}/overview/${id}/${cipCode}`),
             fetch(`${apiUrl}/tuition/${id}`),
-            fetch(`${apiUrl}/outcomes/${id}/default`)
+            fetch(`${apiUrl}/outcomes/${id}/${cipCode}`),
+            fetch(`${apiUrl}/colleges/${id}`)
           ]);
 
           let overviewData: any = {};
           let tuitionData: any = {};
           let outcomesData: any = {};
+          let collegeData: any = {};
 
           if (overviewRes.ok) overviewData = await overviewRes.json();
           if (tuitionRes.ok) tuitionData = await tuitionRes.json();
           if (outcomesRes.ok) outcomesData = await outcomesRes.json();
+          if (collegeRes.ok) collegeData = await collegeRes.json();
 
           // Resolve school basic info from allUniversities
           const matchedUni = allUniversities.find(uni => String(uni.id) === String(id));
@@ -130,11 +159,16 @@ function CompareContent() {
           const isPrivate = control.toLowerCase().includes("private");
           const state = matchedUni?.state || overviewData?.school?.state || "US";
           const city = matchedUni?.city || overviewData?.school?.city || "";
-          
-          let website = "https://www.google.com";
-          if (overviewData?.school?.school_url) {
-            const url = overviewData.school.school_url;
-            website = url.startsWith("http") ? url : `https://${url}`;
+
+          const rawUrl =
+            collegeData?.school_url ||
+            overviewData?.school?.school_url ||
+            overviewData?.school_url ||
+            "";
+          let website = "";
+          if (rawUrl && rawUrl.trim()) {
+            const trimmed = rawUrl.trim();
+            website = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
           }
 
           // Tuition fees
@@ -164,11 +198,7 @@ function CompareContent() {
             : null;
 
           // Median 10yr salary outcomes
-          const medianSalary = outcomesData?.earnings?.year_10 !== null && outcomesData?.earnings?.year_10 !== undefined
-            ? Number(outcomesData.earnings.year_10)
-            : overviewData?.earnings?.year_10 !== null && overviewData?.earnings?.year_10 !== undefined
-            ? Number(overviewData.earnings.year_10)
-            : null;
+          const medianSalary = sanitizeSalary(outcomesData?.earnings?.year_10) || sanitizeSalary(overviewData?.earnings?.year_10) || null;
 
           // Student size
           const studentPopulation = overviewData?.students?.size !== null && overviewData?.students?.size !== undefined
@@ -179,7 +209,7 @@ function CompareContent() {
             id,
             name,
             shortName: name.replace("University", "").replace("Institute of Technology", "").trim(),
-            logo: `https://logo.clearbit.com/${new URL(website).hostname}`,
+            logo: website ? `https://logo.clearbit.com/${new URL(website).hostname}` : "",
             state,
             location: city && state ? `${city}, ${state}` : (city || state || "Unknown"),
             isPrivate,
@@ -192,12 +222,27 @@ function CompareContent() {
             medianSalary,
             studentPopulation,
             image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
-            website
+            website,
+            schoolUrl: website || undefined,
+            cipCode
           } as College;
         });
 
         const resolvedColleges = await Promise.all(fetchPromises);
-        setComparedColleges(resolvedColleges.filter(Boolean) as College[]);
+        const filteredColleges = resolvedColleges.filter(Boolean) as College[];
+        setComparedColleges(filteredColleges);
+
+        // Save resolved details to localStorage
+        const detailsList = filteredColleges.map(c => ({
+          id: String(c.id),
+          name: c.name,
+          logo: c.logo,
+          logoColor: 'bg-blue-600',
+          location: c.location,
+          cipCode: c.cipCode || 'default',
+          schoolUrl: c.schoolUrl || ''
+        }));
+        localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
       } catch (err) {
         console.error("Failed to load colleges details:", err);
       } finally {
@@ -323,6 +368,20 @@ function CompareContent() {
     const updatedIds = comparedIds.filter((cid) => cid !== id);
     setComparedIds(updatedIds);
     localStorage.setItem('compared_colleges', JSON.stringify(updatedIds));
+
+    const details = localStorage.getItem('compared_colleges_details');
+    if (details) {
+      try {
+        const detailsList = JSON.parse(details);
+        if (Array.isArray(detailsList)) {
+          const updatedDetails = detailsList.filter((c: any) => String(c.id) !== String(id));
+          localStorage.setItem('compared_colleges_details', JSON.stringify(updatedDetails));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     window.dispatchEvent(new Event('compared-colleges-updated'));
     syncUrlParams(updatedIds);
   };
@@ -330,7 +389,7 @@ function CompareContent() {
   return (
     <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-20 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* 1. Header */}
         <CompareHeader />
 
@@ -379,6 +438,7 @@ function CompareContent() {
                 onClick={() => {
                   setComparedIds([]);
                   localStorage.setItem('compared_colleges', JSON.stringify([]));
+                  localStorage.setItem('compared_colleges_details', JSON.stringify([]));
                   window.dispatchEvent(new Event('compared-colleges-updated'));
                   syncUrlParams([]);
                 }}
@@ -432,9 +492,18 @@ function CompareContent() {
             averages={averages}
             highlights={highlights}
             onRemove={handleRemoveCollege}
-            onViewDetails={(id) => router.push(`/university/${id}`)}
+            onViewDetails={(id) => setActiveModalId(id)}
           />
         )}
+
+        <CollegeDetailsModal
+          collegeId={activeModalId}
+          isOpen={activeModalId !== null}
+          onClose={() => setActiveModalId(null)}
+          cache={collegeDetailsCache}
+          setCache={setCollegeDetailsCache}
+          comparedColleges={comparedColleges}
+        />
 
         {/* 5. Limit reached warnings modal */}
         <Modal

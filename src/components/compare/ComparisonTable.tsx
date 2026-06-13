@@ -10,26 +10,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button, Tooltip } from 'antd';
-
-export interface College {
-  id: string;
-  name: string;
-  shortName: string;
-  logo: string;
-  state: string;
-  location: string;
-  isPrivate: boolean;
-  tuitionInState: number | null;
-  tuitionOutOfState: number | null;
-  acceptanceRate: number | null; // 0.0 to 1.0
-  satMin: number | null;
-  satMax: number | null;
-  graduationRate: number | null; // 0.0 to 1.0
-  medianSalary: number | null;
-  studentPopulation: number | null;
-  image: string;
-  website: string;
-}
+import { College } from '@/types/university/ComparisonTable';
 
 interface ComparisonTableProps {
   comparedColleges: College[];
@@ -51,8 +32,8 @@ export default function ComparisonTable({
       <table className="w-full text-left border-collapse table-fixed min-w-[768px] md:min-w-[1000px]">
         {/* Sticky Header Row */}
         <thead>
-          <tr className="border-b border-gray-100 bg-[#FAFBFD]/90 backdrop-blur sticky top-[70px] z-20">
-            <th className="w-36 md:w-80 p-4 md:p-8 font-black text-slate-900 text-xs md:text-lg sticky top-[70px] left-0 bg-[#FAFBFD] z-30 border-r border-gray-100">
+          <tr className="border-b border-gray-100 bg-[#FAFBFD]/90 backdrop-blur sticky z-20">
+            <th className="w-36 md:w-80 p-4 md:p-8 font-black text-slate-900 text-xs md:text-lg sticky  left-0 bg-[#FAFBFD] z-30 border-r border-gray-100">
               Institutional Criteria
             </th>
             {comparedColleges.map((college) => {
@@ -61,7 +42,7 @@ export default function ComparisonTable({
               const isLowestCost = highlights.lowestTuitionId === college.id;
 
               return (
-                <th key={college.id} className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky top-[70px] bg-[#FAFBFD] z-20">
+                <th key={college.id} className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky bg-[#FAFBFD] z-20">
                   <div className="absolute top-2 right-2 md:top-4 md:right-4 z-40">
                     <Tooltip title="Remove college">
                       <Button
@@ -229,9 +210,8 @@ export default function ComparisonTable({
                   <span className="text-sm md:text-xl font-bold text-slate-900">
                     {(college.acceptanceRate * 100).toFixed(1)}%
                   </span>
-                  <span className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${
-                    isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
-                  }`}>
+                  <span className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
+                    }`}>
                     {isHighlyCompetitive ? 'Selective' : isCompetitive ? 'Competitive' : 'Match'}
                   </span>
                 </td>
@@ -421,14 +401,23 @@ export default function ComparisonTable({
                   >
                     View Details
                   </Button>
-                  <a
-                    href={college.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] md:text-xs text-[#3F51B5] font-black hover:underline mt-0.5 md:mt-1"
-                  >
-                    Visit Site
-                  </a>
+                  {college.schoolUrl ? (
+                    <a
+                      href={college.schoolUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center flex items-center justify-center w-full"
+                    >
+                      Visit Website
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      className="border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[11px] font-bold cursor-not-allowed text-center flex items-center justify-center w-full"
+                    >
+                      Visit Website
+                    </button>
+                  )}
                 </div>
               </td>
             ))}

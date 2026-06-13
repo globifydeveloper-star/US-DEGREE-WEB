@@ -1,44 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import LoginModal from "../auth/LoginModal";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
-
-  const checkAuth = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("auth_token") : null;
-    const email = typeof window !== 'undefined' ? localStorage.getItem("user_email") : null;
-    if (token) {
-      setIsLoggedIn(true);
-      setUserEmail(email || "User");
-    } else {
-      setIsLoggedIn(false);
-      setUserEmail("");
-    }
+  const [compareCount, setCompareCount] = useState(0);
+   const checkCompareCount = () => {
+    const list = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("compared_colleges") || "[]") : [];
+    setCompareCount(list.length);
   };
-
-  useEffect(() => {
-    checkAuth();
-    window.addEventListener("auth-state-changed", checkAuth);
+   useEffect(() => {
+   
+    checkCompareCount();
+    window.addEventListener("compared-colleges-updated", checkCompareCount);
     return () => {
-      window.removeEventListener("auth-state-changed", checkAuth);
+      window.removeEventListener("compared-colleges-updated", checkCompareCount);
     };
   }, []);
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
-  const handleSignOut = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("user_name");
-    window.dispatchEvent(new Event("auth-state-changed"));
-    setIsLoggedIn(false);
-    setUserEmail("");
+  const handleSignOut = async () => {
+    await signOut(auth);
     setIsMobileMenuOpen(false);
   };
 
@@ -66,8 +57,13 @@ const Navbar = () => {
               <Link href="/" className="hover:text-[#2b55ff] transition-colors">
                 Home
               </Link>
-              <Link href="/compare" className="hover:text-[#2b55ff] transition-colors">
-                Compare Colleges
+              <Link href="/compare" className="hover:text-[#2b55ff] transition-colors flex items-center gap-1.5">
+                <span>Compare Colleges</span>
+                {compareCount > 0 && (
+                  <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                    {compareCount}
+                  </span>
+                )}
               </Link>
               <Link href="/courses" className="hover:text-[#2b55ff] transition-colors">
                 Courses
@@ -90,7 +86,7 @@ const Navbar = () => {
             {isLoggedIn ? (
               <>
                 <span className="hidden sm:inline text-[15px] font-semibold text-slate-600">
-                  Hi, {userEmail.split('@')[0]}
+                  Hi, {user?.displayName?.split(' ')[0] ?? user?.email?.split('@')[0]}
                 </span>
                 <button
                   onClick={handleSignOut}
@@ -101,14 +97,14 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <button 
-                  onClick={() => openAuthModal('login')} 
+                <button
+                  onClick={() => openAuthModal('login')}
                   className="hidden sm:inline text-[16px] font-medium text-[#4b5563] hover:text-[#2b55ff] transition-colors cursor-pointer"
                 >
                   Sign In
                 </button>
-                <button 
-                  onClick={() => openAuthModal('signup')} 
+                <button
+                  onClick={() => openAuthModal('signup')}
                   className="hidden sm:inline-flex bg-[#3b5bdb] hover:bg-[#364fc7] text-white px-6 sm:px-8 py-2.5 rounded-full text-[15px] font-semibold transition-colors shadow-md cursor-pointer"
                 >
                   Get Started
@@ -130,7 +126,14 @@ const Navbar = () => {
         {isMobileMenuOpen && (
           <div className="absolute top-[70px] left-0 w-full bg-white border-b border-[#f0f2f5] shadow-lg lg:hidden flex flex-col p-6 gap-6 text-[#4b5563] font-medium animate-in slide-in-from-top-2 z-50">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-            <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)}>Compare Colleges</Link>
+            <Link href="/compare" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-between w-full">
+              <span>Compare Colleges</span>
+              {compareCount > 0 && (
+                <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                  {compareCount}
+                </span>
+              )}
+            </Link>
             <Link href="/courses" onClick={() => setIsMobileMenuOpen(false)}>Courses</Link>
             <Link href="/categories" onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
             <Link href="/mentors" onClick={() => setIsMobileMenuOpen(false)}>Mentors</Link>
@@ -139,19 +142,19 @@ const Navbar = () => {
             <hr className="border-[#f0f2f5]" />
             {isLoggedIn ? (
               <>
-                <span className="text-slate-600 font-semibold">Hi, {userEmail}</span>
+                <span className="text-slate-600 font-semibold">Hi, {user?.displayName ?? user?.email}</span>
                 <button onClick={handleSignOut} className="text-left text-[#f43f5e] font-semibold cursor-pointer">Sign Out</button>
               </>
             ) : (
               <>
-                <button 
-                  onClick={() => { openAuthModal('login'); setIsMobileMenuOpen(false); }} 
+                <button
+                  onClick={() => { openAuthModal('login'); setIsMobileMenuOpen(false); }}
                   className="text-left text-[16px] font-medium text-[#4b5563] hover:text-[#2b55ff] transition-colors cursor-pointer"
                 >
                   Sign In
                 </button>
-                <button 
-                  onClick={() => { openAuthModal('signup'); setIsMobileMenuOpen(false); }} 
+                <button
+                  onClick={() => { openAuthModal('signup'); setIsMobileMenuOpen(false); }}
                   className="text-left text-[#3b5bdb] font-semibold cursor-pointer"
                 >
                   Get Started
@@ -163,11 +166,11 @@ const Navbar = () => {
       </nav>
 
       {/* Reusable Login/Signup Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
         initialMode={authMode}
         onClose={() => setIsLoginModalOpen(false)} 
-        onSuccess={() => checkAuth()} 
+        onSuccess={() => setIsLoginModalOpen(false)}
       />
     </>
   );

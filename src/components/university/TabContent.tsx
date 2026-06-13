@@ -31,6 +31,7 @@ export default function TabContent({ data }: { data: any }) {
   return (
     <>
       <UniversityHero
+        id={data.id}
         name={data.name}
         location={data.location}
         type={data.type}
@@ -41,6 +42,7 @@ export default function TabContent({ data }: { data: any }) {
         tuitionData={data.tuitionData}
         tuitionType={tuitionType}
         schoolUrl={data.schoolUrl}
+        accreditor={data.accreditor}
       />
       <TrustBanner />
 
