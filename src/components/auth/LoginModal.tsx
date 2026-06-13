@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, ArrowRight, Eye, EyeOff, ShieldCheck, X, GraduationCap, User } from 'lucide-react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { useAuth } from '@/context/AuthContext';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -23,7 +22,9 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isParent, setIsParent] = useState(false);
 
+  const { login, signup, loginWithGoogle } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Sync mode with initialMode prop when modal is opened
@@ -35,6 +36,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       setEmail('');
       setPassword('');
       setConfirmPassword('');
+      setIsParent(false);
     }
   }, [isOpen, initialMode]);
 
@@ -69,7 +71,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     }
   };
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -101,28 +103,51 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
 
     setIsLoading(true);
 
-    // Simulate API check delay
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem('auth_token', 'mocked_jwt_token_123456');
-      localStorage.setItem('user_email', email);
-      if (mode === 'signup') {
-        localStorage.setItem('user_name', name);
+    try {
+      if (mode === 'login') {
+        await login(email, password);
+      } else {
+        await signup(email, password, name, isParent ? 'parent' : 'student');
       }
-
-      // Notify authentication state change
-      window.dispatchEvent(new Event('auth-state-changed'));
       onSuccess(email);
       onClose();
-    }, 1000);
+    } catch (err: any) {
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const getFriendlyErrorMessage = (error: any): string => {
+    const code = error?.code || error?.message || '';
+    if (code.includes('auth/email-already-in-use')) {
+      return 'This email address is already in use by another account.';
+    }
+    if (code.includes('auth/invalid-email')) {
+      return 'Please enter a valid email address.';
+    }
+    if (code.includes('auth/weak-password')) {
+      return 'The password must be at least 6 characters.';
+    }
+    if (code.includes('auth/user-not-found') || code.includes('auth/wrong-password') || code.includes('auth/invalid-credential')) {
+      return 'Invalid email address or password.';
+    }
+    if (code.includes('auth/operation-not-allowed')) {
+      return 'Email/Password authentication is disabled in this project.';
+    }
+    if (code.includes('auth/too-many-requests')) {
+      return 'Too many failed login attempts. Please try again later.';
+    }
+    return error?.message || 'Authentication failed. Please try again.';
+  };
+
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      onSuccess(result.user.email!);
+      const firebaseUser = await loginWithGoogle();
+      onSuccess(firebaseUser.email!);
       onClose();
-    } catch (err) {
-      setError('Google sign-in failed. Please try again.');
+    } catch (err: any) {
+      setError(getFriendlyErrorMessage(err));
     }
   };
 
@@ -319,6 +344,20 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                     </button>
                   </div>
                 </div>
+              </div>
+
+              {/* Role Checkbox (Parent/Student) */}
+              <div className="flex items-center gap-2 pl-1 select-none py-1">
+                <input
+                  id="role-checkbox"
+                  type="checkbox"
+                  checked={isParent}
+                  onChange={(e) => setIsParent(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="role-checkbox" className="text-xs font-bold text-slate-500 cursor-pointer">
+                  I am a parent signing up for my child
+                </label>
               </div>
             </>
           ) : (
