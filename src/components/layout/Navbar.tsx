@@ -46,6 +46,19 @@ const Navbar = () => {
     getCompareCountSnapshot,
     getCompareCountServerSnapshot,
   );
+  //    useEffect(() => {
+   
+  //   const handleOpenAuth = (e: Event) => {
+  //     const customEvent = e as CustomEvent<{ mode?: 'login' | 'signup' }>;
+  //     const mode = customEvent.detail?.mode || 'signup';
+  //     openAuthModal(mode);
+  //   };
+  //   window.addEventListener('open-auth-modal', handleOpenAuth);
+
+  //   return () => {
+  //     window.removeEventListener('open-auth-modal', handleOpenAuth);
+  //   };
+  // }, []);
   const { user, logout, resendVerificationEmail, checkVerificationStatus } =
     useAuth();
   const isLoggedIn = !!user;
