@@ -196,6 +196,27 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       return;
     }
 
+    if (mode === 'forgot_password') {
+      if (!email) {
+        setError('Email address is required');
+        return;
+      }
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        await sendPasswordReset(email);
+        setResetSent(true);
+      } catch (err: any) {
+        setError(getFriendlyErrorMessage(err));
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     // Common Validation
     if (mode === "signup" && !name.trim()) {
       setError("Full Name is required");
