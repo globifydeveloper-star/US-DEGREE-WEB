@@ -81,6 +81,25 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     return () => clearInterval(interval);
   }, [isOpen, isVerificationSent, checkVerificationStatus, verificationEmail, onSuccess, onClose]);
 
+  // Poll verification status if pending verification
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isOpen && isVerificationSent) {
+      interval = setInterval(async () => {
+        try {
+          const verified = await checkVerificationStatus();
+          if (verified) {
+            onSuccess(verificationEmail);
+            onClose();
+          }
+        } catch (e) {
+          console.error("Error checking verification status:", e);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isOpen, isVerificationSent, checkVerificationStatus, verificationEmail, onSuccess, onClose]);
+
   // Close on Esc key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
