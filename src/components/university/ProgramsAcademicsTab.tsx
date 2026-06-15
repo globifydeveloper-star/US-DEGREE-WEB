@@ -128,29 +128,29 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
     <div className="flex flex-col gap-12 py-6 w-full">
 
       {/* 1. Top Row of 3 Metric Cards — Count-up animation */}
-      <div ref={metricsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div ref={metricsRef} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
         {/* Acceptance Rate */}
-        <div className="bg-[#EEF2FF] border border-[#E0E7FF]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+        <div className="bg-[#EEF2FF] border border-[#E0E7FF]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#4F46E5] uppercase tracking-wider mb-1">Acceptance Rate</p>
-          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
+          <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animAdmission : '0%'}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">{selectiveLabel}</p>
         </div>
 
         {/* Tuition (EST.) */}
-        <div className="bg-[#FEFCE8] border border-[#FEF9C3]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+        <div className="bg-[#FEFCE8] border border-[#FEF9C3]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
           <p className="text-[10px] font-black text-[#CA8A04] uppercase tracking-wider mb-1">Tuition (EST.)</p>
-          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
+          <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animTuition : '$0'}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Per Academic Year</p>
         </div>
 
         {/* Total Enrollment */}
-        <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
+        <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
           <p className="text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">Total Enrollment</p>
-          <p className="text-3xl font-black text-gray-900 tracking-tight mb-0.5">
+          <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animEnrollment : '0'}
           </p>
           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Undergrad & Grad</p>
@@ -166,52 +166,52 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
           World-class mentorship and institutional outcomes that define leadership in higher education.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {/* Card 1: Graduation Rate */}
-          <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-3xl p-6.5 flex flex-col gap-3 shadow-sm">
-            <div className="w-10 h-10 bg-white border border-[#DCFCE7] rounded-full flex items-center justify-center text-[#15803D]">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-3 shadow-sm">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white border border-[#DCFCE7] rounded-full flex items-center justify-center text-[#15803D] shrink-0">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path d="M12 14l9-5-9-5-9 5 9 5z" />
                 <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
               </svg>
             </div>
             <div>
-              <p className="text-3xl font-black text-[#15803D] tracking-tight mb-0.5">{completionRate}</p>
-              <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Graduation Rate</p>
-              <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
+              <p className="text-2xl sm:text-3xl font-black text-[#15803D] tracking-tight mb-0.5">{completionRate}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">Graduation Rate</p>
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
                 Consistency in student success through comprehensive support systems and peer networks.
               </p>
             </div>
           </div>
 
           {/* Card 2: Faculty-Student Ratio */}
-          <div className="bg-[#EFF6FF] border border-[#DBEAFE]/60 rounded-3xl p-6.5 flex flex-col gap-3 shadow-sm">
-            <div className="w-10 h-10 bg-white border border-[#DBEAFE] rounded-full flex items-center justify-center text-[#1D4ED8]">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-[#EFF6FF] border border-[#DBEAFE]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-3 shadow-sm">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white border border-[#DBEAFE] rounded-full flex items-center justify-center text-[#1D4ED8] shrink-0">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
             <div>
-              <p className="text-3xl font-black text-[#1D4ED8] tracking-tight mb-0.5">{facultyRatio}</p>
-              <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Student-Faculty Ratio</p>
-              <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
+              <p className="text-2xl sm:text-3xl font-black text-[#1D4ED8] tracking-tight mb-0.5">{facultyRatio}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">Student-Faculty</p>
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
                 Helps estimate the level of faculty availability and potential for personalized instruction
               </p>
             </div>
           </div>
 
           {/* Card 3: Loan Repayment Success */}
-          <div className="bg-[#FFF1F2] border border-[#FFE4E6]/60 rounded-3xl p-6.5 flex flex-col gap-3 shadow-sm relative">
-            <div className="w-10 h-10 bg-white border border-[#FFE4E6] rounded-full flex items-center justify-center text-[#E11D48]">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-[#FFF1F2] border border-[#FFE4E6]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-3 shadow-sm col-span-2 md:col-span-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white border border-[#FFE4E6] rounded-full flex items-center justify-center text-[#E11D48] shrink-0">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <p className="text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">{loanRepaymentDisplay}</p>
-              <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Loan Repayment Success (3-Year)</p>
-              <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
-                Graduates actively repaying student loans within three years.
+              <p className="text-2xl sm:text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">{loanRepaymentDisplay}</p>
+              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">Loan Repayment (3-Yr)</p>
+              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
+                Graduates actively repaying student loans within three years of entry.
               </p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
           Comprehensive Degree Levels
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {["Undergraduate", "Graduate", "Professional"].map((levelName: string, idx: number) => {
             const levelData = (data.programsData?.comprehensive_degree_levels || []).find((l: any) => l.level === levelName) || { level: levelName, total_programs: 0, top_titles: [] };
             
@@ -288,30 +288,35 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
             }
 
             return (
-              <div key={idx} className={`${bg} border ${border} rounded-[28px] p-7 flex flex-col items-start text-left shadow-sm min-h-[280px]`}>
-                <div className="w-14 h-14 bg-[#2563EB] text-white rounded-full flex items-center justify-center mb-5.5 shadow-md">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div
+                key={idx}
+                className={`${bg} border ${border} rounded-[20px] sm:rounded-[28px] p-4 sm:p-7 flex flex-col items-start text-left shadow-sm min-h-[220px] sm:min-h-[280px] ${
+                  levelName === "Professional" ? "col-span-2 md:col-span-1" : ""
+                }`}
+              >
+                <div className="w-10 h-10 sm:w-14 sm:h-14 bg-[#2563EB] text-white rounded-full flex items-center justify-center mb-3 sm:mb-5.5 shadow-md shrink-0">
+                  <svg className="w-5 h-5 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     {iconPath}
                   </svg>
                 </div>
-                <p className="text-base font-extrabold text-gray-900 mb-2">{levelName}</p>
-                <p className="text-[11px] text-gray-500 leading-relaxed mb-6 font-medium min-h-[48px]">
+                <p className="text-sm sm:text-base font-extrabold text-gray-900 mb-1.5 sm:mb-2">{levelName}</p>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed mb-4 sm:mb-6 font-medium min-h-[36px] sm:min-h-[48px]">
                   Explore top programs in {levelName.toLowerCase()} studies, offering comprehensive educational pathways.
                 </p>
-                <ul className="flex flex-col gap-1.5 mt-auto w-full text-[11px] font-bold text-[#1D4ED8] list-none">
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] shrink-0" />
+                <ul className="flex flex-col gap-1.5 mt-auto w-full text-[10px] sm:text-[11px] font-bold text-[#1D4ED8] list-none">
+                  <li className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-[#2563EB] shrink-0" />
                     {levelData.total_programs} Program{levelData.total_programs !== 1 && 's'}
                   </li>
                   {(levelData.top_titles || []).slice(0, 2).map((title: string, tIdx: number) => (
-                    <li key={tIdx} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] shrink-0" />
+                    <li key={tIdx} className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-[#2563EB] shrink-0" />
                       <span className="truncate" title={title}>{title}</span>
                     </li>
                   ))}
                   {levelData.total_programs === 0 && (
-                    <li className="flex items-center gap-2 text-gray-500">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                    <li className="flex items-center gap-1.5 sm:gap-2 text-gray-500">
+                      <span className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-gray-400 shrink-0" />
                       No programs reported
                     </li>
                   )}

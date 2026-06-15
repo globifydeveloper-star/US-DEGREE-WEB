@@ -291,7 +291,7 @@ function SearchContent() {
                     No results found.
                   </p>
                 ) : viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
                     {currentResults.map((result, i) => (
                       <TileCard key={i} {...mapToCardProps(result)} />
                     ))}

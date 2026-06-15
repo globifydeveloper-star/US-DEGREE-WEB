@@ -43,29 +43,35 @@ const stats = [
 
 export default function Stats() {
   return (
-    <section className="px-6 lg:px-[86px] py-12">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <section className="px-4 sm:px-6 lg:px-[86px] py-8 sm:py-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((item, i) => (
           <div
             key={i}
             className="
-              h-[178px]
-              rounded-[28px]
+              h-[156px]
+              sm:h-[178px]
+              rounded-[20px]
+              sm:rounded-[28px]
               flex
               flex-col
               items-center
               justify-center
               text-center
+              px-3
+              sm:px-4
             "
             style={{ backgroundColor: item.bg }}
           >
             {/* Icon */}
             <div
               className="
-                text-[48px]
+                text-[32px]
+                sm:text-[48px]
                 text-[#4F46E5]
                 leading-none
-                mb-5
+                mb-3
+                sm:mb-5
               "
             >
               {item.icon}
@@ -74,13 +80,15 @@ export default function Stats() {
             {/* Title */}
             <h3
               className="
-                text-[22px]
+                text-[18px]
+                sm:text-[22px]
                 md:text-[24px]
                 font-extrabold
                 text-[#111827]
                 leading-none
                 decoration-[2px]
-                mb-2
+                mb-1.5
+                sm:mb-2
               "
             >
               {item.title}
@@ -89,7 +97,8 @@ export default function Stats() {
             {/* Description */}
             <div
               className="
-                text-[15px]
+                text-[12px]
+                sm:text-[15px]
                 text-[#4B5563]
                 leading-[1.3]
               "

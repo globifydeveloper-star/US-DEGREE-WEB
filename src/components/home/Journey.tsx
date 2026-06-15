@@ -55,39 +55,44 @@ px-5 sm:px-8 lg:px-[86px]">
         {/* Steps */}
         <div
           className="
-    flex
-    flex-wrap
-    justify-center
-    gap-y-14
-    gap-x-8
-    lg:gap-x-12
-    xl:gap-x-16
-  "
+            grid
+            grid-cols-2
+            md:flex
+            md:flex-wrap
+            justify-center
+            gap-y-10
+            sm:gap-y-14
+            gap-x-4
+            sm:gap-x-8
+            lg:gap-x-12
+            xl:gap-x-16
+          "
         >
           {steps.map((step) => (
             <div
               key={step.num}
               className="
-    w-full
-    sm:w-[280px]
-    md:w-[240px]
-    lg:w-[260px]
-    xl:w-[280px]
-  "
+                w-full
+                md:w-[240px]
+                lg:w-[260px]
+                xl:w-[280px]
+              "
             >
               {/* Number + Icon */}
               <div
                 className="
-    flex
-    items-center
-    gap-4
-    sm:gap-6
-    lg:gap-8
-    mb-6
-    justify-center
-    md:justify-start
-  "
-              >                {/* Number Circle */}
+                  flex
+                  items-center
+                  gap-3
+                  sm:gap-6
+                  lg:gap-8
+                  mb-4
+                  sm:mb-6
+                  justify-center
+                  md:justify-start
+                "
+              >
+                {/* Number Circle */}
                 <div className="relative flex items-center justify-center">
                   {/* Soft Purple Glow */}
                   <div
@@ -104,7 +109,7 @@ px-5 sm:px-8 lg:px-[86px]">
                   {/* Circle */}
                   <div
                     className="
-                     relative w-[64px] h-[64px] sm:w-[72px] sm:h-[72px] lg:w-[84px] lg:h-[84px] rounded-full  border border-white/70  flex
+                     relative w-[56px] h-[56px] sm:w-[72px] sm:h-[72px] lg:w-[84px] lg:h-[84px] rounded-full  border border-white/70  flex
                     items-center  justify-center shadow-[0_8px_24px_rgba(99,102,241,0.06)]  "
                     style={{
                       background:
@@ -114,7 +119,7 @@ px-5 sm:px-8 lg:px-[86px]">
                     <span
                       className="
                         text-[#2956ff]
-                        text-[28px]
+                        text-[24px]
                         sm:text-[34px]
                         lg:text-[42px]
                         font-semibold
@@ -129,7 +134,7 @@ px-5 sm:px-8 lg:px-[86px]">
                 {/* Icon */}
                 <div
                   className="
-                    text-[48px]
+                    text-[36px]
                     sm:text-[60px]
                     lg:text-[76px]
                     text-[#d8def8]
@@ -144,12 +149,14 @@ px-5 sm:px-8 lg:px-[86px]">
               {/* Title */}
               <h3
                 className="
-                  text-[24px]
+                  text-[18px]
+                  sm:text-[24px]
                   lg:text-[28px]
                   font-extrabold
                   text-[#111827]
                   decoration-[2px]
-                  mb-4
+                  mb-2
+                  sm:mb-4
                   text-center
                   md:text-left
                 "
@@ -160,9 +167,11 @@ px-5 sm:px-8 lg:px-[86px]">
               {/* Description */}
               <p
                 className="
-                  text-[15px]
+                  text-[13px]
+                  sm:text-[15px]
                   lg:text-[16px]
-                  leading-[1.8]
+                  leading-[1.6]
+                  sm:leading-[1.8]
                   text-[#4b5563]
                   decoration-[1px]
                   max-w-full
