@@ -86,6 +86,7 @@ interface AuthContextType {
     resendVerificationEmail: () => Promise<void>;
     checkVerificationStatus: () => Promise<boolean>;
     resendVerificationForUnverifiedUser: (email: string, password: string) => Promise<void>;
+    sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -97,7 +98,8 @@ const AuthContext = createContext<AuthContextType>({
     logout: async () => {},
     resendVerificationEmail: async () => {},
     checkVerificationStatus: async () => false,
-    resendVerificationForUnverifiedUser: async () => {}
+    resendVerificationForUnverifiedUser: async () => {},
+    sendPasswordReset: async () => {}
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -269,6 +271,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const sendPasswordReset = async (email: string): Promise<void> => {
+        await sendPasswordResetEmail(auth, email);
+    };
+
     useEffect(() => {
         let active = true;
         let unsubscribeFirebase: (() => void) | null = null;
@@ -350,7 +356,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             logout,
             resendVerificationEmail,
             checkVerificationStatus,
-            resendVerificationForUnverifiedUser
+            resendVerificationForUnverifiedUser,
+            sendPasswordReset
         }}>
             {children}
         </AuthContext.Provider>
