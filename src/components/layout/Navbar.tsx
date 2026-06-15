@@ -40,14 +40,29 @@ const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const compareCount = useSyncExternalStore(
-    subscribeCompareCount,
-    getCompareCountSnapshot,
-    getCompareCountServerSnapshot,
-  );
-  const { user, logout, resendVerificationEmail, checkVerificationStatus } =
-    useAuth();
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [compareCount, setCompareCount] = useState(0);
+   const checkCompareCount = () => {
+    const list = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("compared_colleges") || "[]") : [];
+    setCompareCount(list.length);
+  };
+   useEffect(() => {
+    checkCompareCount();
+    window.addEventListener("compared-colleges-updated", checkCompareCount);
+
+    const handleOpenAuth = (e: Event) => {
+      const customEvent = e as CustomEvent<{ mode?: 'login' | 'signup' }>;
+      const mode = customEvent.detail?.mode || 'signup';
+      openAuthModal(mode);
+    };
+    window.addEventListener('open-auth-modal', handleOpenAuth);
+
+    return () => {
+      window.removeEventListener("compared-colleges-updated", checkCompareCount);
+      window.removeEventListener('open-auth-modal', handleOpenAuth);
+    };
+  }, []);
+  const { user, logout } = useAuth();
   const isLoggedIn = !!user;
 
   // Open the login modal when redirected here with ?login=1 (e.g. an
