@@ -76,7 +76,19 @@ const Navbar = () => {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [resendError, setResendError] = useState("");
-
+// const [compareCount, setCompareCount] = useState(0);
+//    const checkCompareCount = () => {
+//     const list = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("compared_colleges") || "[]") : [];
+//     setCompareCount(list.length);
+//   };
+//    useEffect(() => {
+   
+//     checkCompareCount();
+//     window.addEventListener("compared-colleges-updated", checkCompareCount);
+//     return () => {
+//       window.removeEventListener("compared-colleges-updated", checkCompareCount);
+//     };
+//   }, []);
   const handleResendEmail = async () => {
     setResending(true);
     setResendError("");

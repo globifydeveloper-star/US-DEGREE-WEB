@@ -37,8 +37,12 @@ export default function LoginModal({
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isParent, setIsParent] = useState(false);
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [isResending, setIsResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
 
-  const { login, signup, loginWithGoogle } = useAuth();
+  const { login, signup, loginWithGoogle, resendVerificationForUnverifiedUser, checkVerificationStatus } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Reset the form to a clean state whenever the modal transitions to open.
@@ -54,8 +58,31 @@ export default function LoginModal({
       setPassword("");
       setConfirmPassword("");
       setIsParent(false);
+      setIsVerificationSent(false);
+      setVerificationEmail('');
+      setIsResending(false);
+      setResendStatus('');
     }
   }
+
+  // Poll verification status if pending verification
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isOpen && isVerificationSent) {
+      interval = setInterval(async () => {
+        try {
+          const verified = await checkVerificationStatus();
+          if (verified) {
+            onSuccess(verificationEmail);
+            onClose();
+          }
+        } catch (e) {
+          console.error("Error checking verification status:", e);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isOpen, isVerificationSent, checkVerificationStatus, verificationEmail, onSuccess, onClose]);
 
   // Close on Esc key press
   useEffect(() => {
@@ -121,15 +148,20 @@ export default function LoginModal({
     setIsLoading(true);
 
     try {
-      if (mode === "login") {
+      if (mode === 'login') {
         await login(email, password, rememberMe);
+        onSuccess(email);
+        onClose();
       } else {
         await signup(email, password, name, isParent ? "parent" : "student");
       }
-      onSuccess(email);
-      onClose();
-    } catch (err) {
-      setError(getFriendlyErrorMessage(err));
+    } catch (err: any) {
+      if (err.message === 'EMAIL_NOT_VERIFIED') {
+        setVerificationEmail(email);
+        setIsVerificationSent(true);
+      } else {
+        setError(getFriendlyErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -172,6 +204,83 @@ export default function LoginModal({
       setError(getFriendlyErrorMessage(err));
     }
   };
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    setResendStatus('');
+    try {
+      await resendVerificationForUnverifiedUser(verificationEmail, password);
+      setResendStatus('Verification email resent successfully!');
+    } catch (err: any) {
+      setResendStatus(getFriendlyErrorMessage(err));
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  if (isVerificationSent) {
+    return (
+      <div
+        onClick={handleOverlayClick}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md px-4 py-6 animate-fade-in"
+      >
+        <div
+          ref={modalRef}
+          className="w-full max-w-[480px] bg-white rounded-[32px] border border-gray-100 shadow-2xl p-6 md:p-8 relative overflow-hidden animate-scale-up select-none font-['Poppins'] text-center"
+        >
+          {/* Decorative corner element */}
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10"></div>
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 active:scale-90 transition-all cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="my-6 flex flex-col items-center">
+            <div className="inline-flex w-16 h-16 rounded-3xl bg-blue-50 items-center justify-center text-blue-600 mb-4 shadow-inner">
+              <Mail className="w-8 h-8 animate-bounce" />
+            </div>
+            <h2 className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-3">
+              Verify Your Email
+            </h2>
+            <p className="text-sm font-semibold text-slate-500 max-w-[320px] leading-relaxed mb-6">
+              We have sent a verification link to <span className="text-blue-600 font-bold">{verificationEmail}</span>. Please check your Gmail inbox and verify your account to log in.
+            </p>
+            
+            <button
+              onClick={() => {
+                setIsVerificationSent(false);
+                setMode('login');
+              }}
+              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-99 text-white font-extrabold text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer"
+            >
+              Back to Sign In <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <div className="mt-6 text-xs font-semibold text-slate-400">
+              Didnt receive the email?{' '}
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : 'Resend verification email'}
+              </button>
+            </div>
+            {resendStatus && (
+              <p className={`mt-3 text-xs font-bold ${resendStatus.includes('successfully') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {resendStatus}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
