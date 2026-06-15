@@ -13,6 +13,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { exchangeIdToken, fetchMe, patchProfile } from "@/lib/auth/api";
