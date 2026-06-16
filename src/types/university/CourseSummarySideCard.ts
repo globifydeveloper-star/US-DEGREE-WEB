@@ -3,4 +3,5 @@ export interface CourseSummarySideCardProps {
   duration: string;
   format: string;
   financialAid: string;
+  schoolUrl?: string | null;
 }

@@ -18,3 +18,86 @@ export interface College {
   image: string;
   cipCode?: string;
 }
+
+// Resolved, display-ready detail shown in the CollegeDetailsModal and cached on the compare page.
+export interface CollegeDetail {
+  name: string;
+  location: string;
+  type: string;
+  logo: string | null;
+  totalStudents: number | null;
+  facultyRatio: string;
+  retentionRate: string;
+  programs: number | null;
+  fafsaApplications: number | null;
+  completionRate: string;
+  tuitionInState: number | null;
+  tuitionOutOfState: number | null;
+  satReadingWriting: string | null;
+  satMath: string | null;
+  satAverage: string | null;
+  acceptanceRate: string;
+  graduates3yr: string;
+  salaryYear1: number | null;
+  salaryYear5: number | null;
+  salaryYear10: number | null;
+  menStudentsPct: number;
+  womenStudentsPct: number;
+  menFacultyPct: number;
+  womenFacultyPct: number;
+}
+
+// ---- Raw API response shapes consumed by the CollegeDetailsModal ----
+export type ApiNumber = number | string | null | undefined;
+
+export interface OverviewResponse {
+  program?: { cip_code?: string };
+  school_name?: string;
+  school?: {
+    school_name?: string;
+    name?: string;
+    city?: string;
+    state?: string;
+    control?: string;
+    school_url?: string;
+    program_count?: number | null;
+  };
+  students?: {
+    size?: number | null;
+    student_faculty_ratio?: ApiNumber;
+    retention_rate?: number | null;
+    fafsa_applications?: number | null;
+  };
+  completion?: { completion_rate?: number | null };
+  admissions?: {
+    sat_rw_min?: number | null;
+    sat_rw_max?: number | null;
+    sat_math_min?: number | null;
+    sat_math_max?: number | null;
+    sat_avg_overall?: ApiNumber;
+    admission_rate?: number | null;
+  };
+  earnings?: { year_1?: ApiNumber; year_5?: ApiNumber; year_10?: ApiNumber };
+}
+
+export interface TuitionResponse {
+  tuition?: { tuition_in_state?: ApiNumber; tuition_out_state?: ApiNumber };
+}
+
+export interface CampusResponse {
+  repayment?: { all_borrowers_3yr?: ApiNumber };
+  students?: { demographics?: { men?: number | null; women?: number | null } };
+}
+
+export interface CollegeResponse {
+  school_name?: string;
+  name?: string;
+  city?: string;
+  state?: string;
+  control?: string;
+  school_url?: string;
+}
+
+export interface OutcomesResponse {
+  earnings?: { year_1?: ApiNumber; year_5?: ApiNumber; year_10?: ApiNumber };
+}

@@ -346,11 +346,11 @@ export default function ResultCard({
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        {/* <div className="flex flex-col items-end gap-2">
           <button className="text-gray-300 hover:text-red-500 transition">
             <Heart size={20} />
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Match Badge (Absolute on Desktop, regular flow on mobile) */}

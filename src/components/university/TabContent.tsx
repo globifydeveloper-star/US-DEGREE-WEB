@@ -155,6 +155,7 @@ export default function TabContent({ data }: { data: any }) {
             duration={data.duration}
             format={data.format}
             financialAid={data.financialAid}
+            schoolUrl={data.schoolUrl}
           />
         </div>
       </div>
