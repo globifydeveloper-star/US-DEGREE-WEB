@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -19,110 +19,291 @@ import {
   Spin,
 } from 'antd';
 
+// How many colleges to preload into the dropdown before the user searches.
+const INITIAL_LIST_SIZE = 20;
+// Minimum characters before we filter the in-memory list on keyword.
+const MIN_SEARCH_CHARS = 4;
+// Debounce window for the search (ms).
+const SEARCH_DEBOUNCE_MS = 300;
+
+// ---- Types ----
+type UniOption = {
+  id: string;
+  name: string;
+  city?: string;
+  state?: string;
+  schoolType?: string;
+};
+
+// Raw row shape from /compare/colleges
+interface RawUniversity {
+  unitid?: string | number;
+  id?: string | number;
+  value?: string | number;
+  school_name?: string;
+  name?: string;
+  label?: string;
+  city?: string;
+  state?: string;
+  school_type?: string;
+  college_type?: string;
+  control?: string;
+}
+
+interface ApiSchool {
+  school_name?: string;
+  name?: string;
+  state?: string;
+  city?: string;
+  control?: string;
+  school_url?: string;
+}
+
+interface OverviewData {
+  school_name?: string;
+  school_url?: string;
+  school?: ApiSchool;
+  admissions?: {
+    admission_rate?: number | null;
+    sat_rw_min?: number | null;
+    sat_math_min?: number | null;
+    sat_rw_max?: number | null;
+    sat_math_max?: number | null;
+  };
+  completion?: { completion_rate?: number | null };
+  earnings?: { year_10?: number | string | null };
+  students?: { size?: number | null };
+}
+
+interface TuitionData {
+  tuition?: {
+    tuition_in_state?: number | string | null;
+    tuition_out_state?: number | string | null;
+  };
+}
+
+interface OutcomesData {
+  earnings?: { year_10?: number | string | null };
+}
+
+interface CollegeData {
+  school_url?: string;
+  school_name?: string;
+  name?: string;
+  city?: string;
+  state?: string;
+  school_type?: string;
+  control?: string;
+}
+
+interface StoredDetail {
+  id: string;
+  name?: string;
+  city?: string;
+  state?: string;
+  schoolType?: string;
+  location?: string;
+  cipCode?: string;
+  schoolUrl?: string;
+  logo?: string;
+  logoColor?: string;
+}
+
 function CompareContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Selected college IDs to compare
-  const [comparedIds, setComparedIds] = useState<string[]>([]);
+  // ---- comparedIds is DERIVED from the URL (single source of truth) ----
+  // No setState-in-effect: the URL drives state, handlers push to the URL.
+  const idsParam = searchParams.get('ids');
+  const comparedIds = useMemo<string[]>(
+    () => (idsParam ? idsParam.split(',').filter(Boolean) : []),
+    [idsParam]
+  );
+
   const [comparedColleges, setComparedColleges] = useState<College[]>([]);
 
   // Selection search data
-  const [allUniversities, setAllUniversities] = useState<{ id: string; name: string; city?: string; state?: string; schoolType?: string }[]>([]);
+  const [selectOptions, setSelectOptions] = useState<UniOption[]>([]);
+  // Rendered in the "Quick Add" list, so this is state (not a ref).
+  const [initialUniversities, setInitialUniversities] = useState<UniOption[]>([]);
+  // Cache of EVERY college we have loaded. Used to resolve names/locations.
+  const allUniversitiesRef = useRef<Map<string, UniOption>>(new Map());
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
-  const [collegeDetailsCache, setCollegeDetailsCache] = useState<Record<string, any>>({});
+  const [collegeDetailsCache, setCollegeDetailsCache] = useState<Record<string, unknown>>({});
+  const hydratedRef = useRef(false);
 
   // Get API URL
   const apiUrl = "/api/proxy";
 
-  // 1. Parse initial IDs from search parameters OR localStorage
-  useEffect(() => {
-    const idsParam = searchParams.get('ids');
-    if (idsParam) {
-      const ids = idsParam.split(',').filter(Boolean);
-      setComparedIds(ids);
-      localStorage.setItem('compared_colleges', JSON.stringify(ids));
-    } else {
-      const stored = localStorage.getItem('compared_colleges');
-      if (stored) {
-        try {
-          const ids = JSON.parse(stored);
-          if (Array.isArray(ids) && ids.length > 0) {
-            setComparedIds(ids);
-            // Sync to URL
-            const params = new URLSearchParams();
-            params.set('ids', ids.join(','));
-            router.replace(`/compare?${params.toString()}`);
-            return;
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      setComparedIds([]);
+  // Helper: normalise one raw API university row into a UniOption and cache it.
+  const cacheUniversity = useCallback((uni: RawUniversity): UniOption | null => {
+    if (!uni) return null;
+    const id = String(uni.unitid ?? uni.id ?? uni.value ?? '');
+    if (!id) return null;
+    const option: UniOption = {
+      id,
+      name: uni.school_name ?? uni.name ?? uni.label ?? '',
+      city: uni.city ?? '',
+      state: uni.state ?? '',
+      schoolType: uni.school_type ?? uni.college_type ?? uni.control ?? 'Public',
+    };
+    const existing = allUniversitiesRef.current.get(id);
+    if (!existing || (!existing.name && option.name)) {
+      allUniversitiesRef.current.set(id, option);
     }
-  }, [searchParams, router]);
+    return option;
+  }, []);
 
-  // 2. Fetch search database to populate the select component options
+  // 1. Hydrate the URL from localStorage on first mount (one-time).
+  //    This effect ONLY touches external systems (router + localStorage) —
+  //    it never calls setState, so it can't trigger cascading renders.
   useEffect(() => {
-    const fetchAllUniversitiesForSelect = async () => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    if (idsParam) {
+      // URL is the source of truth — mirror it into localStorage.
+      localStorage.setItem(
+        'compared_colleges',
+        JSON.stringify(idsParam.split(',').filter(Boolean))
+      );
+      return;
+    }
+
+    // No ids in the URL — restore from localStorage by pushing them to the URL.
+    const stored = localStorage.getItem('compared_colleges');
+    if (stored) {
       try {
-        const res = await fetch(`${apiUrl}/search?type=universities`);
+        const ids = JSON.parse(stored);
+        if (Array.isArray(ids) && ids.length > 0) {
+          const params = new URLSearchParams();
+          params.set('ids', ids.join(','));
+          router.replace(`/compare?${params.toString()}`);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [idsParam, router]);
+
+  // 2. Preload the initial dropdown list from /compare/colleges (returns up to 50).
+  //    We render only the first ~20; searching hits the server for the rest.
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/compare/colleges`);
         if (res.ok) {
-          const data = await res.json();
+          const data: unknown = await res.json();
           if (Array.isArray(data)) {
-            setAllUniversities(
-              data.map((uni: any) => ({
-                id: String(uni.unitid),
-                name: uni.school_name,
-                city: uni.city,
-                state: uni.state,
-                schoolType: uni.school_type || uni.college_type || "Public",
-              }))
-            );
+            (data as RawUniversity[]).forEach((uni) => cacheUniversity(uni));
+
+            const all = Array.from(allUniversitiesRef.current.values());
+            const mapped = all.slice(0, INITIAL_LIST_SIZE);
+            setInitialUniversities(mapped);
+            setSelectOptions(mapped);
           }
         }
       } catch (err) {
-        console.error("Failed to fetch select list:", err);
+        console.error("Failed to fetch initial college list:", err);
       }
     };
-    fetchAllUniversitiesForSelect();
-  }, [apiUrl]);
+    fetchUniversities();
+  }, [apiUrl, cacheUniversity]);
 
-  // 3. Keep URL query param synchronised with active compared IDs
-  const syncUrlParams = (ids: string[]) => {
+  // 2b. Debounced SERVER-SIDE search against the full DB via /compare/colleges?search=...
+  const handleDropdownSearch = useCallback((searchText: string) => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+
+    const trimmed = searchText.trim();
+
+    if (trimmed.length < MIN_SEARCH_CHARS) {
+      setSelectOptions(initialUniversities);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${apiUrl}/compare/colleges?search=${encodeURIComponent(trimmed)}&limit=50`
+        );
+        if (res.ok) {
+          const data: unknown = await res.json();
+          if (Array.isArray(data)) {
+            const results: UniOption[] = [];
+            const seen = new Set<string>();
+            for (const uni of data as RawUniversity[]) {
+              const opt = cacheUniversity(uni); // cache so name/location resolve later
+              if (opt && !seen.has(opt.id)) {
+                seen.add(opt.id);
+                results.push(opt);
+              }
+            }
+            setSelectOptions(results.length > 0 ? results : initialUniversities);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to search colleges:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  }, [apiUrl, initialUniversities, cacheUniversity]);
+
+  // 3. Keep URL query param synchronised with active compared IDs.
+  const syncUrlParams = useCallback((ids: string[]) => {
     const params = new URLSearchParams();
     if (ids.length > 0) {
       params.set('ids', ids.join(','));
     }
     router.push(`/compare?${params.toString()}`);
-  };
+  }, [router]);
 
-  // 4. Fetch details for compared colleges dynamically
+  // 4. Fetch details for compared colleges dynamically.
   useEffect(() => {
-    if (comparedIds.length === 0) {
-      setComparedColleges([]);
-      return;
-    }
+    let cancelled = false;
 
-    const fetchCollegesDetails = async () => {
+    const sanitizeSalary = (val: number | string | null | undefined): number | null => {
+      if (val === null || val === undefined) return null;
+      const str = String(val).trim();
+      if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+        return null;
+      }
+      const num = Number(str.replace(/[^0-9.-]/g, ''));
+      return isNaN(num) ? null : num;
+    };
+
+    const toNum = (val: number | string | null | undefined): number | null => {
+      if (val === null || val === undefined) return null;
+      const num = Number(val);
+      return isNaN(num) ? null : num;
+    };
+
+    const run = async () => {
+      if (comparedIds.length === 0) {
+        // Updater returns the same reference when already empty → no extra render.
+        setComparedColleges((prev) => (prev.length === 0 ? prev : []));
+        return;
+      }
+
       setIsDetailsLoading(true);
-      const sanitizeSalary = (val: any) => {
-        if (val === null || val === undefined) return null;
-        const str = String(val).trim();
-        if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
-          return null;
-        }
-        const num = Number(str.replace(/[^0-9.-]/g, ''));
-        return isNaN(num) ? null : num;
-      };
-      let storedDetails: any[] = [];
+
+      let storedDetails: StoredDetail[] = [];
       try {
         const stored = localStorage.getItem('compared_colleges_details');
         if (stored) {
-          storedDetails = JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) storedDetails = parsed as StoredDetail[];
         }
       } catch (e) {
         console.error("Error reading stored details:", e);
@@ -130,10 +311,9 @@ function CompareContent() {
 
       try {
         const fetchPromises = comparedIds.map(async (id) => {
-          const matchedStored = storedDetails.find((d: any) => String(d.id) === String(id));
+          const matchedStored = storedDetails.find((d) => String(d.id) === String(id));
           const cipCode = matchedStored?.cipCode || "default";
 
-          // Fetch overview details, tuition fees, career outcomes, and college details (for school_url)
           const [overviewRes, tuitionRes, outcomesRes, collegeRes] = await Promise.all([
             fetch(`${apiUrl}/overview/${id}/${cipCode}`),
             fetch(`${apiUrl}/tuition/${id}`),
@@ -141,24 +321,54 @@ function CompareContent() {
             fetch(`${apiUrl}/colleges/${id}`)
           ]);
 
-          let overviewData: any = {};
-          let tuitionData: any = {};
-          let outcomesData: any = {};
-          let collegeData: any = {};
+          let overviewData: OverviewData = {};
+          let tuitionData: TuitionData = {};
+          let outcomesData: OutcomesData = {};
+          let collegeData: CollegeData = {};
 
           if (overviewRes.ok) overviewData = await overviewRes.json();
           if (tuitionRes.ok) tuitionData = await tuitionRes.json();
           if (outcomesRes.ok) outcomesData = await outcomesRes.json();
           if (collegeRes.ok) collegeData = await collegeRes.json();
 
-          // Resolve school basic info from allUniversities
-          const matchedUni = allUniversities.find(uni => String(uni.id) === String(id));
+          const matchedUni =
+            allUniversitiesRef.current.get(String(id)) ||
+            selectOptions.find((uni) => String(uni.id) === String(id));
 
-          const name = matchedUni?.name || overviewData?.school_name || overviewData?.school?.school_name || overviewData?.school?.name || "Unknown University";
-          const control = matchedUni?.schoolType || overviewData?.school?.control || "Public";
-          const isPrivate = control.toLowerCase().includes("private");
-          const state = matchedUni?.state || overviewData?.school?.state || "US";
-          const city = matchedUni?.city || overviewData?.school?.city || "";
+          // ---- NAME (priority order, most reliable first) ----
+          const name =
+            matchedUni?.name ||
+            matchedStored?.name ||
+            collegeData?.school_name ||
+            collegeData?.name ||
+            overviewData?.school_name ||
+            overviewData?.school?.school_name ||
+            overviewData?.school?.name ||
+            "Unknown University";
+
+          // ---- TYPE (Public/Private) ----
+          const control =
+            matchedUni?.schoolType ||
+            matchedStored?.schoolType ||
+            collegeData?.school_type ||
+            collegeData?.control ||
+            overviewData?.school?.control ||
+            "Public";
+          const isPrivate = String(control).toLowerCase().includes("private");
+
+          // ---- LOCATION ----
+          const state =
+            matchedUni?.state ||
+            matchedStored?.state ||
+            collegeData?.state ||
+            overviewData?.school?.state ||
+            "";
+          const city =
+            matchedUni?.city ||
+            matchedStored?.city ||
+            collegeData?.city ||
+            overviewData?.school?.city ||
+            "";
 
           const rawUrl =
             collegeData?.school_url ||
@@ -166,50 +376,49 @@ function CompareContent() {
             overviewData?.school_url ||
             "";
           let website = "";
-          if (rawUrl && rawUrl.trim()) {
-            const trimmed = rawUrl.trim();
-            website = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+          if (rawUrl && String(rawUrl).trim()) {
+            const trimmedUrl = String(rawUrl).trim();
+            website = trimmedUrl.startsWith("http") ? trimmedUrl : `https://${trimmedUrl}`;
           }
 
-          // Tuition fees
-          const tuitionInState = tuitionData?.tuition?.tuition_in_state !== null && tuitionData?.tuition?.tuition_in_state !== undefined
-            ? Number(tuitionData.tuition.tuition_in_state)
-            : null;
-          const tuitionOutOfState = tuitionData?.tuition?.tuition_out_state !== null && tuitionData?.tuition?.tuition_out_state !== undefined
-            ? Number(tuitionData.tuition.tuition_out_state)
-            : null;
+          let logo = "";
+          if (website) {
+            try {
+              logo = `https://logo.clearbit.com/${new URL(website).hostname}`;
+            } catch {
+              logo = "";
+            }
+          }
 
-          // Acceptance rates
-          const acceptanceRate = overviewData?.admissions?.admission_rate !== null && overviewData?.admissions?.admission_rate !== undefined
-            ? Number(overviewData.admissions.admission_rate)
-            : null;
+          const tuitionInState = toNum(tuitionData?.tuition?.tuition_in_state);
+          const tuitionOutOfState = toNum(tuitionData?.tuition?.tuition_out_state);
+          const acceptanceRate = toNum(overviewData?.admissions?.admission_rate);
 
-          // SAT min and max estimation
-          const satMin = overviewData?.admissions?.sat_rw_min !== null && overviewData?.admissions?.sat_math_min !== null && overviewData?.admissions?.sat_rw_min !== undefined && overviewData?.admissions?.sat_math_min !== undefined
-            ? Number(overviewData.admissions.sat_rw_min) + Number(overviewData.admissions.sat_math_min)
-            : null;
-          const satMax = overviewData?.admissions?.sat_rw_max !== null && overviewData?.admissions?.sat_math_max !== null && overviewData?.admissions?.sat_rw_max !== undefined && overviewData?.admissions?.sat_math_max !== undefined
-            ? Number(overviewData.admissions.sat_rw_max) + Number(overviewData.admissions.sat_math_max)
-            : null;
+          const satRwMin = toNum(overviewData?.admissions?.sat_rw_min);
+          const satMathMin = toNum(overviewData?.admissions?.sat_math_min);
+          const satMin = satRwMin !== null && satMathMin !== null ? satRwMin + satMathMin : null;
 
-          // Graduation rate
-          const graduationRate = overviewData?.completion?.completion_rate !== null && overviewData?.completion?.completion_rate !== undefined
-            ? Number(overviewData.completion.completion_rate) / 100
-            : null;
+          const satRwMax = toNum(overviewData?.admissions?.sat_rw_max);
+          const satMathMax = toNum(overviewData?.admissions?.sat_math_max);
+          const satMax = satRwMax !== null && satMathMax !== null ? satRwMax + satMathMax : null;
 
-          // Median 10yr salary outcomes
-          const medianSalary = sanitizeSalary(outcomesData?.earnings?.year_10) || sanitizeSalary(overviewData?.earnings?.year_10) || null;
+          const completionRate = toNum(overviewData?.completion?.completion_rate);
+          const graduationRate = completionRate !== null ? completionRate / 100 : null;
 
-          // Student size
-          const studentPopulation = overviewData?.students?.size !== null && overviewData?.students?.size !== undefined
-            ? Number(overviewData.students.size)
-            : null;
+          const medianSalary =
+            sanitizeSalary(outcomesData?.earnings?.year_10) ??
+            sanitizeSalary(overviewData?.earnings?.year_10) ??
+            null;
+
+          const studentPopulation = toNum(overviewData?.students?.size);
+
+          cacheUniversity({ unitid: id, school_name: name, city, state, school_type: control });
 
           return {
             id,
             name,
             shortName: name.replace("University", "").replace("Institute of Technology", "").trim(),
-            logo: website ? `https://logo.clearbit.com/${new URL(website).hostname}` : "",
+            logo,
             state,
             location: city && state ? `${city}, ${state}` : (city || state || "Unknown"),
             isPrivate,
@@ -229,16 +438,20 @@ function CompareContent() {
         });
 
         const resolvedColleges = await Promise.all(fetchPromises);
+        if (cancelled) return;
+
         const filteredColleges = resolvedColleges.filter(Boolean) as College[];
         setComparedColleges(filteredColleges);
 
-        // Save resolved details to localStorage
-        const detailsList = filteredColleges.map(c => ({
+        const detailsList: StoredDetail[] = filteredColleges.map((c) => ({
           id: String(c.id),
           name: c.name,
           logo: c.logo,
           logoColor: 'bg-blue-600',
           location: c.location,
+          city: c.location && c.location.includes(',') ? c.location.split(',')[0].trim() : '',
+          state: c.state,
+          schoolType: c.isPrivate ? 'Private' : 'Public',
           cipCode: c.cipCode || 'default',
           schoolUrl: c.schoolUrl || ''
         }));
@@ -246,14 +459,19 @@ function CompareContent() {
       } catch (err) {
         console.error("Failed to load colleges details:", err);
       } finally {
-        setIsDetailsLoading(false);
+        if (!cancelled) setIsDetailsLoading(false);
       }
     };
 
-    fetchCollegesDetails();
-  }, [comparedIds, apiUrl, allUniversities]);
+    run();
 
-  // Comparison Metrics calculations for highlighting winners
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comparedIds, apiUrl]);
+
+  // Comparison metrics for highlighting winners.
   const highlights = useMemo(() => {
     const defaultVal = {
       lowestTuitionId: '',
@@ -275,7 +493,6 @@ function CompareContent() {
       bestValueId: '',
     };
 
-    // Keep track of all valid values to check for differences
     const tuitionValues: number[] = [];
     const graduationValues: number[] = [];
     const salaryValues: number[] = [];
@@ -317,7 +534,6 @@ function CompareContent() {
       }
     });
 
-    // Verify differences: if max === min, there is no difference, so don't highlight
     const hasTuitionDiff = tuitionValues.length > 1 && Math.max(...tuitionValues) !== Math.min(...tuitionValues);
     const hasGradDiff = graduationValues.length > 1 && Math.max(...graduationValues) !== Math.min(...graduationValues);
     const hasSalaryDiff = salaryValues.length > 1 && Math.max(...salaryValues) !== Math.min(...salaryValues);
@@ -331,14 +547,14 @@ function CompareContent() {
     };
   }, [comparedColleges]);
 
-  // Averages for lower/higher calculations
+  // Averages for lower/higher calculations.
   const averages = useMemo(() => {
     if (comparedColleges.length === 0)
       return { tuition: 0, graduationRate: 0, medianSalary: 0 };
 
-    const tuitionColleges = comparedColleges.filter(c => c.tuitionOutOfState !== null);
-    const gradColleges = comparedColleges.filter(c => c.graduationRate !== null);
-    const salaryColleges = comparedColleges.filter(c => c.medianSalary !== null);
+    const tuitionColleges = comparedColleges.filter((c) => c.tuitionOutOfState !== null);
+    const gradColleges = comparedColleges.filter((c) => c.graduationRate !== null);
+    const salaryColleges = comparedColleges.filter((c) => c.medianSalary !== null);
 
     const sumTuition = tuitionColleges.reduce((s, c) => s + (c.tuitionOutOfState ?? 0), 0);
     const sumGraduation = gradColleges.reduce((s, c) => s + (c.graduationRate ?? 0), 0);
@@ -357,16 +573,43 @@ function CompareContent() {
       setIsLimitModalOpen(true);
       return;
     }
+
+    // Persist what we already know about this college (from the dropdown option)
+    // so its name/location/type render immediately — even before the detail APIs
+    // respond and on a future reload. This is the core fix for "Unknown" cards.
+    const opt =
+      allUniversitiesRef.current.get(String(id)) ||
+      selectOptions.find((u) => u.id === id) ||
+      initialUniversities.find((u) => u.id === id);
+    if (opt) {
+      try {
+        const stored = localStorage.getItem('compared_colleges_details');
+        const list: StoredDetail[] = stored ? JSON.parse(stored) : [];
+        if (Array.isArray(list) && !list.some((d) => String(d.id) === String(id))) {
+          list.push({
+            id: String(id),
+            name: opt.name,
+            city: opt.city || '',
+            state: opt.state || '',
+            schoolType: opt.schoolType || 'Public',
+            location: opt.city && opt.state ? `${opt.city}, ${opt.state}` : (opt.city || opt.state || ''),
+            cipCode: 'default',
+          });
+          localStorage.setItem('compared_colleges_details', JSON.stringify(list));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     const updatedIds = [...comparedIds, id];
-    setComparedIds(updatedIds);
     localStorage.setItem('compared_colleges', JSON.stringify(updatedIds));
     window.dispatchEvent(new Event('compared-colleges-updated'));
-    syncUrlParams(updatedIds);
+    syncUrlParams(updatedIds); // URL update re-derives comparedIds
   };
 
   const handleRemoveCollege = (id: string) => {
     const updatedIds = comparedIds.filter((cid) => cid !== id);
-    setComparedIds(updatedIds);
     localStorage.setItem('compared_colleges', JSON.stringify(updatedIds));
 
     const details = localStorage.getItem('compared_colleges_details');
@@ -374,7 +617,7 @@ function CompareContent() {
       try {
         const detailsList = JSON.parse(details);
         if (Array.isArray(detailsList)) {
-          const updatedDetails = detailsList.filter((c: any) => String(c.id) !== String(id));
+          const updatedDetails = detailsList.filter((c: StoredDetail) => String(c.id) !== String(id));
           localStorage.setItem('compared_colleges_details', JSON.stringify(updatedDetails));
         }
       } catch (e) {
@@ -384,6 +627,13 @@ function CompareContent() {
 
     window.dispatchEvent(new Event('compared-colleges-updated'));
     syncUrlParams(updatedIds);
+  };
+
+  const handleClearAll = () => {
+    localStorage.setItem('compared_colleges', JSON.stringify([]));
+    localStorage.setItem('compared_colleges_details', JSON.stringify([]));
+    window.dispatchEvent(new Event('compared-colleges-updated'));
+    syncUrlParams([]);
   };
 
   return (
@@ -416,17 +666,22 @@ function CompareContent() {
             <Select
               showSearch
               className="w-full md:w-80 h-12"
-              placeholder="Search or Select a College..."
+              placeholder="Type to search colleges..."
               value={null}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              filterOption={false}
+              onSearch={handleDropdownSearch}
+              loading={isSearching}
+              notFoundContent={
+                isSearching
+                  ? <Spin size="small" />
+                  : <span className="text-gray-400 text-xs">Type at least {MIN_SEARCH_CHARS} characters to search</span>
               }
               onChange={(value) => {
                 if (value) handleAddCollege(value);
               }}
-              options={allUniversities.map((c) => ({
+              options={selectOptions.map((c) => ({
                 value: c.id,
-                label: c.name,
+                label: c.city && c.state ? `${c.name} (${c.city}, ${c.state})` : c.name,
                 disabled: comparedIds.includes(c.id),
               }))}
             />
@@ -435,13 +690,7 @@ function CompareContent() {
                 type="text"
                 danger
                 className="font-bold flex items-center gap-1.5"
-                onClick={() => {
-                  setComparedIds([]);
-                  localStorage.setItem('compared_colleges', JSON.stringify([]));
-                  localStorage.setItem('compared_colleges_details', JSON.stringify([]));
-                  window.dispatchEvent(new Event('compared-colleges-updated'));
-                  syncUrlParams([]);
-                }}
+                onClick={handleClearAll}
               >
                 Clear all
               </Button>
@@ -473,7 +722,7 @@ function CompareContent() {
                 Quick Add Recommendations
               </p>
               <div className="flex flex-wrap justify-center gap-3">
-                {allUniversities.slice(0, 4).map((c) => (
+                {initialUniversities.slice(0, 4).map((c) => (
                   <button
                     key={c.id}
                     onClick={() => handleAddCollege(c.id)}

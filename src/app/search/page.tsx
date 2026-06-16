@@ -25,7 +25,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   psychology: ["psychology", "behavioral science", "counseling"],
   "mechanical-engineering": ["mechanical engineering", "robotics", "aerospace"],
   "public-health": ["public health", "epidemiology", "health policy"],
-  "graphic-design": ["graphic design", "digital design", "visual arts", "multimedia"],
+  "design": ["Design"],
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -34,7 +34,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   psychology: "Psychology",
   "mechanical-engineering": "Mechanical Engineering",
   "public-health": "Public Health",
-  "graphic-design": "Graphic Design",
+  "design": "Design",
 };
 
 type ViewMode = 'list' | 'grid';
@@ -81,6 +81,8 @@ function SearchContent() {
   }, []);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+
     const fetchResults = async () => {
       setIsLoading(true);
       try {
@@ -205,7 +207,7 @@ function SearchContent() {
 
   return (
     <>
-      <div className="flex-1">
+      <div className="flex-1 min-h-[75vh] flex flex-col">
         <TopSearchBar />
         <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4 flex flex-col md:flex-row gap-8">
           {/* Sidebar */}

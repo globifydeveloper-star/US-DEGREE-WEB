@@ -7,6 +7,7 @@ export default function CourseSummarySideCard({
   duration,
   format,
   financialAid,
+  schoolUrl,
 }: CourseSummarySideCardProps) {
   return (
     <div className="w-full flex flex-col gap-4">
@@ -41,10 +42,14 @@ export default function CourseSummarySideCard({
         </div>
 
         <div className="flex flex-col gap-3">
-          <button className="w-full rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10">
+          <a
+            href={schoolUrl ? (schoolUrl.startsWith("http") ? schoolUrl : `https://${schoolUrl}`) : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full text-center rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10 block"
+          >
             Apply Now
-          </button>
-
+          </a>
         </div>
       </div>
       <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">

@@ -83,7 +83,10 @@ export default function ComparisonTable({
                     </p>
 
                     {/* Badges */}
-                    <div className="flex flex-col items-center gap-1 mt-2 md:mt-4 min-h-[36px] md:min-h-[48px]">
+                    <div className="flex flex-col items-center gap-1 mt-2 md:mt-4">
+                      <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-gray-400 border border-gray-100/80 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md">
+                        {college.isPrivate ? 'Private' : 'Public'}
+                      </span>
                       {isBestValue && (
                         <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-[#22C55E] bg-green-50 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md border border-green-100 flex items-center gap-0.5 md:gap-1">
                           <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3" /> Best ROI
@@ -97,11 +100,6 @@ export default function ComparisonTable({
                       {isLowestCost && (
                         <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md border border-emerald-100">
                           📉 Lowest Cost
-                        </span>
-                      )}
-                      {!isBestValue && !isHighSalary && !isLowestCost && (
-                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-gray-400 border border-gray-100/80 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md">
-                          {college.isPrivate ? 'Private' : 'Public'}
                         </span>
                       )}
                     </div>
@@ -224,7 +222,7 @@ export default function ComparisonTable({
             <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
               <div>
                 <p className="font-bold text-slate-800 text-xs md:text-sm">Graduation Rate</p>
-                <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Percent completing within 6 years</p>
+                <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Percent completing</p>
               </div>
             </td>
             {comparedColleges.map((college) => {
@@ -360,7 +358,7 @@ export default function ComparisonTable({
             <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
               <div>
                 <p className="font-bold text-slate-800 text-xs md:text-sm">Student Enrollment</p>
-                <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Total size (undergrad + grad)</p>
+                <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Total size</p>
               </div>
             </td>
             {comparedColleges.map((college) => {
