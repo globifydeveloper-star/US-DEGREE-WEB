@@ -108,13 +108,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const authActionInProgress = useRef(false);
 
+    const getActionCodeSettings = () => {
+        return {
+            url: typeof window !== 'undefined' ? window.location.origin : 'https://usdegrees.web.app',
+            handleCodeInApp: false
+        };
+    };
+
     const login = async (email: string, password: string): Promise<AuthUser> => {
         authActionInProgress.current = true;
         try {
             const credential = await signInWithEmailAndPassword(auth, email, password);
             
             if (!credential.user.emailVerified) {
-                await signOut(auth);
                 throw new Error("EMAIL_NOT_VERIFIED");
             }
             
@@ -162,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             if (credential.user) {
                 await updateProfile(credential.user, { displayName });
-                await sendEmailVerification(credential.user);
+                await sendEmailVerification(credential.user, getActionCodeSettings());
                 
                 // Create user in Postgres DB (with email_verified = false initially)
                 try {
@@ -184,8 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.error("Postgres user creation error during signup:", err);
                 }
             }
-            // Always sign out and throw EMAIL_NOT_VERIFIED so that the user starts in a non-logged-in verification pending state
-            await signOut(auth);
+            // Always throw EMAIL_NOT_VERIFIED so that the user starts in a non-logged-in verification pending state
             throw new Error("EMAIL_NOT_VERIFIED");
         } finally {
             authActionInProgress.current = false;
@@ -209,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const resendVerificationEmail = async (): Promise<void> => {
         if (auth.currentUser) {
-            await sendEmailVerification(auth.currentUser);
+            await sendEmailVerification(auth.currentUser, getActionCodeSettings());
         }
     };
 
@@ -265,8 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authActionInProgress.current = true;
         try {
             const credential = await signInWithEmailAndPassword(auth, email, password);
-            await sendEmailVerification(credential.user);
-            await signOut(auth);
+            await sendEmailVerification(credential.user, getActionCodeSettings());
         } finally {
             authActionInProgress.current = false;
         }
@@ -290,7 +294,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         }
 
                         if (!firebaseUser.emailVerified) {
-                            await signOut(auth);
                             setUser(null);
                             setLoading(false);
                             return;

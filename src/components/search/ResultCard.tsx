@@ -395,32 +395,36 @@ export default function ResultCard({
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-      {/* Top Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex gap-4 items-start">
-          <div
-            className={`w-10 h-10 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-xl shrink-0`}
-          >
-            {university.charAt(0)}
-          </div>
-          <div>
-            <Link href={universityHref}>
-              <h2 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
-                {university}
-              </h2>
-            </Link>
-            <div className="flex items-center text-gray-500 text-xs mt-0.5">
-              <MapPin size={12} className="mr-1" />
-              {location}
+    <>
+      {/* Desktop View (>= md) */}
+      <div className="hidden md:block bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+        {/* Top Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex gap-4 items-start">
+            <div className={`w-10 h-10 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-xl shrink-0`}>
+              {university.charAt(0)}
+            </div>
+            <div>
+              <Link href={universityHref}>
+                <h2 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
+              </Link>
+              <div className="flex items-center text-gray-500 text-xs mt-0.5">
+                <MapPin size={12} className="mr-1" />
+                {location}
+              </div>
             </div>
           </div>
         </div>
-        {/* <div className="flex flex-col items-end gap-2">
-          <button className="text-gray-300 hover:text-red-500 transition">
-            <Heart size={20} />
+
+        {/* Match Badge (Absolute on Desktop) */}
+        <div className="flex absolute top-5 right-5 flex-col items-center bg-blue-50/50 border border-blue-100 rounded-xl p-2 w-28 transition-all duration-300 hover:border-blue-200">
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full text-[9px] bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-1 px-1 rounded-lg mb-1.5 text-center transition-all duration-200 shadow-sm leading-tight hover:scale-105 active:scale-95 whitespace-nowrap"
+          >
+            {shouldShowFit ? "Update Fit" : "Find your fit score"}
           </button>
-        </div> */}
+        </div> 
       </div>
 
       {/* Match Badge (Absolute on Desktop, regular flow on mobile) */}
@@ -491,6 +495,158 @@ export default function ResultCard({
             <Clock size={10} className="text-gray-400" />
             {duration}
           </span>
+          <div className={`relative w-11 h-11 flex items-center justify-center transition-all duration-500 ${!shouldShowFit ? 'filter blur-[1.5px] opacity-80' : ''}`}>
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-gray-200 stroke-current"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" strokeWidth="3"
+              />
+              <path
+                className="text-blue-600 stroke-current"
+                strokeDasharray={`${shouldShowFit ? currentScore : matchScore}, 100`}
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" strokeWidth="3"
+              />
+            </svg>
+            <span className="absolute text-[10px] font-extrabold text-blue-900">{shouldShowFit ? currentScore : matchScore}%</span>
+          </div>
+        </div>
+
+        {/* Degree Info */}
+        <div className="mb-5 md:pr-28">
+          <h3 className="text-sm text-red-500 font-bold mb-2">{degree}</h3>
+
+          <div className="flex flex-wrap gap-5 mb-3">
+            <div>
+              <p className="text-[9px] text-gray-500 uppercase font-semibold">Admission Rate</p>
+              <p className="font-bold text-gray-900 text-xs">{admissionRate}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-500 uppercase font-semibold">Avg. GPA</p>
+              <p className="font-bold text-gray-900 text-xs">{avgGpa}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-gray-500 uppercase font-semibold">SAT/ACT</p>
+              <p className="font-bold text-gray-900 text-xs">{satAct}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600">
+            <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-1 rounded-md border border-gray-100">
+              <Clock size={10} className="text-gray-400" />
+              {duration}
+            </span>
+            {schoolType && (
+              <span className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${schoolType.toLowerCase().includes('public')
+                ? 'bg-green-50 border-green-100 text-green-700'
+                : 'bg-purple-50 border-purple-100 text-purple-700'
+                }`}>
+                {schoolType.split(',')[0]}
+              </span>
+            )}
+            <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-1 rounded-md border border-gray-100">
+              <BookOpen size={10} className="text-gray-400" />
+              Specializations: {specializations}
+            </span>
+          </div>
+        </div>
+
+        {/* Stat Tiles */}
+        <div className="flex flex-wrap gap-3 py-4 border-y border-gray-100 mb-4">
+          {/* Employment Rate */}
+          <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Employment Rate</span>
+            <span className="text-sm font-extrabold text-gray-900">
+              {gradRate > 0 ? `${gradRate}%` : 'N/A'}
+            </span>
+          </div>
+
+          <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Median Salary</span>
+            <span className="text-sm font-extrabold text-green-600">{medianSalary ?? 'N/A'}</span>
+          </div>
+
+          {/* 20yr ROI */}
+          <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">20yr ROI</span>
+            <span className="text-sm font-extrabold text-blue-600">
+              {roi ?? 'N/A'}
+            </span>
+          </div>
+
+          {/* Sticker Price */}
+          <StickerPrice id={id} estCost={estCost} />
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Button
+            type={isCompared ? "primary" : "default"}
+            onClick={toggleCompare}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className={`flex items-center gap-1.5 h-8 text-[11px] font-bold rounded-full transition-all duration-300 ${
+              isCompared 
+                ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 scale-105 shadow-sm' 
+                : 'text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600 hover:scale-105'
+            }`}
+            icon={<CompareIconAnimation active={isCompared} hovered={isHovered} />}
+          >
+            {isCompared ? "Added to Compare" : "Compare"}
+          </Button>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            {formattedSchoolUrl ? (
+              <a
+                href={formattedSchoolUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-none border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center flex items-center justify-center"
+              >
+                Visit Website
+              </a>
+            ) : (
+              <button
+                disabled
+                className="flex-1 sm:flex-none border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[11px] font-bold cursor-not-allowed text-center"
+              >
+                Visit Website
+              </button>
+            )}
+            <Link
+              href={universityHref}
+              className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center"
+            >
+              View Full Details
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile View (< md) */}
+      <div className="md:hidden bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative">
+        {/* Header */}
+        <div className="flex gap-3 items-start mb-2">
+          <div className={`w-8 h-8 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-base shrink-0 shadow-sm`}>
+            {university.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <Link href={universityHref}>
+              <h2 className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer truncate">
+                {university}
+              </h2>
+            </Link>
+            <div className="flex items-center text-gray-500 text-[10px] mt-0.5">
+              <MapPin size={10} className="mr-0.5 shrink-0" />
+              <span className="truncate">{location}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Degree & Type */}
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <span className="text-xs text-red-500 font-extrabold truncate">{degree}</span>
           {schoolType && (
             <span
               className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${
@@ -577,7 +733,7 @@ export default function ResultCard({
 
             <button
               onClick={() => setShowModal(true)}
-              className="text-[9px] font-bold text-blue-600 hover:text-blue-700"
+              className="text-[8px] font-extrabold text-blue-700 underline ml-0.5"
             >
               {shouldShowFit ? "Update" : "Find"}
             </button>
@@ -649,9 +805,39 @@ export default function ResultCard({
           <Link
             href={universityHref}
             className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center"
+            />
+        {/* Actions Footer */}
+        <div className="flex items-center justify-between gap-2 mt-1">
+          <Button
+            type={isCompared ? "primary" : "default"}
+            onClick={toggleCompare}
+            className={`flex items-center justify-center gap-1.5 h-8 text-[10px] font-bold rounded-full transition-all duration-300 w-[110px] shrink-0 ${
+              isCompared 
+                ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700' 
+                : 'text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600'
+            }`}
           >
-            View Full Details
-          </Link>
+            {isCompared ? "Added" : "Compare"}
+          </Button>
+
+          <div className="flex gap-1.5 flex-1 justify-end min-w-0">
+            {formattedSchoolUrl && (
+              <a
+                href={formattedSchoolUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-2.5 py-1.5 rounded-full text-[10px] font-bold transition text-center truncate"
+              >
+                Website
+              </a>
+            )}
+            <Link
+              href={universityHref}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition text-center truncate"
+            >
+              Details
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -678,5 +864,6 @@ export default function ResultCard({
         />
       )}
     </div>
+    </>
   );
 }
