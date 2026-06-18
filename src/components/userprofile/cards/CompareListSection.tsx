@@ -34,7 +34,7 @@ export default function CompareListSection({
           )}
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100 bg-linear-to-b from-white to-neutral-50/20"
     >
       {compareList.length === 0 ? (
@@ -59,7 +59,7 @@ export default function CompareListSection({
               <Col xs={24} sm={12} md={6} key={uni.id}>
                 <Card
                   size="small"
-                  bordered
+                  variant="outlined"
                   className="border-neutral-200 shadow-xxs rounded-xl relative"
                 >
                   <button

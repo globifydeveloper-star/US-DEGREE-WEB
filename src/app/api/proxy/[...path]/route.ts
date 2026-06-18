@@ -40,10 +40,11 @@ export async function GET(
         'Content-Type': contentType,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("API Proxy Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Proxy connection error";
     return Response.json(
-      { error: error.message || "Proxy connection error" },
+      { error: errorMessage },
       { status: 502 }
     );
   }
@@ -67,12 +68,12 @@ export async function POST(
     
     const targetUrl = `${backendBase}/${pathStr}${searchString}`;
     
-    let body: any = null;
+    let body: unknown = null;
     const contentTypeHeader = request.headers.get('content-type') || '';
     if (contentTypeHeader.includes('application/json')) {
       try {
         body = await request.json();
-      } catch (e) {
+      } catch {
         // Ignore parse errors for empty/malformed requests
       }
     }
@@ -101,10 +102,11 @@ export async function POST(
         'Content-Type': contentType,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("API Proxy POST Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Proxy connection error";
     return Response.json(
-      { error: error.message || "Proxy connection error" },
+      { error: errorMessage },
       { status: 502 }
     );
   }

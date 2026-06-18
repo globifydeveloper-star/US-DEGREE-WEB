@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Dropdown, Avatar } from "antd";
@@ -16,29 +17,35 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import LoginModal from "../auth/LoginModal";
 
+// Subscribe to the compared-colleges list stored in localStorage so the badge
+// count stays in sync across tabs and in-app updates.
+const subscribeCompareCount = (onChange: () => void) => {
+  window.addEventListener("compared-colleges-updated", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener("compared-colleges-updated", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+};
+const getCompareCountSnapshot = () => {
+  try {
+    return JSON.parse(localStorage.getItem("compared_colleges") || "[]").length;
+  } catch {
+    return 0;
+  }
+};
+const getCompareCountServerSnapshot = () => 0;
+
 const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [compareCount, setCompareCount] = useState(0);
-  const checkCompareCount = () => {
-    const list =
-      typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("compared_colleges") || "[]")
-        : [];
-    setCompareCount(list.length);
-  };
-  useEffect(() => {
-    checkCompareCount();
-    window.addEventListener("compared-colleges-updated", checkCompareCount);
-    return () => {
-      window.removeEventListener(
-        "compared-colleges-updated",
-        checkCompareCount,
-      );
-    };
-  }, []);
+  const compareCount = useSyncExternalStore(
+    subscribeCompareCount,
+    getCompareCountSnapshot,
+    getCompareCountServerSnapshot,
+  );
   const { user, logout, resendVerificationEmail, checkVerificationStatus } =
     useAuth();
   const isLoggedIn = !!user;
@@ -54,8 +61,9 @@ const Navbar = () => {
       await resendVerificationEmail();
       setResent(true);
       setTimeout(() => setResent(false), 5000);
-    } catch (err: any) {
-      if (err.message?.includes("auth/too-many-requests")) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "";
+      if (errorMessage.includes("auth/too-many-requests")) {
         setResendError(
           "Please wait a minute before requesting another verification email.",
         );
@@ -167,9 +175,12 @@ const Navbar = () => {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <img
+              <Image
                 src="/images/logo2.png"
                 alt="US Degrees"
+                width={185}
+                height={70}
+                priority
                 className="h-[20px] sm:h-[32px] w-auto object-contain"
               />
             </Link>

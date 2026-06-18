@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, ShieldCheck, X, GraduationCap, User } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, X, GraduationCap, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface LoginModalProps {
@@ -27,8 +27,11 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
   const { login, signup, loginWithGoogle } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Sync mode with initialMode prop when modal is opened
-  useEffect(() => {
+  // Reset the form to a clean state whenever the modal transitions to open.
+  // Done during render (not in an effect) to avoid cascading re-renders.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setMode(initialMode);
       setError('');
@@ -38,7 +41,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       setConfirmPassword('');
       setIsParent(false);
     }
-  }, [isOpen, initialMode]);
+  }
 
   // Close on Esc key press
   useEffect(() => {
@@ -111,15 +114,16 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       }
       onSuccess(email);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       setError(getFriendlyErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getFriendlyErrorMessage = (error: any): string => {
-    const code = error?.code || error?.message || '';
+  const getFriendlyErrorMessage = (error: unknown): string => {
+    const err = error as { code?: string; message?: string } | null;
+    const code = err?.code || err?.message || '';
     if (code.includes('auth/email-already-in-use')) {
       return 'This email address is already in use by another account.';
     }
@@ -138,7 +142,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     if (code.includes('auth/too-many-requests')) {
       return 'Too many failed login attempts. Please try again later.';
     }
-    return error?.message || 'Authentication failed. Please try again.';
+    return err?.message || 'Authentication failed. Please try again.';
   };
 
   const handleGoogleSignIn = async () => {
@@ -146,7 +150,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       const firebaseUser = await loginWithGoogle();
       onSuccess(firebaseUser.email!);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       setError(getFriendlyErrorMessage(err));
     }
   };
@@ -459,7 +463,7 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
           <p className="text-xs font-semibold text-slate-500">
             {mode === 'login' ? (
               <>
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <button
                   type="button"
                   onClick={() => { setMode('signup'); setError(''); }}

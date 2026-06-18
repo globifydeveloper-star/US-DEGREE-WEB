@@ -56,7 +56,7 @@ export default function CollegeMatchesSection({
           </div>
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100 bg-linear-to-b from-white to-blue-50/10"
     >
       <Row gutter={[20, 20]}>
@@ -77,15 +77,17 @@ export default function CollegeMatchesSection({
           return (
             <Col xs={24} md={8} key={match.university.id}>
               <Card
-                bordered
+                variant="outlined"
                 hoverable
                 className="rounded-2xl h-full border-neutral-150 shadow-xs flex flex-col justify-between"
-                bodyStyle={{
-                  padding: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  height: "100%",
+                styles={{
+                  body: {
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    height: "100%",
+                  },
                 }}
               >
                 <div className="space-y-4">

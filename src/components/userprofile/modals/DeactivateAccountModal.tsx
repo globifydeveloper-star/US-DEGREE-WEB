@@ -66,7 +66,7 @@ export default function DeactivateAccountModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" className="pt-4 space-y-4">
         <Alert

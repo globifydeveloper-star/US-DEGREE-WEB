@@ -62,7 +62,7 @@ export default function SavedCollegesSection({
           />
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100"
     >
       {savedColleges.length === 0 ? (
@@ -90,14 +90,16 @@ export default function SavedCollegesSection({
               <Col xs={24} sm={12} md={8} lg={6} key={uni.id}>
                 <Card
                   hoverable
-                  bordered
+                  variant="outlined"
                   className="overflow-hidden rounded-2xl h-full border-neutral-150 shadow-xs flex flex-col justify-between"
-                  bodyStyle={{
-                    padding: "16px",
-                    flex: "1",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
+                  styles={{
+                    body: {
+                      padding: "16px",
+                      flex: "1",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    },
                   }}
                 >
                   <div>

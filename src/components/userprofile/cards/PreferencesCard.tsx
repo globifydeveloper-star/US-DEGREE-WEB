@@ -40,7 +40,7 @@ export default function PreferencesCard({
           </Button>
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100"
     >
       <div className="space-y-4">

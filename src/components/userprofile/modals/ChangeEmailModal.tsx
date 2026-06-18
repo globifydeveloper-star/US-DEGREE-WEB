@@ -43,7 +43,7 @@ export default function ChangeEmailModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

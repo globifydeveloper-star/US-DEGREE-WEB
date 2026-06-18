@@ -33,7 +33,7 @@ export default function ChangePasswordModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={onSubmit} className="pt-4">
         <Form.Item

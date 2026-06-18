@@ -55,7 +55,7 @@ export default function EditProfileModal({
       onCancel={onClose}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
       className="rounded-3xl overflow-hidden"
     >
       <Form

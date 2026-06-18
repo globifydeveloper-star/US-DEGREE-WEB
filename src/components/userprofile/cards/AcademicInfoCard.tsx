@@ -40,7 +40,7 @@ export default function AcademicInfoCard({
           </Button>
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl flex-1 border border-neutral-100"
     >
       <div className="space-y-6">

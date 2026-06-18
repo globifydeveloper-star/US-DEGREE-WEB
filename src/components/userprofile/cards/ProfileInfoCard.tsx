@@ -54,7 +54,7 @@ export default function ProfileInfoCard({
           </Button>
         </div>
       }
-      bordered={false}
+      variant="borderless"
       className="shadow-md rounded-2xl h-full border border-neutral-100"
     >
       <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
@@ -70,7 +70,8 @@ export default function ProfileInfoCard({
           </h2>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
             <Tag
-              color="cyan-inverse"
+              color="cyan"
+              variant="solid"
               style={{ borderRadius: "6px" }}
               icon={<BookOutlined />}
             >
