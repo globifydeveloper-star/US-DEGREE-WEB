@@ -144,25 +144,15 @@ export default function StatsGrid({
   return (
     <div
       ref={gridRef}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "12px",
-        padding: "8px 0",
-      }}
+      className="grid grid-cols-2 md:grid-cols-3 gap-3 py-2"
     >
       {stats.map((stat, i) => (
         <div
           key={stat.label}
+          className="flex flex-col justify-between min-h-[90px] sm:min-h-[100px] p-3.5 sm:p-5 border rounded-2xl"
           style={{
             backgroundColor: stat.accentBg,
-            border: `1px solid ${stat.accentBorder}`,
-            borderRadius: "16px",
-            padding: "20px 22px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            minHeight: "100px",
+            borderColor: stat.accentBorder,
           }}
         >
           {/* Label */}
@@ -184,12 +174,9 @@ export default function StatsGrid({
 
           {/* Animated Value */}
           <p
+            className="m-0 mt-3 text-2xl sm:text-[32px] font-extrabold leading-none"
             style={{
-              margin: "12px 0 0",
-              fontSize: "32px",
-              fontWeight: 800,
               color: stat.valueColor,
-              lineHeight: 1,
             }}
           >
             {stat.label === "FAFSA APPLICATION" ? (

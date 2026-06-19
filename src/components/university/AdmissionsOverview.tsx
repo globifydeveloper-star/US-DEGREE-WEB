@@ -326,7 +326,7 @@ export default function AdmissionsOverview({
           outlineOffset: '-3px',
         }}
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* Salary 10th Year */}
           <div

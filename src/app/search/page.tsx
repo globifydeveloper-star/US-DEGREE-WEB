@@ -11,21 +11,34 @@ import ResultCard from "@/components/search/ResultCard";
 import TileCard from "@/components/search/TileCard";
 import Pagination from "@/components/search/Pagination";
 import CompareDeck from "@/components/search/CompareDeck";
-import { ResultListSkeleton, TileGridSkeleton, SearchHeaderSkeleton } from "@/components/search/SearchSkeletons";
+import {
+  ResultListSkeleton,
+  TileGridSkeleton,
+  SearchHeaderSkeleton,
+} from "@/components/search/SearchSkeletons";
 import { SearchResult } from "@/types/search-details";
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   "computer-science": [
-    "computer science", "software engineering", "cybersecurity",
-    "information technology", "data science", "artificial intelligence",
+    "computer science",
+    "software engineering",
+    "cybersecurity",
+    "information technology",
+    "data science",
+    "artificial intelligence",
   ],
   business: [
-    "business", "finance", "accounting", "management", "marketing", "entrepreneurship",
+    "business",
+    "finance",
+    "accounting",
+    "management",
+    "marketing",
+    "entrepreneurship",
   ],
   psychology: ["psychology", "behavioral science", "counseling"],
   "mechanical-engineering": ["mechanical engineering", "robotics", "aerospace"],
   "public-health": ["public health", "epidemiology", "health policy"],
-  "design": ["Design"],
+  design: ["Design"],
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -34,12 +47,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   psychology: "Psychology",
   "mechanical-engineering": "Mechanical Engineering",
   "public-health": "Public Health",
-  "design": "Design",
+  design: "Design",
 };
 
-type ViewMode = 'list' | 'grid';
+type ViewMode = "list" | "grid";
 
-const getCollegeType = (result: SearchResult) => result.college_type || result.school_type || "";
+const getCollegeType = (result: SearchResult) =>
+  result.college_type || result.school_type || "";
 
 const matchesCollegeType = (result: SearchResult, selectedType: string) => {
   const collegeType = getCollegeType(result).toLowerCase();
@@ -61,12 +75,17 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const itemsPerPage = viewMode === 'grid' ? 12 : 10;
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const itemsPerPage = viewMode === "grid" ? 12 : 10;
   const category = searchParams.get("category") || "";
-  const categoryLabel = category ? (CATEGORY_LABELS[category] || category.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")) : "";
+  const categoryLabel = category
+    ? CATEGORY_LABELS[category] ||
+      category
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : "";
   const [showBackToTop, setShowBackToTop] = useState(false);
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -128,24 +147,27 @@ function SearchContent() {
           // Client-side filtering for school_type
           const schoolType = searchParams.get("school_type");
           if (schoolType) {
-            filteredData = filteredData.filter((item: SearchResult) => matchesCollegeType(item, schoolType));
+            filteredData = filteredData.filter((item: SearchResult) =>
+              matchesCollegeType(item, schoolType),
+            );
           }
 
           // Client-side filtering for multiple credential titles
           if (selectedCredentials.length > 1) {
             filteredData = filteredData.filter((item: SearchResult) =>
-              selectedCredentials.some(cred =>
-                item.credential_title?.toLowerCase() === cred.toLowerCase()
-              )
+              selectedCredentials.some(
+                (cred) =>
+                  item.credential_title?.toLowerCase() === cred.toLowerCase(),
+              ),
             );
           }
 
           // Client-side filtering for multiple states
           if (selectedStates.length > 1) {
             filteredData = filteredData.filter((item: SearchResult) =>
-              selectedStates.some(st =>
-                item.state?.toLowerCase() === st.toLowerCase()
-              )
+              selectedStates.some(
+                (st) => item.state?.toLowerCase() === st.toLowerCase(),
+              ),
             );
           }
 
@@ -153,9 +175,9 @@ function SearchContent() {
           const categoryKws = category ? CATEGORY_KEYWORDS[category] : null;
           if (categoryKws && categoryKws.length > 0) {
             filteredData = filteredData.filter((item: SearchResult) =>
-              categoryKws.some(kw =>
-                item.program_title?.toLowerCase().includes(kw.toLowerCase())
-              )
+              categoryKws.some((kw) =>
+                item.program_title?.toLowerCase().includes(kw.toLowerCase()),
+              ),
             );
           }
 
@@ -175,35 +197,53 @@ function SearchContent() {
   }, [searchParams]);
 
   const mapToCardProps = (result: SearchResult) => {
-    const hasValue = (value: number | string | null | undefined) => value !== null && value !== undefined;
+    const hasValue = (value: number | string | null | undefined) =>
+      value !== null && value !== undefined;
 
     return {
       id: result.unitid,
+      unitid: result.unitid != null ? String(result.unitid) : undefined,
       cipCode: result.cip_code,
       university: result.school_name || "Unknown University",
       location: `${result.city || "Unknown"}, ${result.state || "US"}`,
       degree: result.program_title || "Unknown Degree",
       schoolType: getCollegeType(result) || "Unknown",
-      admissionRate: hasValue(result.admission_rate) ? `${(Number(result.admission_rate) * 100).toFixed(1)}%` : "N/A",
-      avgGpa: "N/A",
-      satAct: hasValue(result.school_min_range) && hasValue(result.school_max_range)
-        ? `${result.school_min_range} - ${result.school_max_range}`
+      admissionRate: hasValue(result.admission_rate)
+        ? `${(Number(result.admission_rate) * 100).toFixed(1)}%`
         : "N/A",
+      avgGpa: "N/A",
+      satAct:
+        hasValue(result.school_min_range) && hasValue(result.school_max_range)
+          ? `${result.school_min_range} - ${result.school_max_range}`
+          : "N/A",
       duration: "4 Years", // Default fallback if not provided
       specializations: result.credential_title || "N/A",
       matchScore: 90, // Placeholder
-      gradRate: hasValue(result.emp_factor) ? parseFloat(Number(result.emp_factor).toFixed(1)) : 0,
-      avgSalary: hasValue(result.earnings_year_5) ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}` : undefined,
-      estCost: hasValue(result.tuition_in_state) ? `$${Math.round(Number(result.tuition_in_state)).toLocaleString()}` : undefined,
-      medianSalary: hasValue(result.earnings_year_5) ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}` : undefined,
-      roi: hasValue(result.roi_20yr) ? `$${Math.round(Number(result.roi_20yr) / 1000)}K` : undefined,
+      gradRate: hasValue(result.emp_factor)
+        ? parseFloat(Number(result.emp_factor).toFixed(1))
+        : 0,
+      avgSalary: hasValue(result.earnings_year_5)
+        ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}`
+        : undefined,
+      estCost: hasValue(result.tuition_in_state)
+        ? `$${Math.round(Number(result.tuition_in_state)).toLocaleString()}`
+        : undefined,
+      medianSalary: hasValue(result.earnings_year_5)
+        ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}`
+        : undefined,
+      roi: hasValue(result.roi_20yr)
+        ? `$${Math.round(Number(result.roi_20yr) / 1000)}K`
+        : undefined,
       logoColor: "bg-blue-600",
       schoolUrl: result.school_url,
     };
   };
 
   const totalPages = Math.ceil(results.length / itemsPerPage);
-  const currentResults = results.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentResults = results.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   return (
     <>
@@ -231,7 +271,9 @@ function SearchContent() {
                     <span className="text-xs text-gray-500">Category:</span>
                     <button
                       onClick={() => {
-                        const params = new URLSearchParams(searchParams.toString());
+                        const params = new URLSearchParams(
+                          searchParams.toString(),
+                        );
                         params.delete("category");
                         router.push(`/search?${params.toString()}`);
                       }}
@@ -242,31 +284,22 @@ function SearchContent() {
                     </button>
                   </div>
                 )}
-                <SearchHeader
-                  view={viewMode}
-                  onViewChange={setViewMode}
-                />
+                <SearchHeader view={viewMode} onViewChange={setViewMode} />
 
                 {currentResults.length === 0 ? (
                   <p className="text-sm text-gray-500 py-8 text-center">
                     No results found.
                   </p>
                 ) : viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
                     {currentResults.map((result, i) => (
-                      <TileCard
-                        key={i}
-                        {...mapToCardProps(result)}
-                      />
+                      <TileCard key={i} {...mapToCardProps(result)} />
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {currentResults.map((result, i) => (
-                      <ResultCard
-                        key={i}
-                        {...mapToCardProps(result)}
-                      />
+                      <ResultCard key={i} {...mapToCardProps(result)} />
                     ))}
                   </div>
                 )}
@@ -339,14 +372,16 @@ export default function SearchPage() {
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <Suspense fallback={
-        <div className="flex-1">
-          <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4">
-            <SearchHeaderSkeleton />
-            <ResultListSkeleton count={5} />
+      <Suspense
+        fallback={
+          <div className="flex-1">
+            <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4">
+              <SearchHeaderSkeleton />
+              <ResultListSkeleton count={5} />
+            </div>
           </div>
-        </div>
-      }>
+        }
+      >
         <SearchContent />
       </Suspense>
       <Footer />

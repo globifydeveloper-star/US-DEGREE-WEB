@@ -1,7 +1,26 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CTA() {
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+
+  const handleGetStarted = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggedIn) {
+      const element = document.getElementById('search-programs-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      const event = new CustomEvent('open-auth-modal', { detail: { mode: 'signup' } });
+      window.dispatchEvent(event);
+    }
+  };
+
   return (
     <section className="px-6 sm:px-10 lg:px-[86px] py-12 flex justify-center">
       <div className="w-full max-w-[2380px] bg-[#edf2ff] rounded-[2rem] flex flex-col md:flex-row overflow-hidden min-h-[400px]">
@@ -14,12 +33,12 @@ export default function CTA() {
             Join thousands of students who have already found their future with US degree Academy. Start your comparison today.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Link 
-              href="/register" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition-colors"
+            <button 
+              onClick={handleGetStarted}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition-colors cursor-pointer"
             >
               Get Started Now
-            </Link>
+            </button>
             <Link 
               href="/compare" 
               className="bg-white hover:bg-gray-50 text-blue-600 px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"

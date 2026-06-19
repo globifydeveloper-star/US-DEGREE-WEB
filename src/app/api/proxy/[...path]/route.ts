@@ -1,8 +1,11 @@
 import { NextRequest } from 'next/server';
 
-export async function GET(
+// Shared handler for bodyless methods (GET, DELETE). The client's Authorization
+// header (app JWT) is forwarded untouched — never injected or stripped here.
+async function forwardNoBody(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  params: Promise<{ path: string[] }>,
+  method: 'GET' | 'DELETE',
 ) {
   try {
     const { path } = await params;
@@ -12,12 +15,12 @@ export async function GET(
 
     const pathStr = path.join('/');
     const searchString = request.nextUrl.search;
-    
+
     // Server-only API URL, fallback to NEXT_PUBLIC_API_URL or local backend
     const backendBase = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     const targetUrl = `${backendBase}/${pathStr}${searchString}`;
-    
+
     const authHeader = request.headers.get('authorization');
     const headers: Record<string, string> = {
       'Accept': 'application/json',
@@ -27,31 +30,50 @@ export async function GET(
     }
 
     const res = await fetch(targetUrl, {
-      method: 'GET',
+      method,
       headers,
     });
-    
+
     const contentType = res.headers.get('content-type') || 'application/json';
     const bodyText = await res.text();
-    
+
     return new Response(bodyText, {
       status: res.status,
       headers: {
         'Content-Type': contentType,
       },
     });
-  } catch (error: any) {
-    console.error("API Proxy Error:", error);
+  } catch (error) {
+    console.error(`API Proxy ${method} Error:`, error);
+    const errorMessage = error instanceof Error ? error.message : "Proxy connection error";
     return Response.json(
-      { error: error.message || "Proxy connection error" },
+      { error: errorMessage },
       { status: 502 }
     );
   }
 }
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
+) {
+  return forwardNoBody(request, params, 'GET');
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  return forwardNoBody(request, params, 'DELETE');
+}
+
+// Shared handler for methods that carry a JSON body (POST, PATCH). The client's
+// Authorization header (app JWT) is forwarded untouched — never injected or
+// stripped here — per auth spec §4.9.
+async function forwardWithBody(
+  request: NextRequest,
+  params: Promise<{ path: string[] }>,
+  method: 'POST' | 'PATCH',
 ) {
   try {
     const { path } = await params;
@@ -61,18 +83,18 @@ export async function POST(
 
     const pathStr = path.join('/');
     const searchString = request.nextUrl.search;
-    
+
     // Server-only API URL, fallback to NEXT_PUBLIC_API_URL or local backend
     const backendBase = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-    
+
     const targetUrl = `${backendBase}/${pathStr}${searchString}`;
-    
-    let body: any = null;
+
+    let body: unknown = null;
     const contentTypeHeader = request.headers.get('content-type') || '';
     if (contentTypeHeader.includes('application/json')) {
       try {
         body = await request.json();
-      } catch (e) {
+      } catch {
         // Ignore parse errors for empty/malformed requests
       }
     }
@@ -87,25 +109,40 @@ export async function POST(
     }
 
     const res = await fetch(targetUrl, {
-      method: 'POST',
+      method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    
+
     const contentType = res.headers.get('content-type') || 'application/json';
     const bodyText = await res.text();
-    
+
     return new Response(bodyText, {
       status: res.status,
       headers: {
         'Content-Type': contentType,
       },
     });
-  } catch (error: any) {
-    console.error("API Proxy POST Error:", error);
+  } catch (error) {
+    console.error(`API Proxy ${method} Error:`, error);
+    const errorMessage = error instanceof Error ? error.message : "Proxy connection error";
     return Response.json(
-      { error: error.message || "Proxy connection error" },
+      { error: errorMessage },
       { status: 502 }
     );
   }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  return forwardWithBody(request, params, 'POST');
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  return forwardWithBody(request, params, 'PATCH');
 }

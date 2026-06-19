@@ -16,7 +16,7 @@ const MOCK_STATES = [
   { state_code: "PA", state_title: "Pennsylvania" },
   { state_code: "FL", state_title: "Florida" },
   { state_code: "NC", state_title: "North Carolina" },
-  { state_code: "GA", state_title: "Georgia" }
+  { state_code: "GA", state_title: "Georgia" },
 ];
 
 const MOCK_CREDENTIALS = [
@@ -24,7 +24,7 @@ const MOCK_CREDENTIALS = [
   { id: 2, name: "Bachelor's Degree" },
   { id: 3, name: "Master's Degree" },
   { id: 4, name: "Doctoral Degree" },
-  { id: 5, name: "Post-Baccalaureate Certificate" }
+  { id: 5, name: "Post-Baccalaureate Certificate" },
 ];
 
 export default function SearchSidebar() {
@@ -33,24 +33,36 @@ export default function SearchSidebar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [states, setStates] = useState<{ state_code: string; state_title: string }[]>(MOCK_STATES);
-  const [credentials, setCredentials] = useState<{ id: number; name: string }[]>(MOCK_CREDENTIALS);
+  const [states, setStates] =
+    useState<{ state_code: string; state_title: string }[]>(MOCK_STATES);
+  const [credentials, setCredentials] =
+    useState<{ id: number; name: string }[]>(MOCK_CREDENTIALS);
   const [searchState, setSearchState] = useState("");
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
-  const selectedStates = searchParams.get("state")?.split(",").filter(Boolean) ?? [];
-  const selectedCredentials = searchParams.get("credential_title")?.split(",").filter(Boolean) ?? [];
+  const selectedStates =
+    searchParams.get("state")?.split(",").filter(Boolean) ?? [];
+  const selectedCredentials =
+    searchParams.get("credential_title")?.split(",").filter(Boolean) ?? [];
   const selectedCollegeType = searchParams.get("school_type");
 
-  const initialTuitionMin = searchParams.get("tuition_min") ? Number(searchParams.get("tuition_min")) / 2000 : 0;
-  const initialTuitionMax = searchParams.get("tuition_max") ? Number(searchParams.get("tuition_max")) / 2000 : 25;
-  const [tuitionRange, setTuitionRange] = useState<[number, number]>([initialTuitionMin, initialTuitionMax]);
+  const initialTuitionMin = searchParams.get("tuition_min")
+    ? Number(searchParams.get("tuition_min")) / 2000
+    : 0;
+  const initialTuitionMax = searchParams.get("tuition_max")
+    ? Number(searchParams.get("tuition_max")) / 2000
+    : 25;
+  const [tuitionRange, setTuitionRange] = useState<[number, number]>([
+    initialTuitionMin,
+    initialTuitionMax,
+  ]);
 
   // Count active filters for the badge
-  const activeFilterCount = (selectedStates.length > 0 ? 1 : 0)
-    + (selectedCredentials.length > 0 ? 1 : 0)
-    + (selectedCollegeType ? 1 : 0)
-    + (tuitionRange[0] !== 0 || tuitionRange[1] !== 25 ? 1 : 0);
+  const activeFilterCount =
+    (selectedStates.length > 0 ? 1 : 0) +
+    (selectedCredentials.length > 0 ? 1 : 0) +
+    (selectedCollegeType ? 1 : 0) +
+    (tuitionRange[0] !== 0 || tuitionRange[1] !== 25 ? 1 : 0);
 
   const handleTuitionChange = (val: number | number[]) => {
     if (Array.isArray(val)) setTuitionRange([val[0], val[1]]);
@@ -137,9 +149,13 @@ export default function SearchSidebar() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const filteredStates = states.filter(s =>
-    s.state_title.toLowerCase().includes(searchState.toLowerCase()) ||
-    s.state_code.toLowerCase().includes(searchState.toLowerCase())
+  // Null-safe: a bad/loading row (missing state_title/state_code) must not crash
+  // the whole sidebar, and `.filter` must never run on undefined.
+  const q = searchState.toLowerCase();
+  const filteredStates = (states ?? []).filter(
+    (s) =>
+      s.state_title?.toLowerCase().includes(q) ||
+      s.state_code?.toLowerCase().includes(q),
   );
 
   /* ── Shared filter content (used in both mobile drawer & desktop sidebar) ── */
@@ -170,10 +186,11 @@ export default function SearchSidebar() {
                 />
 
                 <span
-                  className={`text-[13px] leading-5 ${selectedCredentials.includes(cred.name)
-                    ? "font-bold text-blue-600"
-                    : "text-gray-700 group-hover:text-gray-900"
-                    }`}
+                  className={`text-[13px] leading-5 ${
+                    selectedCredentials.includes(cred.name)
+                      ? "font-bold text-blue-600"
+                      : "text-gray-700 group-hover:text-gray-900"
+                  }`}
                 >
                   {cred.name}
                 </span>
@@ -196,10 +213,11 @@ export default function SearchSidebar() {
           <button
             onClick={() => handleFilterChange("school_type", "public")}
             style={{ borderRadius: "35px" }}
-            className={`flex-1 py-2 text-[13px] font-semibold transition-all duration-200 ${selectedCollegeType === "public"
-              ? "border border-blue-300 bg-blue-50 text-blue-700 shadow-lg shadow-blue-200/50"
-              : "text-gray-500 hover:text-gray-900"
-              }`}
+            className={`flex-1 py-2 text-[13px] font-semibold transition-all duration-200 ${
+              selectedCollegeType === "public"
+                ? "border border-blue-300 bg-blue-50 text-blue-700 shadow-lg shadow-blue-200/50"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
           >
             Public
           </button>
@@ -207,10 +225,11 @@ export default function SearchSidebar() {
           <button
             onClick={() => handleFilterChange("school_type", "private")}
             style={{ borderRadius: "35px" }}
-            className={`flex-1 py-2 text-[13px] font-semibold transition-all duration-200 ${selectedCollegeType === "private"
-              ? "border border-blue-300 bg-blue-50 text-blue-700 shadow-lg shadow-blue-200/50"
-              : "text-gray-500 hover:text-gray-900"
-              }`}
+            className={`flex-1 py-2 text-[13px] font-semibold transition-all duration-200 ${
+              selectedCollegeType === "private"
+                ? "border border-blue-300 bg-blue-50 text-blue-700 shadow-lg shadow-blue-200/50"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
           >
             Private
           </button>
@@ -219,8 +238,13 @@ export default function SearchSidebar() {
 
       {/* State */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">State</h3>
-        <div className="flex items-center bg-gray-50 border rounded-lg px-2 py-1.5 mb-3" style={{ borderRadius: "20px", borderColor: "lab(59 -0.22 -3.71)", }}>
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+          State
+        </h3>
+        <div
+          className="flex items-center bg-gray-50 border rounded-lg px-2 py-1.5 mb-3"
+          style={{ borderRadius: "20px", borderColor: "lab(59 -0.22 -3.71)" }}
+        >
           <Search size={14} className="text-gray-400 mr-2" />
           <input
             type="text"
@@ -232,28 +256,41 @@ export default function SearchSidebar() {
         </div>
         <div className="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 degree-scrollbar">
           {filteredStates.map((s) => (
-            <label key={s.state_code} className="flex items-center gap-3 cursor-pointer group">
+            <label
+              key={s.state_code}
+              className="flex items-center gap-3 cursor-pointer group"
+            >
               <input
                 type="checkbox"
                 checked={selectedStates.includes(s.state_code)}
                 onChange={() => handleMultiFilterChange("state", s.state_code)}
                 className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
               />
-              <span className={`text-[13px] transition-colors ${selectedStates.includes(s.state_code) ? 'text-blue-600 font-bold' : 'text-gray-700 group-hover:text-gray-900'}`}>
+              <span
+                className={`text-[13px] transition-colors ${selectedStates.includes(s.state_code) ? "text-blue-600 font-bold" : "text-gray-700 group-hover:text-gray-900"}`}
+              >
                 {s.state_title}
               </span>
             </label>
           ))}
-          {states.length === 0 && <p className="text-xs text-gray-400 italic">Loading states...</p>}
-          {states.length > 0 && filteredStates.length === 0 && <p className="text-xs text-gray-400 italic">No states found</p>}
+          {states.length === 0 && (
+            <p className="text-xs text-gray-400 italic">Loading states...</p>
+          )}
+          {states.length > 0 && filteredStates.length === 0 && (
+            <p className="text-xs text-gray-400 italic">No states found</p>
+          )}
         </div>
       </div>
 
       {/* Tuition & Fees */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tuition & Fees</h3>
-          <span className="text-[13px] font-medium text-gray-900">${tuitionRange[0] * 2}K-${tuitionRange[1] * 2}K</span>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            Tuition & Fees
+          </h3>
+          <span className="text-[13px] font-medium text-gray-900">
+            ${tuitionRange[0] * 2}K-${tuitionRange[1] * 2}K
+          </span>
         </div>
         <Slider
           range
@@ -285,22 +322,28 @@ export default function SearchSidebar() {
 
       {/* ── Mobile: Backdrop overlay ── */}
       <div
-        className={`md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+        className={`md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+          isSidebarOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
       {/* ── Mobile: Slide-in drawer (visible below md) ── */}
       <div
         id="sidebar-mobile-drawer"
-        className={`md:hidden fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[320px] bg-white shadow-2xl transition-transform duration-300 ease-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`md:hidden fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[320px] bg-white shadow-2xl transition-transform duration-300 ease-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-blue-600" />
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Filters</h2>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+              Filters
+            </h2>
             {activeFilterCount > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-[11px] font-bold">
                 {activeFilterCount}

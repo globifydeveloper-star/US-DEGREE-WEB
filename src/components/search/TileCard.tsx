@@ -86,31 +86,31 @@ export default function TileCard({
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 relative">
+    <div className="bg-white border border-gray-100 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 sm:gap-3 relative">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex gap-2 items-center min-w-0">
-          <div className={`w-9 h-9 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-base shrink-0`}>
+        <div className="flex gap-1.5 sm:gap-2 items-center min-w-0">
+          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0 shadow-sm`}>
             {university.charAt(0)}
           </div>
           <div className="min-w-0">
             <Link href={universityHref}>
-              <h2 className="text-sm font-bold text-gray-900 truncate hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 truncate hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
             </Link>
-            <div className="flex items-center text-gray-400 text-[11px] mt-0.5">
-              <MapPin size={10} className="mr-0.5 shrink-0" />
+            <div className="flex items-center text-gray-400 text-[9px] sm:text-[11px] mt-0.5">
+              <MapPin size={9} className="mr-0.5 shrink-0" />
               <span className="truncate">{location}</span>
             </div>
           </div>
         </div>
-        <button className="text-gray-200 hover:text-red-400 transition shrink-0">
-          <Heart size={16} />
+        <button className="text-gray-200 hover:text-red-400 transition shrink-0 hidden sm:block">
+          <Heart size={14} />
         </button>
       </div>
 
       {/* School type badge */}
       {schoolType && (
-        <span className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+        <span className={`self-start text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border ${
           schoolType.toLowerCase().includes('public')
             ? 'bg-green-50 border-green-100 text-green-700'
             : 'bg-purple-50 border-purple-100 text-purple-700'
@@ -120,44 +120,44 @@ export default function TileCard({
       )}
 
       {/* Degree */}
-      <h3 className="text-[11px] font-bold text-red-500 leading-snug line-clamp-2">{degree}</h3>
+      <h3 className="text-[10px] sm:text-[11px] font-bold text-red-500 leading-snug line-clamp-2">{degree}</h3>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+      <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1 sm:gap-y-1.5">
         <div>
-          <p className="text-[9px] text-gray-400 uppercase font-semibold">Admission</p>
-          <p className="text-xs font-bold text-gray-900">{admissionRate}</p>
+          <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase font-semibold">Admission</p>
+          <p className="text-[10px] sm:text-xs font-bold text-gray-900">{admissionRate}</p>
         </div>
         <div>
-          <p className="text-[9px] text-gray-400 uppercase font-semibold">20yr ROI</p>
-          <p className="text-xs font-bold text-blue-600">{roi ?? 'N/A'}</p>
+          <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase font-semibold">20yr ROI</p>
+          <p className="text-[10px] sm:text-xs font-bold text-blue-600">{roi ?? 'N/A'}</p>
         </div>
         <div>
-          <p className="text-[9px] text-gray-400 uppercase font-semibold">Avg. Salary</p>
-          <p className="text-xs font-bold text-green-600">{avgSalary ?? 'N/A'}</p>
+          <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase font-semibold">Avg. Salary</p>
+          <p className="text-[10px] sm:text-xs font-bold text-green-600">{avgSalary ?? 'N/A'}</p>
         </div>
         <div>
-          <p className="text-[9px] text-gray-400 uppercase font-semibold">Employment</p>
-          <p className="text-xs font-bold text-gray-900">{gradRate > 0 ? `${gradRate}%` : 'N/A'}</p>
+          <p className="text-[8px] sm:text-[9px] text-gray-400 uppercase font-semibold">Employment</p>
+          <p className="text-[10px] sm:text-xs font-bold text-gray-900">{gradRate > 0 ? `${gradRate}%` : 'N/A'}</p>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-50 pt-3">
-        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+      <div className="mt-auto flex items-center justify-between gap-1 border-t border-gray-50 pt-2.5">
+        <label className="flex items-center gap-1 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={isCompared}
             onChange={handleCompareChange}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+            className="w-3 h-3 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
           />
-          <span className="text-[11px] font-medium text-gray-600">Compare</span>
+          <span className="text-[9px] sm:text-[11px] font-medium text-gray-600">Compare</span>
         </label>
         <Link
           href={universityHref}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-[11px] font-bold transition whitespace-nowrap"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-[11px] font-bold transition whitespace-nowrap"
         >
-          View Details
+          Details
         </Link>
       </div>
     </div>

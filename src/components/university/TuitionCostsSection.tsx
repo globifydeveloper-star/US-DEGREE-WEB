@@ -147,45 +147,45 @@ export default function TuitionCostsSection({
       <div>
         <h2 className="text-2xl font-bold text-black font-poppins mb-4">Cost of Attendance</h2>
 
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
           {costCards.map((card, i) => (
             <div
               key={i}
-              className="rounded-xl p-4 flex flex-col justify-between min-h-[90px]"
+              className="rounded-xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[80px] sm:min-h-[90px]"
               style={{ background: card.bg, outline: '1.27px #E2E8F0 solid' }}
             >
-              <p className="text-[10px] font-bold text-black font-poppins ">{card.label}</p>
-              <p className="text-xl font-bold font-poppins text-black">{fmt(card.value)}</p>
+              <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins ">{card.label}</p>
+              <p className="text-sm sm:text-base md:text-xl font-bold font-poppins text-black">{fmt(card.value)}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── 2. Financial Aid Cards ── */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-6 flex flex-col gap-3">
-          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(aidPercentage * animProgress)}%</p>
-          <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-4 sm:p-6 flex flex-col gap-2 sm:gap-3">
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(aidPercentage * animProgress)}%</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Receive Financial Aid
           </p>
-          <p className="text-xs text-slate-500 font-poppins leading-relaxed">
+          <p className="text-[10px] sm:text-xs text-slate-500 font-poppins leading-normal sm:leading-relaxed">
             Students receive need-based grants to ease the cost of education. Financial aid
             programs help lower overall tuition expenses and make college more accessible.
           </p>
-          <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
+          <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
             <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${aidPercentage * animProgress}%` }} />
           </div>
         </div>
 
-        <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-6 flex flex-col gap-3">
-          <p className="text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(studentsWithLoan * animProgress)}%</p>
-          <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
+        <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-4 sm:p-6 flex flex-col gap-2 sm:gap-3">
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(studentsWithLoan * animProgress)}%</p>
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Students with any loan
           </p>
-          <p className="text-xs text-slate-500 font-poppins leading-relaxed">
+          <p className="text-[10px] sm:text-xs text-slate-500 font-poppins leading-normal sm:leading-relaxed">
             {loanMessage}
           </p>
-          <div className="w-full h-2.5 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
+          <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
             <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${studentsWithLoan * animProgress}%` }} />
           </div>
         </div>
@@ -224,23 +224,23 @@ export default function TuitionCostsSection({
       <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col gap-5">
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-[#FFE6C4] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[10px] font-bold text-black font-poppins">Sticker price</p>
-            <p className="text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}
-              <span className="text-xs font-bold">/ year</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="bg-[#FFE6C4] rounded-xl p-3.5 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Sticker price</p>
+            <p className="text-sm sm:text-base md:text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}
+              <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
-          <div className="bg-[#FFE2F5] rounded-xl p-4 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[10px] font-bold text-black font-poppins">Estimated Financial Aid</p>
-            <p className="text-xl font-bold text-[#7C7C7C] font-poppins">
-              {fmt(currentNetPrice)} <span className="text-xs font-bold">/ year</span>
+          <div className="bg-[#FFE2F5] rounded-xl p-3.5 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Est. Financial Aid</p>
+            <p className="text-sm sm:text-base md:text-xl font-bold text-[#7C7C7C] font-poppins">
+              {fmt(currentNetPrice)} <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
-          <div className="bg-[#C0FFF0] rounded-xl p-4 flex flex-col gap-1">
-            <p className="text-[10px] font-bold text-black font-poppins">Your Net Price</p>
-            <p className="text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}
-              <span className="text-xs font-bold">/ year</span>
+          <div className="bg-[#C0FFF0] rounded-xl p-3.5 flex flex-col gap-1 col-span-2 md:col-span-1">
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Your Net Price</p>
+            <p className="text-sm sm:text-base md:text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}
+              <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
 
@@ -250,13 +250,56 @@ export default function TuitionCostsSection({
 
         {/* Slider */}
         <div
-          className="rounded-xl p-4 flex items-center gap-4"
+          className="rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4"
           style={{ background: 'rgba(251,147,147,0.35)', boxShadow: '4px 4px 4px rgba(0,0,0,0.15)' }}
         >
-          <span className="text-sm font-normal text-black font-poppins whitespace-nowrap">
-            Approximate Family income
-          </span>
-          <div className="flex-1 relative h-2.5">
+          <div className="flex justify-between items-center md:contents gap-2">
+            <span className="text-sm font-normal text-black font-poppins">
+              Approximate Family income
+            </span>
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-inner w-[130px] md:w-[150px] shrink-0 md:order-last">
+              <span className="text-slate-400 font-bold text-sm">$</span>
+              <input
+                type="text"
+                value={inputVal}
+                onChange={(e) => {
+                  const rawText = e.target.value;
+                  setInputVal(rawText);
+
+                  // Parse numbers from the input text
+                  const numeric = rawText.replace(/[^0-9]/g, '');
+                  if (numeric) {
+                    const num = parseInt(numeric, 10);
+                    const clamped = Math.min(150000, Math.max(0, num));
+                    setSliderValue(clamped);
+                    // Update income range based on clamped value
+                    if (clamped <= 30000) setIncomeRange('0-30000');
+                    else if (clamped <= 48000) setIncomeRange('30001-48000');
+                    else if (clamped <= 75000) setIncomeRange('48001-75000');
+                    else if (clamped <= 110000) setIncomeRange('75001-110000');
+                    else setIncomeRange('110001+');
+                  } else {
+                    setSliderValue(0);
+                    setIncomeRange('0-30000');
+                  }
+                }}
+                onBlur={() => {
+                  // Reformat cleanly with commas on blur
+                  setInputVal(sliderValue.toLocaleString());
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setInputVal(sliderValue.toLocaleString());
+                    e.currentTarget.blur();
+                  }
+                }}
+                className="w-full text-right font-extrabold text-[#334155] text-sm focus:outline-none bg-transparent"
+                placeholder="0"
+              />
+              <span className="text-slate-400 font-bold text-xs whitespace-nowrap">/ Yr</span>
+            </div>
+          </div>
+          <div className="flex-1 relative h-2.5 my-1 md:my-0">
             <div className="w-full h-full rounded-full bg-white overflow-hidden">
               <div
                 className="h-full rounded-full bg-[#3765FE]"
@@ -272,47 +315,6 @@ export default function TuitionCostsSection({
               onChange={(e) => handleSliderChange(Number(e.target.value))}
               className="absolute inset-0 w-full opacity-0 cursor-pointer"
             />
-          </div>
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-inner w-[150px] shrink-0">
-            <span className="text-slate-400 font-bold text-sm">$</span>
-            <input
-              type="text"
-              value={inputVal}
-              onChange={(e) => {
-                const rawText = e.target.value;
-                setInputVal(rawText);
-
-                // Parse numbers from the input text
-                const numeric = rawText.replace(/[^0-9]/g, '');
-                if (numeric) {
-                  const num = parseInt(numeric, 10);
-                  const clamped = Math.min(150000, Math.max(0, num));
-                  setSliderValue(clamped);
-                  // Update income range based on clamped value
-                  if (clamped <= 30000) setIncomeRange('0-30000');
-                  else if (clamped <= 48000) setIncomeRange('30001-48000');
-                  else if (clamped <= 75000) setIncomeRange('48001-75000');
-                  else if (clamped <= 110000) setIncomeRange('75001-110000');
-                  else setIncomeRange('110001+');
-                } else {
-                  setSliderValue(0);
-                  setIncomeRange('0-30000');
-                }
-              }}
-              onBlur={() => {
-                // Reformat cleanly with commas on blur
-                setInputVal(sliderValue.toLocaleString());
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setInputVal(sliderValue.toLocaleString());
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-full text-right font-extrabold text-[#334155] text-sm focus:outline-none bg-transparent"
-              placeholder="0"
-            />
-            <span className="text-slate-400 font-bold text-xs whitespace-nowrap">/ Year</span>
           </div>
         </div>
 

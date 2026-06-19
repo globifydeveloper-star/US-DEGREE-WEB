@@ -122,97 +122,96 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
 
       {/* 1. Enrolment & Size */}
       <div>
-        <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
+        <h2 className="text-xl sm:text-[26px] font-black text-[#1E293B] mb-4 sm:mb-6 tracking-tight leading-none">
           Enrolment & Size
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           {/* Size Category */}
-          <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          <div className="bg-[#EBF3FF]/60 border border-[#DBEAFE]/80 rounded-2xl sm:rounded-[24px] px-4 sm:px-7 py-6 sm:py-8 flex flex-col justify-between min-h-[120px] sm:min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{sizeCategory}</p>
-              {/* <p className="text-[11px] font-bold text-[#2563EB] mb-0">{sizeCategorySub}</p> */}
+              <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{sizeCategory}</p>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Size Category</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Size Category</p>
           </div>
 
           {/* Total Students */}
-          <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          <div className="bg-[#E6F4EA]/60 border border-[#DCFCE7]/80 rounded-2xl sm:rounded-[24px] px-4 sm:px-7 py-6 sm:py-8 flex flex-col justify-between min-h-[120px] sm:min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{size !== null ? size.toLocaleString() : "N/A"}</p>
+              <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{size !== null ? size.toLocaleString() : "N/A"}</p>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Total Students</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Total Students</p>
           </div>
 
           {/* Grad Students */}
-          <div className="bg-[#EBF3FF]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          <div className="bg-[#EBF3FF]/60 border border-[#FEF9C3]/80 rounded-2xl sm:rounded-[24px] px-4 sm:px-7 py-6 sm:py-8 flex flex-col justify-between min-h-[120px] sm:min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{gradStudents !== null ? gradStudents.toLocaleString() : "N/A"}</p>
+              <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">{gradStudents !== null ? gradStudents.toLocaleString() : "N/A"}</p>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Graduate Students</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Graduate Students</p>
           </div>
 
           {/* Average Family Income */}
-          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-[24px] px-7 py-8 flex flex-col justify-between min-h-[140px] shadow-sm">
+          <div className="bg-[#FEFCE8]/60 border border-[#FEF9C3]/80 rounded-2xl sm:rounded-[24px] px-4 sm:px-7 py-6 sm:py-8 flex flex-col justify-between min-h-[120px] sm:min-h-[140px] shadow-sm">
             <div>
-              <p className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
+              <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mb-1">
                 {avgFamilyIncome !== null ? `$${Math.round(avgFamilyIncome * animProgress).toLocaleString()}` : "N/A"}
               </p>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Avg family income</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider mt-4">Avg family income</p>
           </div>
         </div>
       </div>
 
       {/* 2. Gender Distribution */}
       <div>
-        <h2 className="text-[26px] font-black text-[#1E293B] mb-6 tracking-tight leading-none">
+        <h2 className="text-xl sm:text-[26px] font-black text-[#1E293B] mb-4 sm:mb-6 tracking-tight leading-none">
           Gender Distribution
         </h2>
 
-        <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+        <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm">
+          <div className="grid grid-cols-2 gap-4 sm:gap-x-16 sm:gap-y-8">
 
             {/* Student Men */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] sm:text-xs font-bold text-slate-700">
                 <span>Men (Students)</span>
                 <span>{menStudentsPct !== null ? `${(menStudentsPct * animProgress).toFixed(1)}%` : "N/A"}</span>
               </div>
-              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-2.5 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#FF5A5A] rounded-full" style={{ width: menStudentsPct !== null ? `${menStudentsPct * animProgress}%` : "0%" }} />
               </div>
             </div>
 
             {/* Faculty Men */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] sm:text-xs font-bold text-slate-700">
                 <span>Men (Faculty)</span>
                 <span>{menFacultyPct !== null ? `${(menFacultyPct * animProgress).toFixed(1)}%` : "N/A"}</span>
               </div>
-              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-2.5 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#FF5A5A] rounded-full" style={{ width: menFacultyPct !== null ? `${menFacultyPct * animProgress}%` : "0%" }} />
               </div>
             </div>
 
             {/* Student Women */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] sm:text-xs font-bold text-slate-700">
                 <span>Women (Students)</span>
                 <span>{womenStudentsPct !== null ? `${(womenStudentsPct * animProgress).toFixed(1)}%` : "N/A"}</span>
               </div>
-              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-2.5 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#EC4899] rounded-full" style={{ width: womenStudentsPct !== null ? `${womenStudentsPct * animProgress}%` : "0%" }} />
               </div>
             </div>
 
             {/* Faculty Women */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] sm:text-xs font-bold text-slate-700">
                 <span>Women (Faculty)</span>
                 <span>{womenFacultyPct !== null ? `${(womenFacultyPct * animProgress).toFixed(1)}%` : "N/A"}</span>
               </div>
-              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-2.5 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#EC4899] rounded-full" style={{ width: womenFacultyPct !== null ? `${womenFacultyPct * animProgress}%` : "0%" }} />
               </div>
             </div>
@@ -223,41 +222,41 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
 
       {/* 3. Repayment Progress By Group */}
       <div>
-        <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm flex flex-col gap-6">
-          <h3 className="text-[20px] font-black text-slate-900 tracking-tight leading-none">
+        <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm flex flex-col gap-5 sm:gap-6">
+          <h3 className="text-lg sm:text-[20px] font-black text-slate-900 tracking-tight leading-none">
             Repayment Progress By Group
           </h3>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5">
             {/* All Borrowers */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-900">
-                <span>All Borrowers - 3year Progress</span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[11px] sm:text-xs font-bold text-slate-900">
+                <span>All Borrowers - 3yr Progress</span>
                 <span>{allBorrowersPct !== null ? `${Math.round(allBorrowersPct * animProgress)}%` : "N/A"}</span>
               </div>
-              <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#10B981] rounded-full" style={{ width: allBorrowersPct !== null ? `${allBorrowersPct * animProgress}%` : "0%" }} />
               </div>
             </div>
 
             {/* Graduates */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-900">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[11px] sm:text-xs font-bold text-slate-900">
                 <span>Graduates</span>
                 <span>{graduatesPct !== null ? `${Math.round(graduatesPct * animProgress)}%` : "N/A"}</span>
               </div>
-              <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#F59E0B] rounded-full" style={{ width: graduatesPct !== null ? `${graduatesPct * animProgress}%` : "0%" }} />
               </div>
             </div>
 
             {/* Non-Completers */}
-            <div className="space-y-2.5">
-              <div className="flex justify-between text-xs font-bold text-slate-900">
+            <div className="space-y-2">
+              <div className="flex justify-between text-[11px] sm:text-xs font-bold text-slate-900">
                 <span>Non - Completers</span>
                 <span>{nonCompletersPct !== null ? `${Math.round(nonCompletersPct * animProgress)}%` : "N/A"}</span>
               </div>
-              <div className="h-3.5 bg-[#EAEFF5] rounded-full overflow-hidden">
+              <div className="h-3 bg-[#EAEFF5] rounded-full overflow-hidden">
                 <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: nonCompletersPct !== null ? `${nonCompletersPct * animProgress}%` : "0%" }} />
               </div>
             </div>
@@ -266,23 +265,23 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
       </div>
 
       {/* 4. Year 1 - Year 3 Change & Completers vs Non-Completers Tables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
 
         {/* Year 1 - Year 3 Change */}
-        <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm flex flex-col gap-5">
-          <h4 className="text-[16px] font-black text-slate-900 tracking-tight leading-none">
+        <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm flex flex-col gap-4 sm:gap-5">
+          <h4 className="text-sm sm:text-[16px] font-black text-slate-900 tracking-tight leading-none">
             Year 1 - Year 3 Change
           </h4>
           <div className="flex flex-col">
-            <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Loan Borrowers year 1</span>
+            <div className="flex justify-between py-2.5 border-b border-slate-100 text-[10px] sm:text-xs font-bold text-slate-400">
+              <span className="truncate mr-2">Loan Borrowers yr 1</span>
               <span className="text-slate-900 font-extrabold">{yr1 !== null ? yr1.toLocaleString() : "N/A"}</span>
             </div>
-            <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Still Repaying Year 3</span>
+            <div className="flex justify-between py-2.5 border-b border-slate-100 text-[10px] sm:text-xs font-bold text-slate-400">
+              <span className="truncate mr-2">Repaying Yr 3</span>
               <span className="text-slate-900 font-extrabold">{yr3 !== null ? yr3.toLocaleString() : "N/A"}</span>
             </div>
-            <div className="flex justify-between pt-3 text-xs font-black text-slate-900">
+            <div className="flex justify-between pt-2.5 text-[10px] sm:text-xs font-black text-slate-900">
               <span>Net Change</span>
               <span className={netChange !== null && netChange < 0 ? "text-[#FF5A5A]" : (netChange !== null ? "text-[#10B981]" : "text-slate-400")}>
                 {netChange !== null ? (netChange > 0 ? `+${netChange.toLocaleString()}` : netChange.toLocaleString()) : "N/A"}
@@ -292,21 +291,21 @@ export default function CampusStudentsTab({ campusData, fafsaApplications }: Cam
         </div>
 
         {/* Completers vs Non-Completers */}
-        <div className="bg-white border border-[#EAEFF5] rounded-[32px] p-8 shadow-sm flex flex-col gap-5">
-          <h4 className="text-[16px] font-black text-slate-900 tracking-tight leading-none">
+        <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm flex flex-col gap-4 sm:gap-5">
+          <h4 className="text-sm sm:text-[16px] font-black text-slate-900 tracking-tight leading-none">
             Completers vs Non-Completers
           </h4>
           <div className="flex flex-col">
-            <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Graduates Repaying</span>
+            <div className="flex justify-between py-2.5 border-b border-slate-100 text-[10px] sm:text-xs font-bold text-slate-400">
+              <span className="truncate mr-2">Graduates Repaying</span>
               <span className="text-slate-900 font-extrabold">{yr3Completers !== null ? yr3Completers.toLocaleString() : "N/A"}</span>
             </div>
-            <div className="flex justify-between py-3 border-b border-slate-100 text-xs font-bold text-slate-400">
-              <span>Non-Completers Repaying</span>
+            <div className="flex justify-between py-2.5 border-b border-slate-100 text-[10px] sm:text-xs font-bold text-slate-400">
+              <span className="truncate mr-2">Non-Grads Repaying</span>
               <span className="text-slate-900 font-extrabold">{yr3NonCompleters !== null ? yr3NonCompleters.toLocaleString() : "N/A"}</span>
             </div>
-            <div className="flex justify-between pt-3 text-xs font-black text-slate-900">
-              <span>Graduates Advantage</span>
+            <div className="flex justify-between pt-2.5 text-[10px] sm:text-xs font-black text-slate-900">
+              <span className="truncate mr-2">Grads Advantage</span>
               <span className="text-[#3B82F6]">
                 {graduatesAdvantage !== null ? `+${graduatesAdvantage.toLocaleString()}` : "N/A"}
               </span>

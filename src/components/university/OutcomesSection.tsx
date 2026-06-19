@@ -189,59 +189,59 @@ export default function OutcomesSection({
       {/* 1. Median Salary Section */}
       <div>
         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-4">MEDIAN SALARY</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
           {/* 1 Year */}
-          <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
-            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s1 != null ? formatCurrency(s1 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
+          <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
+              {s1 != null ? formatCurrency(s1 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
             </p>
           </div>
 
           {/* 5 Year */}
-          <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
-            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s5 != null ? formatCurrency(s5 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
+          <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
+              {s5 != null ? formatCurrency(s5 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
             </p>
           </div>
 
           {/* 10 Year */}
-          <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-3xl p-6.5 flex flex-col justify-center min-h-[108px] shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
-            <p className="text-3xl font-black text-[#16A34A] tracking-tight">
-              {s10 != null ? formatCurrency(s10 * animProgress) : <span className="text-gray-300 text-xl">No data</span>}
+          <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
+              {s10 != null ? formatCurrency(s10 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
             </p>
           </div>
         </div>
       </div>
 
       {/* 2. Employment Rate & ROI Side-by-Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full">
         {/* Employment Rate */}
-        <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-3xl p-8 shadow-sm flex flex-col justify-between min-h-[160px] relative overflow-hidden">
+        <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-2">EMPLOYMENT RATE</p>
-            <p className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
+            <p className="text-[9px] sm:text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-1 sm:mb-2">EMPLOYMENT RATE</p>
+            <p className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-2 sm:mb-4">
               {formatPercent(parsedEmp)}
             </p>
           </div>
-          <div className="w-full bg-gray-100 h-2.5 rounded-full mt-2">
+          <div className="w-full bg-gray-100 h-2 rounded-full mt-1 sm:mt-2">
             <div
-              className="bg-[#2563EB] h-2.5 rounded-full"
+              className="bg-[#2563EB] h-2 rounded-full"
               style={{ width: `${(parsedEmp < 2 ? parsedEmp * 100 : parsedEmp) * animProgress}%` }}
             />
           </div>
         </div>
 
         {/* 20-Year ROI */}
-        <div className="bg-[#FDF4FF] border border-[#F5D0FE]/60 rounded-3xl p-8 shadow-sm flex flex-col justify-between min-h-[160px] relative overflow-hidden">
+        <div className="bg-[#FDF4FF] border border-[#F5D0FE]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-2">20-YEAR NET ROI</p>
-            <p className="text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
+            <p className="text-[9px] sm:text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-1 sm:mb-2">20-YEAR NET ROI</p>
+            <p className="text-2xl sm:text-4xl md:text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
               {formatRoi(netRoi20Yr || null)}
             </p>
-            <p className="text-xs text-gray-400 font-medium">Lifetime earnings premium</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 font-medium">Lifetime premium</p>
           </div>
         </div>
       </div>
