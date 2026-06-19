@@ -50,6 +50,29 @@ const Navbar = () => {
     useAuth();
   const isLoggedIn = !!user;
 
+  // Open the login modal when redirected here with ?login=1 (e.g. an
+  // unauthenticated user was bounced off a protected page like /compare).
+  // Read from window to avoid needing a useSearchParams Suspense boundary.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("login") === "1" && !user) {
+      // Reading the URL is a client-only post-mount sync; a lazy useState
+      // initializer would cause an SSR/hydration mismatch here.
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setAuthMode("login");
+      setIsLoginModalOpen(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      params.delete("login");
+      const query = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + (query ? `?${query}` : ""),
+      );
+    }
+  }, [user]);
+
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [resendError, setResendError] = useState("");

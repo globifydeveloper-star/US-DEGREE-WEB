@@ -5,13 +5,21 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Result, Row, Col, message, notification } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
-import { INITIAL_PROFILE, StudentProfile } from "../../data/mockProfile";
+import React, { useState, useMemo, useEffect } from "react";
+import { Result, Row, Col, Alert, Button, message, notification } from "antd";
+import { CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  verifyBeforeUpdateEmail,
+  signOut,
+} from "firebase/auth";
+import { auth } from "../../lib/firebase";
+import { fetchProfile, patchProfile, deleteAccount } from "../../lib/auth/api";
+import { clearAppJwt } from "../../lib/auth/tokenStore";
+import { University, StudentProfile } from "../../types/profile";
 import { UNIVERSITIES } from "../../data/mockColleges";
-import { University } from "../../types/profile";
 import { computeCollegeMatches } from "./matchEngine";
 
 import ProfileInfoCard from "./cards/ProfileInfoCard";
@@ -56,12 +64,166 @@ function formatDbDate(
   });
 }
 
+// Return `value` unless it is null/undefined, in which case `fallback` is used.
+function pick<T>(value: unknown, fallback: T): T {
+  return value === undefined || value === null ? fallback : (value as T);
+}
+
+interface ProfileAuthUser {
+  displayName: string | null;
+  email: string | null;
+  createdAt?: string | null;
+  lastLogin?: string | null;
+}
+
+/**
+ * A blank profile. Identity (name/email/dates) is seeded from the authenticated
+ * user (real backend data), everything else is empty — there is NO mock/sample
+ * data. GET /profile then overlays whatever the user has actually entered.
+ */
+function emptyProfile(authUser?: ProfileAuthUser | null): StudentProfile {
+  return {
+    fullName: authUser?.displayName ?? "",
+    email: authUser?.email ?? "",
+    phone: "",
+    address: "",
+    createdDate: formatDbDate(authUser?.createdAt, ""),
+    lastLogin: formatDbDate(authUser?.lastLogin, ""),
+    highSchoolName: "",
+    graduationYear: null,
+    gpa: null,
+    satReadingWriting: null,
+    satMath: null,
+    actScore: null,
+    preferredStates: [],
+    preferredPrograms: [],
+    preferredDegreeLevel: "",
+  };
+}
+
+/**
+ * True when the user hasn't entered any academic/preference data yet (new
+ * signup). Identity fields (name/email/dates) are ignored — they come from
+ * signup, not from the user filling out the profile.
+ */
+function isProfileEmpty(p: StudentProfile): boolean {
+  return (
+    !p.phone &&
+    !p.address &&
+    !p.highSchoolName &&
+    p.graduationYear == null &&
+    p.gpa == null &&
+    p.satReadingWriting == null &&
+    p.satMath == null &&
+    p.actScore == null &&
+    p.preferredStates.length === 0 &&
+    p.preferredPrograms.length === 0 &&
+    !p.preferredDegreeLevel
+  );
+}
+
+/**
+ * Overlay a backend profile response onto the current StudentProfile. The
+ * backend is snake_case (display_name/created_at/preferred_states…); we read
+ * snake_case first and fall back to camelCase. Anything the response omits or
+ * returns null keeps the current (empty) value — never a fabricated default.
+ */
+function mergeProfile(
+  prev: StudentProfile,
+  data: Record<string, unknown>,
+): StudentProfile {
+  return {
+    ...prev,
+    fullName: pick(
+      data.display_name ?? data.full_name ?? data.fullName,
+      prev.fullName,
+    ),
+    email: pick(data.email, prev.email),
+    phone: pick(data.phone, prev.phone),
+    address: pick(data.address, prev.address),
+    createdDate: data.created_at
+      ? formatDbDate(data.created_at as string, prev.createdDate)
+      : prev.createdDate,
+    lastLogin: data.last_login
+      ? formatDbDate(data.last_login as string, prev.lastLogin)
+      : prev.lastLogin,
+    highSchoolName: pick(
+      data.high_school_name ?? data.highSchoolName,
+      prev.highSchoolName,
+    ),
+    graduationYear: pick(
+      data.graduation_year ?? data.graduationYear,
+      prev.graduationYear,
+    ),
+    gpa: pick(data.gpa, prev.gpa),
+    satReadingWriting: pick(
+      data.sat_reading_writing ?? data.satReadingWriting,
+      prev.satReadingWriting,
+    ),
+    satMath: pick(data.sat_math ?? data.satMath, prev.satMath),
+    actScore: pick(data.act_score ?? data.actScore, prev.actScore),
+    preferredStates: pick(
+      data.preferred_states ?? data.preferredStates,
+      prev.preferredStates,
+    ),
+    preferredPrograms: pick(
+      data.preferred_programs ?? data.preferredPrograms,
+      prev.preferredPrograms,
+    ),
+    preferredDegreeLevel: pick(
+      data.preferred_degree_level ?? data.preferredDegreeLevel,
+      prev.preferredDegreeLevel,
+    ),
+  };
+}
+
+/**
+ * Map the edit form's values to the snake_case PATCH /profile body. Email is
+ * never included (managed in Firebase). `preferred_states` is an array of
+ * 2-letter codes; `preferred_degree_level` is the canonical string from
+ * GET /degree-levels.
+ */
+function toProfilePatch(
+  values: Omit<StudentProfile, "createdDate" | "lastLogin">,
+): Record<string, unknown> {
+  return {
+    display_name: values.fullName,
+    phone: values.phone,
+    address: values.address,
+    high_school_name: values.highSchoolName,
+    graduation_year: values.graduationYear,
+    gpa: values.gpa,
+    sat_reading_writing: values.satReadingWriting,
+    sat_math: values.satMath,
+    act_score: values.actScore,
+    preferred_states: values.preferredStates,
+    preferred_programs: values.preferredPrograms,
+    preferred_degree_level: values.preferredDegreeLevel,
+  };
+}
+
+// Friendly text for the Firebase auth error codes surfaced by credential changes.
+function getAuthErrorMessage(error: unknown, fallback: string): string {
+  const code = (error as { code?: string } | null)?.code ?? "";
+  if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+    return "Your current password is incorrect.";
+  }
+  if (code === "auth/weak-password") {
+    return "The new password is too weak (use at least 6 characters).";
+  }
+  if (code === "auth/email-already-in-use") {
+    return "That email address is already in use by another account.";
+  }
+  if (code === "auth/requires-recent-login") {
+    return "For security, please sign out and back in, then try again.";
+  }
+  return fallback;
+}
+
 export default function ProfileDashboard({
   onQuickViewUniversity,
   authUser,
 }: ProfileDashboardProps) {
-  const router = useRouter();
-
   // Quick view falls back to an informational toast when no handler is supplied
   // (the mock universities have no live detail page).
   const handleQuickView = (uni: University) => {
@@ -72,15 +234,30 @@ export default function ProfileDashboard({
     }
   };
 
-  // Primary student profile (seeded with the real user's name/email and DB
-  // registration/last-login dates when available; academics remain mock).
-  const [profile, setProfile] = useState<StudentProfile>({
-    ...INITIAL_PROFILE,
-    fullName: authUser?.displayName ?? INITIAL_PROFILE.fullName,
-    email: authUser?.email ?? INITIAL_PROFILE.email,
-    createdDate: formatDbDate(authUser?.createdAt, INITIAL_PROFILE.createdDate),
-    lastLogin: formatDbDate(authUser?.lastLogin, INITIAL_PROFILE.lastLogin),
-  });
+  // Primary student profile. Starts blank (identity from the signed-in user,
+  // academics/preferences empty) and is populated solely by GET /profile — no
+  // mock/sample data is ever shown.
+  const [profile, setProfile] = useState<StudentProfile>(() =>
+    emptyProfile(authUser),
+  );
+
+  // Load the real profile from the backend (GET /profile, via the authed-fetch
+  // wrapper). Missing fields keep their seeded defaults so the UI still renders
+  // if the backend is unavailable.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const data = await fetchProfile<Record<string, unknown>>();
+        if (active && data) setProfile((prev) => mergeProfile(prev, data));
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Saved Colleges list - prepopulated with 12 colleges for the "Saved Colleges (12)" display.
   const [savedColleges, setSavedColleges] = useState<University[]>([
@@ -125,29 +302,22 @@ export default function ProfileDashboard({
   // Dynamic College Matchmaker — combines SAT score, preferred states, programs and degree level.
   const matches = useMemo(() => computeCollegeMatches(profile), [profile]);
 
-  // Handle Profile Update Confirmation
-  const onProfileSave = (
+  // Handle Profile Update Confirmation — persists via PATCH /profile.
+  const onProfileSave = async (
     values: Omit<StudentProfile, "createdDate" | "lastLogin">,
   ) => {
-    setProfile((prev) => ({
-      ...prev,
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      address: values.address,
-      highSchoolName: values.highSchoolName,
-      graduationYear: values.graduationYear,
-      gpa: values.gpa,
-      satReadingWriting: values.satReadingWriting,
-      satMath: values.satMath,
-      actScore: values.actScore,
-      preferredStates: values.preferredStates || prev.preferredStates,
-      preferredPrograms: values.preferredPrograms || prev.preferredPrograms,
-      preferredDegreeLevel:
-        values.preferredDegreeLevel || prev.preferredDegreeLevel,
-    }));
-    setIsEditProfileOpen(false);
-    message.success("Academic profile and preferences updated successfully!");
+    // Map to the snake_case backend body; email is never sent (Firebase-managed).
+    const patch = toProfilePatch(values);
+
+    try {
+      const updated = await patchProfile<Record<string, unknown>>(patch);
+      setProfile((prev) => mergeProfile(prev, updated ?? patch));
+      setIsEditProfileOpen(false);
+      message.success("Academic profile and preferences updated successfully!");
+    } catch (err) {
+      console.error("Profile save failed:", err);
+      message.error("Could not save your profile. Please try again.");
+    }
   };
 
   // Action: Add/Remove from Compare List
@@ -184,64 +354,99 @@ export default function ProfileDashboard({
     message.success(`${uni.name} added to your saved colleges.`);
   };
 
-  // Action: Password Modal Submit Handler
-  const handlePasswordSubmit = (values: {
+  // Action: Password change — Firebase SDK only (no backend endpoint).
+  const handlePasswordSubmit = async (values: {
+    currentPassword: string;
     newPassword: string;
     confirmPassword: string;
   }) => {
+    const current = auth.currentUser;
+    if (!current || !current.email) {
+      message.error("You must be signed in to change your password.");
+      return;
+    }
     if (values.newPassword !== values.confirmPassword) {
       message.error("The passwords do not match!");
       return;
     }
-    setIsChangePasswordOpen(false);
-    notification.success({
-      message: "Password Updated",
-      description:
-        "Your account security credentials have been updated successfully today.",
-      icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
-    });
-  };
-
-  // Action: Email Modal Submit Handler
-  const handleEmailSubmit = (values: { newEmail: string }) => {
-    setProfile((prev) => ({ ...prev, email: values.newEmail }));
-    setIsChangeEmailOpen(false);
-    message.success("Email settings modified successfully! Saved.");
-  };
-
-  // Action: Compare Now — hand the selected colleges' unitids to the live
-  // /compare page (same localStorage + URL contract used by useCompareColleges).
-  const handleCompareNow = () => {
-    const ids = compareList.map((u) => u.unitid).filter(Boolean);
-    if (ids.length < 2) return;
 
     try {
-      localStorage.setItem("compared_colleges", JSON.stringify(ids));
-      const details = compareList.map((u) => ({
-        id: u.unitid,
-        name: u.name,
-        city: u.city,
-        state: u.state,
-        schoolType: u.type,
-        location: `${u.city}, ${u.state}`,
-        cipCode: "default",
-      }));
-      localStorage.setItem(
-        "compared_colleges_details",
-        JSON.stringify(details),
-      );
-      window.dispatchEvent(new Event("compared-colleges-updated"));
-    } catch (e) {
-      console.error("Failed to seed compare selection:", e);
-    }
+      try {
+        await updatePassword(current, values.newPassword);
+      } catch (err) {
+        // Firebase requires a recent login for sensitive changes — reauth then retry.
+        if ((err as { code?: string }).code === "auth/requires-recent-login") {
+          const credential = EmailAuthProvider.credential(
+            current.email,
+            values.currentPassword,
+          );
+          await reauthenticateWithCredential(current, credential);
+          await updatePassword(current, values.newPassword);
+        } else {
+          throw err;
+        }
+      }
 
-    router.push(`/compare?ids=${ids.join(",")}`);
+      setIsChangePasswordOpen(false);
+      notification.success({
+        message: "Password Updated",
+        description:
+          "Your account security credentials have been updated successfully.",
+        icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+      });
+    } catch (err) {
+      console.error("Password change failed:", err);
+      message.error(
+        getAuthErrorMessage(err, "Could not update your password."),
+      );
+    }
   };
 
-  // Trigger Deactivation Complete (validation handled inside the modal).
-  const onConfirmDeactivate = () => {
-    setAccountDeactivatedStatus(true);
+  // Action: Email change — Firebase sends a verification link; the change takes
+  // effect after the user clicks it, and the backend mirrors it on next login.
+  const handleEmailSubmit = async (values: { newEmail: string }) => {
+    const current = auth.currentUser;
+    if (!current) {
+      message.error("You must be signed in to change your email.");
+      return;
+    }
+
+    try {
+      await verifyBeforeUpdateEmail(current, values.newEmail);
+      setIsChangeEmailOpen(false);
+      notification.success({
+        message: "Verification link sent",
+        description: `We sent a confirmation link to ${values.newEmail}. Your email updates after you click it.`,
+        icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+      });
+    } catch (err) {
+      console.error("Email change failed:", err);
+      message.error(
+        getAuthErrorMessage(err, "Could not start the email change."),
+      );
+    }
+  };
+
+  // Account deletion: backend soft-delete, then Firebase sign-out + clear the
+  // app JWT (validation handled inside the modal).
+  const onConfirmDeactivate = async () => {
+    try {
+      await deleteAccount(); // POST /account/delete (app JWT)
+    } catch (err) {
+      console.error("Account deletion failed:", err);
+      message.error("We couldn't deactivate your account. Please try again.");
+      return;
+    }
+
     setIsDeactivateOpen(false);
+    setAccountDeactivatedStatus(true);
+
+    try {
+      await signOut(auth); // a soft-deleted account must not stay signed in
+    } catch (err) {
+      console.error("Sign-out after deletion failed:", err);
+    }
+    clearAppJwt();
   };
 
   if (accountDeactivatedStatus) {
@@ -261,6 +466,27 @@ export default function ProfileDashboard({
       id="student_profile_dashboard_page"
       className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12"
     >
+      {/* New-user prompt: shown only when no profile data has been entered yet.
+          No fabricated/placeholder values are displayed — just an invitation. */}
+      {isProfileEmpty(profile) && (
+        <Alert
+          type="info"
+          showIcon
+          className="rounded-2xl"
+          message="Complete your profile to get personalized recommendations"
+          description="Add your academic details and preferences so we can match you with the right colleges."
+          action={
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => setIsEditProfileOpen(true)}
+            >
+              Complete your profile
+            </Button>
+          }
+        />
+      )}
+
       {/* Upper Main Grid Section (Profile Info and Academics) */}
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={14}>
@@ -297,26 +523,14 @@ export default function ProfileDashboard({
         onAddSaved={handleAddSaved}
       />
 
-      {/* Saved Colleges */}
+      {/* Saved Colleges — self-fetches from GET /saved-colleges */}
       <SavedCollegesSection
-        savedColleges={savedColleges}
         view={savedCollegesView}
         onViewChange={setSavedCollegesView}
-        preferredStates={profile.preferredStates}
-        onQuickView={handleQuickView}
-        onRemoveSaved={handleRemoveSaved}
       />
 
-      {/* Compare List */}
-      <CompareListSection
-        compareList={compareList}
-        onToggleCompare={handleToggleCompare}
-        onClearAll={() => {
-          setCompareList([]);
-          message.info("Comparison bucket cleared successfully.");
-        }}
-        onCompareNow={handleCompareNow}
-      />
+      {/* Compare List — self-fetches from GET /compare/selected */}
+      <CompareListSection />
 
       {/* Danger Zone */}
       <DangerZoneCard onDeactivate={() => setIsDeactivateOpen(true)} />

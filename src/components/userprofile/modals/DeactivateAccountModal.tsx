@@ -13,7 +13,7 @@ import {
   message,
 } from "antd";
 import { WarningOutlined } from "@ant-design/icons";
-import { DEACTIVATION_REASONS } from "../../../data/mockProfile";
+import { DEACTIVATION_REASONS } from "../../../data/profileOptions";
 
 interface DeactivateAccountModalProps {
   open: boolean;

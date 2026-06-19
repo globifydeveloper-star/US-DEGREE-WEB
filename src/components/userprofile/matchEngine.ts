@@ -7,8 +7,7 @@
  */
 
 import { UNIVERSITIES, PROGRAMS } from "../../data/mockColleges";
-import { StudentProfile } from "../../data/mockProfile";
-import { University } from "../../types/profile";
+import { StudentProfile, University } from "../../types/profile";
 
 export type MatchBadge = "Strong Match" | "Good Match" | "Reach School";
 
@@ -31,7 +30,7 @@ export function computeCollegeMatches(profile: StudentProfile): CollegeMatch[] {
     }
 
     // 2. SAT Fit assessment (+15%)
-    const totalSAT = profile.satMath + profile.satReadingWriting;
+    const totalSAT = (profile.satMath ?? 0) + (profile.satReadingWriting ?? 0);
     // Elite universities (Stanford, Harvard, MIT, Columbia, etc.)
     const isUltraSelective = [
       "stanford",
@@ -60,9 +59,10 @@ export function computeCollegeMatches(profile: StudentProfile): CollegeMatch[] {
     }
 
     // 3. GPA Factor (+10%)
-    if (profile.gpa >= 3.85) {
+    const gpa = profile.gpa ?? 0;
+    if (gpa >= 3.85) {
       baseMatch += 10;
-    } else if (profile.gpa >= 3.5) {
+    } else if (gpa >= 3.5) {
       baseMatch += 5;
     }
 

@@ -29,3 +29,30 @@ export interface Program {
   state: string;
   degreeLevel: string;
 }
+
+/**
+ * The student profile as rendered by the dashboard. Sourced solely from
+ * GET /profile — there is no mock/seed data. Numeric academic fields are
+ * nullable so a field the backend returns empty renders blank (never a
+ * fabricated sample value).
+ */
+export interface StudentProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  createdDate: string;
+  lastLogin: string;
+
+  highSchoolName: string;
+  graduationYear: number | null;
+  gpa: number | null;
+
+  satReadingWriting: number | null;
+  satMath: number | null;
+  actScore?: number | null;
+
+  preferredStates: string[]; // 2-letter codes e.g. ['CA', 'NY']
+  preferredPrograms: string[];
+  preferredDegreeLevel: string;
+}

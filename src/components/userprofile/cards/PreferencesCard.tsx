@@ -3,7 +3,8 @@
 import React from "react";
 import { Card, Button, Tag } from "antd";
 import { CompassOutlined, EditOutlined } from "@ant-design/icons";
-import { StudentProfile, SAC_STATES } from "../../../data/mockProfile";
+import { StudentProfile } from "../../../types/profile";
+import { useStates } from "../../../lib/referenceData";
 
 interface PreferencesCardProps {
   profile: StudentProfile;
@@ -16,6 +17,11 @@ export default function PreferencesCard({
   profile,
   onEdit,
 }: PreferencesCardProps) {
+  // Map stored 2-letter codes to full names using the canonical backend list.
+  const { states } = useStates();
+  const stateName = (code: string) =>
+    states.find((s) => s.code === code)?.name || code;
+
   return (
     <Card
       id="preferences_summary_card"
@@ -61,7 +67,7 @@ export default function PreferencesCard({
                   style={{ borderRadius: "6px" }}
                   className="font-medium px-2.5 py-0.5"
                 >
-                  {SAC_STATES.find((s) => s.code === st)?.name || st}
+                  {stateName(st)}
                 </Tag>
               ))
             )}

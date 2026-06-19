@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, Button, Row, Col } from "antd";
 import { BookOutlined, HomeOutlined, EditOutlined } from "@ant-design/icons";
-import { StudentProfile } from "../../../data/mockProfile";
+import { StudentProfile } from "../../../types/profile";
 
 interface AcademicInfoCardProps {
   profile: StudentProfile;
@@ -50,7 +50,7 @@ export default function AcademicInfoCard({
           </h4>
           <p className="text-sm font-semibold text-neutral-800 flex items-center gap-2">
             <HomeOutlined className="text-neutral-400" />
-            {profile.highSchoolName}
+            {profile.highSchoolName || "Not provided"}
           </p>
           <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-neutral-100 text-xs">
             <div>
@@ -58,7 +58,7 @@ export default function AcademicInfoCard({
                 Graduation Target
               </span>
               <span className="font-bold text-neutral-800 text-sm mt-0.5 block">
-                {profile.graduationYear}
+                {profile.graduationYear ?? "Not provided"}
               </span>
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function AcademicInfoCard({
                 Cumulative GPA
               </span>
               <span className="font-extrabold text-blue-600 text-sm mt-0.5 block">
-                {profile.gpa} / 4.0
+                {profile.gpa != null ? `${profile.gpa} / 4.0` : "Not provided"}
               </span>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function AcademicInfoCard({
                   SAT Reading
                 </span>
                 <span className="font-extrabold text-neutral-800 text-base">
-                  {profile.satReadingWriting}
+                  {profile.satReadingWriting ?? "—"}
                 </span>
               </div>
             </Col>
@@ -94,7 +94,7 @@ export default function AcademicInfoCard({
                   SAT Mathematics
                 </span>
                 <span className="font-extrabold text-neutral-800 text-base">
-                  {profile.satMath}
+                  {profile.satMath ?? "—"}
                 </span>
               </div>
             </Col>

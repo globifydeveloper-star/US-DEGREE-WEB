@@ -7,7 +7,11 @@ import { LockOutlined } from "@ant-design/icons";
 interface ChangePasswordModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: { newPassword: string; confirmPassword: string }) => void;
+  onSubmit: (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => void | Promise<void>;
 }
 
 export default function ChangePasswordModal({

@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { Modal, Form, Input, Button, Space, message } from "antd";
+import React from "react";
+import { Modal, Form, Input, Button, Space, Alert } from "antd";
 import { MailOutlined } from "@ant-design/icons";
 
 interface ChangeEmailModalProps {
   open: boolean;
   onClose: () => void;
   currentEmail: string;
-  onSubmit: (values: { newEmail: string }) => void;
+  onSubmit: (values: { newEmail: string }) => void | Promise<void>;
 }
 
 export default function ChangeEmailModal({
@@ -18,18 +18,21 @@ export default function ChangeEmailModal({
   onSubmit,
 }: ChangeEmailModalProps) {
   const [form] = Form.useForm();
-  const [sentEmailVerification, setSentEmailVerification] = useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleClose = () => {
-    setSentEmailVerification(false);
     form.resetFields();
     onClose();
   };
 
-  const handleFinish = (values: { newEmail: string }) => {
-    onSubmit(values);
-    setSentEmailVerification(false);
-    form.resetFields();
+  const handleFinish = async (values: { newEmail: string }) => {
+    setSubmitting(true);
+    try {
+      await onSubmit(values);
+      form.resetFields();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -51,79 +54,32 @@ export default function ChangeEmailModal({
         onFinish={handleFinish}
         className="pt-4"
       >
-        <Form.Item
-          name="currentEmail"
-          label="Current Email Address"
-          initialValue={currentEmail}
-        >
-          <Input prefix={<MailOutlined />} disabled />
+        <Alert
+          type="info"
+          showIcon
+          className="text-xs rounded-xl mb-4"
+          message="We'll email a verification link to your new address. Your email changes only after you click that link — and is reflected here on your next sign-in."
+        />
+
+        <Form.Item label="Current Email Address">
+          <Input prefix={<MailOutlined />} value={currentEmail} disabled />
         </Form.Item>
 
         <Form.Item
           name="newEmail"
-          label="New Verified Email Address"
+          label="New Email Address"
           rules={[
             { required: true, message: "New email is required" },
             { type: "email", message: "Enter a valid email address format" },
           ]}
         >
-          <Input
-            prefix={<MailOutlined />}
-            onChange={() => setSentEmailVerification(false)}
-          />
+          <Input prefix={<MailOutlined />} placeholder="you@example.com" />
         </Form.Item>
-
-        <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-100 flex items-center justify-between mb-4">
-          <div>
-            <span className="text-xs font-bold text-neutral-800 block">
-              Verification Required
-            </span>
-            <span className="text-[11px] text-neutral-400 block">
-              A verification code must be triggered to lock settings
-            </span>
-          </div>
-          <Button
-            size="small"
-            onClick={() => {
-              setSentEmailVerification(true);
-              message.info(
-                "A mockup OTP code '83921' generated and queued. Check logs.",
-              );
-            }}
-          >
-            {sentEmailVerification ? "Resend Code" : "Send Code"}
-          </Button>
-        </div>
-
-        {sentEmailVerification && (
-          <Form.Item
-            name="verificationCode"
-            label="Input Verification Code"
-            rules={[
-              { required: true, message: "Verification OTP is mandatory" },
-            ]}
-            help="Hint: type '83921' (generated mockup code sent for test compliance)"
-          >
-            <Input
-              placeholder="e.g. 83921"
-              maxLength={6}
-              style={{
-                fontWeight: "bold",
-                letterSpacing: "0.2em",
-                textAlign: "center",
-              }}
-            />
-          </Form.Item>
-        )}
 
         <div className="flex justify-end gap-3 pt-4 border-t border-neutral-100">
           <Button onClick={handleClose}>Cancel</Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            disabled={!sentEmailVerification}
-          >
-            Authenticate & Save Email
+          <Button type="primary" htmlType="submit" loading={submitting}>
+            Send Verification Link
           </Button>
         </div>
       </Form>

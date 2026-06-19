@@ -13,7 +13,7 @@ import {
   SettingOutlined,
   SecurityScanOutlined,
 } from "@ant-design/icons";
-import { StudentProfile } from "../../../data/mockProfile";
+import { StudentProfile } from "../../../types/profile";
 
 interface ProfileInfoCardProps {
   profile: StudentProfile;
@@ -61,22 +61,26 @@ export default function ProfileInfoCard({
         <Avatar
           size={80}
           icon={<UserOutlined />}
-          src={`https://api.dicebear.com/7.x/adventurer/svg?seed=Rahul`}
+          src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(
+            profile.fullName || profile.email || "student",
+          )}`}
           className="bg-blue-100 border-2 border-blue-500 shadow-sm"
         />
         <div className="text-center sm:text-left space-y-1">
           <h2 className="text-xl font-bold text-neutral-900">
-            {profile.fullName}
+            {profile.fullName || "Not provided"}
           </h2>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-            <Tag
-              color="cyan"
-              variant="solid"
-              style={{ borderRadius: "6px" }}
-              icon={<BookOutlined />}
-            >
-              {profile.preferredDegreeLevel} Preference
-            </Tag>
+            {profile.preferredDegreeLevel && (
+              <Tag
+                color="cyan"
+                variant="solid"
+                style={{ borderRadius: "6px" }}
+                icon={<BookOutlined />}
+              >
+                {profile.preferredDegreeLevel} Preference
+              </Tag>
+            )}
             <Tag
               color="blue"
               style={{ borderRadius: "6px" }}
@@ -100,7 +104,9 @@ export default function ProfileInfoCard({
             </span>
           }
         >
-          <span className="font-medium text-neutral-700">{profile.email}</span>
+          <span className="font-medium text-neutral-700">
+            {profile.email || "Not provided"}
+          </span>
         </Descriptions.Item>
         <Descriptions.Item
           label={
@@ -132,7 +138,7 @@ export default function ProfileInfoCard({
           }
         >
           <span className="font-medium text-neutral-600">
-            {profile.createdDate}
+            {profile.createdDate || "—"}
           </span>
         </Descriptions.Item>
         <Descriptions.Item
@@ -144,7 +150,7 @@ export default function ProfileInfoCard({
           }
         >
           <span className="font-medium text-neutral-600">
-            {profile.lastLogin}
+            {profile.lastLogin || "—"}
           </span>
         </Descriptions.Item>
       </Descriptions>

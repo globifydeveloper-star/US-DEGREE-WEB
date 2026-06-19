@@ -1,13 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Heart, Clock, BookOpen, MapPin, X, GitCompareArrows } from 'lucide-react';
-import UserSatPopup from './UserSatPopup';
-import StickerPrice from './StickerPrice';
-import { Button } from 'antd';
-import CompareIconAnimation from './CompareIconAnimation';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Heart,
+  Clock,
+  BookOpen,
+  MapPin,
+  X,
+  GitCompareArrows,
+} from "lucide-react";
+import UserSatPopup from "./UserSatPopup";
+import StickerPrice from "./StickerPrice";
+import { Button, message } from "antd";
+import CompareIconAnimation from "./CompareIconAnimation";
+import { useSavedCollege, toggleSaved } from "./useSavedColleges";
+import { setCompareSelected } from "./useCompareSelected";
 
 export interface ResultCardProps {
   id?: number | string;
+  /** IPEDS UNITID — stable identifier used for saving the college. */
+  unitid?: string;
   cipCode?: string;
   university: string;
   location: string;
@@ -29,14 +40,14 @@ export interface ResultCardProps {
 }
 
 const parseAdmissionRate = (rateStr: string): number | null => {
-  if (!rateStr || rateStr === 'N/A') return null;
-  const num = parseFloat(rateStr.replace('%', ''));
+  if (!rateStr || rateStr === "N/A") return null;
+  const num = parseFloat(rateStr.replace("%", ""));
   return isNaN(num) ? null : num / 100;
 };
 
 const parseSatRange = (satStr: string): { min: number; max: number } | null => {
-  if (!satStr || satStr === 'N/A') return null;
-  const parts = satStr.split('-');
+  if (!satStr || satStr === "N/A") return null;
+  const parts = satStr.split("-");
   if (parts.length === 2) {
     const min = parseInt(parts[0].trim());
     const max = parseInt(parts[1].trim());
@@ -51,7 +62,7 @@ const calculateFitScore = (
   userGpa: number,
   userSat: number,
   admissionRateStr: string,
-  satActStr: string
+  satActStr: string,
 ): number => {
   let score = 75; // base score
 
@@ -117,6 +128,7 @@ const calculateFitScore = (
 
 export default function ResultCard({
   id = 1,
+  unitid,
   cipCode,
   university,
   location,
@@ -134,14 +146,15 @@ export default function ResultCard({
   avgSalary,
   medianSalary,
   logoColor,
-  schoolUrl
+  schoolUrl,
 }: ResultCardProps) {
   const formattedSchoolUrl = schoolUrl
-    ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+    ? schoolUrl.trim().startsWith("http://") ||
+      schoolUrl.trim().startsWith("https://")
       ? schoolUrl.trim()
-      : `https://${schoolUrl.trim()}`)
+      : `https://${schoolUrl.trim()}`
     : "";
-  const hasSatData = satAct && satAct !== 'N/A';
+  const hasSatData = satAct && satAct !== "N/A";
 
   const [isCalculated, setIsCalculated] = useState(false);
   const [currentScore, setCurrentScore] = useState(matchScore);
@@ -156,22 +169,55 @@ export default function ResultCard({
   const [isCompared, setIsCompared] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Saved-college state (shared store; loads once across all visible cards).
+  const isSavedCollege = useSavedCollege(unitid);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleToggleSave = async () => {
+    // A card with no unitid cannot be saved — report it.
+    if (!unitid) {
+      console.error(
+        `Cannot save "${university}": missing unitid in card data.`,
+      );
+      message.error("This college can't be saved (missing identifier).");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const nowSaved = await toggleSaved(unitid);
+      message.success(
+        nowSaved
+          ? `Saved ${university} to your colleges.`
+          : `Removed ${university} from saved colleges.`,
+      );
+    } catch {
+      message.error("Could not update saved colleges. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   useEffect(() => {
-    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+    const list = JSON.parse(localStorage.getItem("compared_colleges") || "[]");
     setIsCompared(list.includes(String(id)));
 
     const handleUpdate = () => {
-      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
+      const updatedList = JSON.parse(
+        localStorage.getItem("compared_colleges") || "[]",
+      );
       setIsCompared(updatedList.includes(String(id)));
     };
 
-    window.addEventListener('compared-colleges-updated', handleUpdate);
-    return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
+    window.addEventListener("compared-colleges-updated", handleUpdate);
+    return () =>
+      window.removeEventListener("compared-colleges-updated", handleUpdate);
   }, [id]);
 
   const toggleCompare = () => {
-    let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
+    let list = JSON.parse(localStorage.getItem("compared_colleges") || "[]");
+    let detailsList = JSON.parse(
+      localStorage.getItem("compared_colleges_details") || "[]",
+    );
     const nextState = !isCompared;
     if (nextState) {
       if (list.length >= 5) {
@@ -183,20 +229,31 @@ export default function ResultCard({
         detailsList.push({
           id: String(id),
           name: university,
-          logoColor: logoColor || 'bg-blue-600',
+          logoColor: logoColor || "bg-blue-600",
           location: location,
-          cipCode: cipCode || 'default',
-          schoolUrl: formattedSchoolUrl || ""
+          cipCode: cipCode || "default",
+          schoolUrl: formattedSchoolUrl || "",
         });
       }
     } else {
       list = list.filter((cid: string) => cid !== String(id));
       detailsList = detailsList.filter((c: any) => c.id !== String(id));
     }
-    localStorage.setItem('compared_colleges', JSON.stringify(list));
-    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
+    localStorage.setItem("compared_colleges", JSON.stringify(list));
+    localStorage.setItem(
+      "compared_colleges_details",
+      JSON.stringify(detailsList),
+    );
     setIsCompared(nextState);
-    window.dispatchEvent(new Event('compared-colleges-updated'));
+    window.dispatchEvent(new Event("compared-colleges-updated"));
+
+    // Persist the selection to the backend so the profile's "Selected for
+    // Comparison" section reflects it. Best-effort; the store reverts on error.
+    if (unitid) {
+      setCompareSelected(unitid, nextState).catch((err) =>
+        console.error("Failed to sync comparison selection:", err),
+      );
+    }
   };
 
   useEffect(() => {
@@ -207,7 +264,12 @@ export default function ResultCard({
       const gpaNum = parseFloat(savedGpa);
       const satNum = parseInt(savedSat || "0") || 0;
       if (!isNaN(gpaNum)) {
-        const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
+        const computed = calculateFitScore(
+          gpaNum,
+          satNum,
+          admissionRate,
+          satAct,
+        );
         setCurrentScore(computed);
         setIsCalculated(true);
         setTempGpa(savedGpa);
@@ -222,7 +284,12 @@ export default function ResultCard({
         const gpaNum = parseFloat(gpa);
         const satNum = parseInt(sat || "0") || 0;
         if (!isNaN(gpaNum)) {
-          const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
+          const computed = calculateFitScore(
+            gpaNum,
+            satNum,
+            admissionRate,
+            satAct,
+          );
           setCurrentScore(computed);
           setIsCalculated(true);
           setTempGpa(gpa);
@@ -295,7 +362,7 @@ export default function ResultCard({
       tuition: estCost,
       avgSalary: avgSalary || medianSalary,
       roi: roi,
-    }
+    },
   };
   const validateSat = (value: string) => {
     if (!value) {
@@ -329,16 +396,19 @@ export default function ResultCard({
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-
       {/* Top Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex gap-4 items-start">
-          <div className={`w-10 h-10 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-xl shrink-0`}>
+          <div
+            className={`w-10 h-10 rounded-lg ${logoColor} flex items-center justify-center text-white font-bold text-xl shrink-0`}
+          >
             {university.charAt(0)}
           </div>
           <div>
             <Link href={universityHref}>
-              <h2 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">{university}</h2>
+              <h2 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
+                {university}
+              </h2>
             </Link>
             <div className="flex items-center text-gray-500 text-xs mt-0.5">
               <MapPin size={12} className="mr-1" />
@@ -364,21 +434,30 @@ export default function ResultCard({
         <span className="text-[8px] font-bold text-blue-600 uppercase mb-1 text-center leading-tight">
           {shouldShowFit ? "Your Fit Score" : "Match Score"}
         </span>
-        <div className={`relative w-11 h-11 flex items-center justify-center transition-all duration-500 ${!shouldShowFit ? 'filter blur-[1.5px] opacity-80' : ''}`}>
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+        <div
+          className={`relative w-11 h-11 flex items-center justify-center transition-all duration-500 ${!shouldShowFit ? "filter blur-[1.5px] opacity-80" : ""}`}
+        >
+          <svg
+            className="w-full h-full transform -rotate-90"
+            viewBox="0 0 36 36"
+          >
             <path
               className="text-gray-200 stroke-current"
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              fill="none" strokeWidth="3"
+              fill="none"
+              strokeWidth="3"
             />
             <path
               className="text-blue-600 stroke-current"
               strokeDasharray={`${shouldShowFit ? currentScore : matchScore}, 100`}
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              fill="none" strokeWidth="3"
+              fill="none"
+              strokeWidth="3"
             />
           </svg>
-          <span className="absolute text-[10px] font-extrabold text-blue-900">{shouldShowFit ? currentScore : matchScore}%</span>
+          <span className="absolute text-[10px] font-extrabold text-blue-900">
+            {shouldShowFit ? currentScore : matchScore}%
+          </span>
         </div>
       </div>
 
@@ -388,15 +467,21 @@ export default function ResultCard({
 
         <div className="flex flex-wrap gap-5 mb-3">
           <div>
-            <p className="text-[9px] text-gray-500 uppercase font-semibold">Admission Rate</p>
+            <p className="text-[9px] text-gray-500 uppercase font-semibold">
+              Admission Rate
+            </p>
             <p className="font-bold text-gray-900 text-xs">{admissionRate}</p>
           </div>
           <div>
-            <p className="text-[9px] text-gray-500 uppercase font-semibold">Avg. GPA</p>
+            <p className="text-[9px] text-gray-500 uppercase font-semibold">
+              Avg. GPA
+            </p>
             <p className="font-bold text-gray-900 text-xs">{avgGpa}</p>
           </div>
           <div>
-            <p className="text-[9px] text-gray-500 uppercase font-semibold">SAT/ACT</p>
+            <p className="text-[9px] text-gray-500 uppercase font-semibold">
+              SAT/ACT
+            </p>
             <p className="font-bold text-gray-900 text-xs">{satAct}</p>
           </div>
         </div>
@@ -407,11 +492,14 @@ export default function ResultCard({
             {duration}
           </span>
           {schoolType && (
-            <span className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${schoolType.toLowerCase().includes('public')
-              ? 'bg-green-50 border-green-100 text-green-700'
-              : 'bg-purple-50 border-purple-100 text-purple-700'
-              }`}>
-              {schoolType.split(',')[0]}
+            <span
+              className={`flex items-center gap-1 px-1.5 py-1 rounded-md border font-bold ${
+                schoolType.toLowerCase().includes("public")
+                  ? "bg-green-50 border-green-100 text-green-700"
+                  : "bg-purple-50 border-purple-100 text-purple-700"
+              }`}
+            >
+              {schoolType.split(",")[0]}
             </span>
           )}
           <span className="flex items-center gap-1 bg-gray-50 px-1.5 py-1 rounded-md border border-gray-100">
@@ -423,25 +511,32 @@ export default function ResultCard({
 
       {/* Stat Tiles */}
       <div className="flex flex-wrap gap-3 py-4 border-y border-gray-100 mb-4">
-
         {/* Employment Rate */}
         <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Employment Rate</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+            Employment Rate
+          </span>
           <span className="text-sm font-extrabold text-gray-900">
-            {gradRate > 0 ? `${gradRate}%` : 'N/A'}
+            {gradRate > 0 ? `${gradRate}%` : "N/A"}
           </span>
         </div>
 
         <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Median Salary</span>
-          <span className="text-sm font-extrabold text-green-600">{medianSalary ?? 'N/A'}</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+            Median Salary
+          </span>
+          <span className="text-sm font-extrabold text-green-600">
+            {medianSalary ?? "N/A"}
+          </span>
         </div>
 
         {/* 20yr ROI */}
         <div className="flex-1 min-w-[80px] flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">20yr ROI</span>
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+            20yr ROI
+          </span>
           <span className="text-sm font-extrabold text-blue-600">
-            {roi ?? 'N/A'}
+            {roi ?? "N/A"}
           </span>
         </div>
 
@@ -466,8 +561,9 @@ export default function ResultCard({
 
                 <path
                   className="text-blue-600 stroke-current"
-                  strokeDasharray={`${shouldShowFit ? currentScore : matchScore
-                    }, 100`}
+                  strokeDasharray={`${
+                    shouldShowFit ? currentScore : matchScore
+                  }, 100`}
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
                   strokeWidth="3"
@@ -490,25 +586,47 @@ export default function ResultCard({
 
         {/* Sticker Price */}
         <StickerPrice id={id} estCost={estCost} />
-
       </div>
 
       {/* Footer Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Button
-          type={isCompared ? "primary" : "default"}
-          onClick={toggleCompare}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className={`flex items-center gap-1.5 h-8 text-[11px] font-bold rounded-full transition-all duration-300 ${
-            isCompared 
-              ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 scale-105 shadow-sm' 
-              : 'text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600 hover:scale-105'
-          }`}
-          icon={<CompareIconAnimation active={isCompared} hovered={isHovered} />}
-        >
-          {isCompared ? "Added to Compare" : "Compare"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type={isCompared ? "primary" : "default"}
+            onClick={toggleCompare}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className={`flex items-center gap-1.5 h-8 text-[11px] font-bold rounded-full transition-all duration-300 ${
+              isCompared
+                ? "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 scale-105 shadow-sm"
+                : "text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600 hover:scale-105"
+            }`}
+            icon={
+              <CompareIconAnimation active={isCompared} hovered={isHovered} />
+            }
+          >
+            {isCompared ? "Added to Compare" : "Compare"}
+          </Button>
+
+          <Button
+            type={isSavedCollege ? "primary" : "default"}
+            onClick={handleToggleSave}
+            loading={isSaving}
+            className={`flex items-center gap-1.5 h-8 text-[11px] font-bold rounded-full transition-all duration-300 ${
+              isSavedCollege
+                ? "bg-rose-500 border-rose-500 text-white hover:bg-rose-600 hover:border-rose-600 scale-105 shadow-sm"
+                : "text-gray-600 border-gray-300 hover:text-rose-500 hover:border-rose-500 hover:scale-105"
+            }`}
+            icon={
+              <Heart
+                size={13}
+                className={isSavedCollege ? "fill-current" : ""}
+              />
+            }
+          >
+            {isSavedCollege ? "Saved" : "Save"}
+          </Button>
+        </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
           {formattedSchoolUrl ? (
@@ -538,21 +656,27 @@ export default function ResultCard({
       </div>
 
       {/* Profile/Fit Score Modal */}
-      {showModal && <UserSatPopup setShowModal={setShowModal}
-        tempGpa={tempGpa}
-        setTempGpa={setTempGpa}
-        validateGpa={validateGpa}
-        gpaError={gpaError}
-        satError={satError}
-        setSatError={setSatError}
-        setTempSat={setTempSat}
-        tempSat={tempSat}
-        validateSat={validateSat}
-        isCalculated={isCalculated}
-        handleClear={handleClear}
-        handleCalculate={handleCalculate}
-        university={university} admissionRate={admissionRate} satAct={satAct} hasSatData={hasSatData} />}
-
+      {showModal && (
+        <UserSatPopup
+          setShowModal={setShowModal}
+          tempGpa={tempGpa}
+          setTempGpa={setTempGpa}
+          validateGpa={validateGpa}
+          gpaError={gpaError}
+          satError={satError}
+          setSatError={setSatError}
+          setTempSat={setTempSat}
+          tempSat={tempSat}
+          validateSat={validateSat}
+          isCalculated={isCalculated}
+          handleClear={handleClear}
+          handleCalculate={handleCalculate}
+          university={university}
+          admissionRate={admissionRate}
+          satAct={satAct}
+          hasSatData={hasSatData}
+        />
+      )}
     </div>
   );
 }

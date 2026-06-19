@@ -18,11 +18,9 @@ import {
   PhoneOutlined,
   HomeOutlined,
 } from "@ant-design/icons";
-import {
-  StudentProfile,
-  SAC_STATES,
-  SAC_PROGRAMS,
-} from "../../../data/mockProfile";
+import { StudentProfile } from "../../../types/profile";
+import { PROGRAM_OPTIONS } from "../../../data/profileOptions";
+import { useStates, useDegreeLevels } from "../../../lib/referenceData";
 
 type ProfileFormValues = Omit<StudentProfile, "createdDate" | "lastLogin">;
 
@@ -40,6 +38,10 @@ export default function EditProfileModal({
   onSave,
 }: EditProfileModalProps) {
   const [form] = Form.useForm();
+
+  // Canonical reference data sourced from the backend (never hardcoded).
+  const { states, loading: statesLoading } = useStates();
+  const { degreeLevels, loading: degreeLevelsLoading } = useDegreeLevels();
 
   return (
     <Modal
@@ -77,25 +79,16 @@ export default function EditProfileModal({
                 { required: true, message: "Please input your full name" },
               ]}
             >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="e.g. Rahul Vidyabhushan"
-              />
+              <Input prefix={<UserOutlined />} placeholder="e.g. Alex" />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
             <Form.Item
               name="email"
               label="Primary Email Address"
-              rules={[
-                { required: true, message: "Please input email address" },
-                { type: "email", message: "Enter a valid email structure" },
-              ]}
+              extra="This is the email linked to your account. To update it, use the 'Change Email Address' option in Security Settings."
             >
-              <Input
-                prefix={<MailOutlined />}
-                placeholder="e.g. rahul@degfinder.com"
-              />
+              <Input prefix={<MailOutlined />} disabled />
             </Form.Item>
           </Col>
         </Row>
@@ -191,11 +184,13 @@ export default function EditProfileModal({
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item name="preferredStates" label="Target States (Multiple)">
+              {/* Options from GET /states: show full name, store 2-letter code. */}
               <Select
                 mode="multiple"
                 placeholder="Select Preferred States"
                 className="w-full"
-                options={SAC_STATES.map((s) => ({
+                loading={statesLoading}
+                options={states.map((s) => ({
                   value: s.code,
                   label: s.name,
                 }))}
@@ -211,7 +206,7 @@ export default function EditProfileModal({
                 mode="multiple"
                 placeholder="Select Majors"
                 className="w-full"
-                options={SAC_PROGRAMS.map((p) => ({ value: p, label: p }))}
+                options={PROGRAM_OPTIONS.map((p) => ({ value: p, label: p }))}
               />
             </Form.Item>
           </Col>
@@ -220,13 +215,11 @@ export default function EditProfileModal({
         <Row gutter={16}>
           <Col xs={24}>
             <Form.Item name="preferredDegreeLevel" label="Target Degree Level">
+              {/* Options from GET /degree-levels in backend order; the canonical
+                  string is both the value submitted and the label shown. */}
               <Select
-                options={[
-                  { value: "Associate", label: "Associate Degree" },
-                  { value: "Bachelor's", label: "Bachelor's Degree" },
-                  { value: "Master's", label: "Master's Degree" },
-                  { value: "Doctorate", label: "Doctorate Level" },
-                ]}
+                options={degreeLevels.map((d) => ({ value: d, label: d }))}
+                loading={degreeLevelsLoading}
                 placeholder="Select Degree"
                 className="w-full"
               />
