@@ -5,41 +5,12 @@ import { useRouter } from "next/navigation";
 import { Brain, GraduationCap, Search } from "lucide-react";
 import { Select } from "antd";
 
-const MOCK_STATES = [
-  { value: "CA", label: "California" },
-  { value: "NY", label: "New York" },
-  { value: "TX", label: "Texas" },
-  { value: "MA", label: "Massachusetts" },
-  { value: "WA", label: "Washington" },
-  { value: "IL", label: "Illinois" },
-  { value: "PA", label: "Pennsylvania" },
-  { value: "FL", label: "Florida" },
-  { value: "NC", label: "North Carolina" },
-  { value: "GA", label: "Georgia" }
-];
-
-const MOCK_LEVELS = [
-  { value: "Associate's Degree", label: "Associate's Degree" },
-  { value: "Bachelor's Degree", label: "Bachelor's Degree" },
-  { value: "Master's Degree", label: "Master's Degree" },
-  { value: "Doctoral Degree", label: "Doctoral Degree" },
-  { value: "Post-Baccalaureate Certificate", label: "Post-Baccalaureate Certificate" }
-];
-
-const MOCK_COURSES = [
-  { value: "Computer Science", label: "Computer Science" },
-  { value: "Biology / Biological Sciences", label: "Biology / Biological Sciences" },
-  { value: "Economics", label: "Economics" },
-  { value: "Management Science & Engineering", label: "Management Science & Engineering" },
-  { value: "Symbolic Systems", label: "Symbolic Systems" }
-];
-
 export default function Hero() {
   const router = useRouter();
 
-  const [levels, setLevels] = useState<{ value: string; label: string }[]>(MOCK_LEVELS);
-  const [states, setStates] = useState<{ value: string; label: string }[]>(MOCK_STATES);
-  const [courses, setCourses] = useState<{ value: string; label: string }[]>(MOCK_COURSES);
+  const [levels, setLevels] = useState<{ value: string; label: string }[]>([]);
+  const [states, setStates] = useState<{ value: string; label: string }[]>([]);
+  const [courses, setCourses] = useState<{ value: string; label: string }[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -116,8 +87,7 @@ export default function Hero() {
       }
     } catch (err) {
       console.error("Error fetching courses:", err);
-      // Keep MOCK_COURSES fallback if fetch fails
-      setCourses(MOCK_COURSES);
+      setCourses([]);
     } finally {
       setIsCoursesLoading(false);
     }
@@ -127,7 +97,7 @@ export default function Hero() {
     if (selectedLevel || selectedState) {
       fetchCourses();
     } else {
-      setCourses(MOCK_COURSES);
+      setCourses([]);
     }
   }, [selectedLevel, selectedState, fetchCourses]);
 
@@ -154,7 +124,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#f5f8fc] px-4 sm:px-10 lg:px-[49px] pb-0 pt-[30px] flex justify-center">
+    <section className="relative overflow-hidden bg-[#f5f8fc] px-4 sm:px-10 lg:px-[49px] pb-12 lg:pb-16 pt-[30px] flex justify-center">
       <div
         className="
           pointer-events-none
@@ -165,20 +135,20 @@ export default function Hero() {
       />
       <div className="relative w-full max-w-[2380px]">
         {/* Hero Row */}
-        <div className="grid gap-14 lg:grid-cols-[0.98fr_1fr] lg:gap-[62px]">
+        <div className="grid gap-10 lg:grid-cols-[0.98fr_1fr] lg:gap-[50px]">
           {/* Left Content */}
-          <div className="flex flex-col items-start pt-[10px]">
+          <div className="flex flex-col items-start pt-[5px]">
             <div className="w-full">
-              <span className="mb-5 inline-block rounded-full bg-[#ff3b30] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white">
+              <span className="mb-4 inline-block rounded-full bg-[#ff3b30] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white">
                 TOP-TIER EDUCATION
               </span>
 
               <h1 className="
-                mb-4 lg:mb-6
+                mb-2 lg:mb-5
                 max-w-[600px]
-                text-[48px]
-                sm:text-[64px]
-                lg:text-[78px]
+                text-[36px]
+                sm:text-[54px]
+                lg:text-[68px]
                 font-bold
                 leading-[0.95]
                 tracking-[-0.04em]
@@ -192,10 +162,10 @@ export default function Hero() {
 
               {/* Trust badges */}
               <p className="
-                mb-6
+                mb-2
                 flex flex-wrap items-center
                 gap-x-1.5 sm:gap-x-2 gap-y-1
-                text-[12px] sm:text-[20px] lg:text-[25px]
+                text-[12px] sm:text-[18px] lg:text-[22px]
                 text-[#1f2937]
                 tracking-[-0.01em]
               ">
@@ -207,9 +177,9 @@ export default function Hero() {
               </p>
 
               <p className="
-                mb-6 lg:mb-8
-                max-w-[650px]
-                text-[16px]
+                mb-4 lg:mb-7
+                max-w-[620px]
+                text-[15px]
                 sm:text-[18px]
                 leading-[1.3]
                 text-[#4b5563]
@@ -336,19 +306,19 @@ export default function Hero() {
           </div>
 
           {/* Right Image */}
-          <div className="relative min-h-[220px] lg:min-h-[320px] hidden lg:block">
+          <div className="relative min-h-[220px] lg:min-h-[300px] hidden lg:block">
             <div className="relative z-10 overflow-hidden rounded-[48px]">
               <img
                 src="/images/collage.webp"
                 alt="Students sitting under a tree"
-                className="h-[220px] w-full object-cover object-center lg:h-[420px]"
+                className="h-[220px] w-full object-cover object-center lg:h-[380px]"
               />
             </div>
           </div>
         </div>
 
         {/* Centered Search Card (Desktop only) */}
-        <div className="hidden lg:flex justify-center mt-12">
+        <div className="hidden lg:flex justify-center mt-6">
           <div className="w-full max-w-[1100px] rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
             {/* Toggle */}
             <div className="flex justify-center mb-8">
