@@ -11,12 +11,12 @@ import {
 } from "@ant-design/icons";
 import {
   fetchCompareSelected,
-  removeCompareSelected,
   SelectedCompareCollege,
 } from "../../../lib/auth/api";
 import {
   COMPARE_SELECTED_EVENT,
-  reloadCompareSelected,
+  removeFromCompare,
+  clearCompare,
 } from "../../search/useCompareSelected";
 
 // Date ONLY, app locale (en-US), e.g. "Jun 19, 2026". Returns null for
@@ -94,11 +94,12 @@ export default function CompareListSection() {
   const handleRemove = async (unitid: string, name: string) => {
     setBusyId(unitid);
     try {
-      await removeCompareSelected(unitid);
+      // Single source of truth: the store updates the backend + localStorage
+      // mirror and notifies the Navbar badge / matrix page / search cards.
+      await removeFromCompare(unitid);
       setItems((prev) =>
         prev.filter((c) => String(c.unitid) !== String(unitid)),
       );
-      await reloadCompareSelected(); // keep the search-card store in sync
       message.info(`Removed ${name} from comparison.`);
     } catch (err) {
       console.error("Failed to remove from comparison:", err);
@@ -111,9 +112,8 @@ export default function CompareListSection() {
   const handleClearAll = async () => {
     setClearing(true);
     try {
-      await Promise.all(items.map((c) => removeCompareSelected(c.unitid)));
+      await clearCompare();
       setItems([]);
-      await reloadCompareSelected();
       message.info("Comparison bucket cleared successfully.");
     } catch (err) {
       console.error("Failed to clear comparison set:", err);

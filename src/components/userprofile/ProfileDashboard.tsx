@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Result, Row, Col, Alert, Button, message, notification } from "antd";
 import { CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
 import {
@@ -19,8 +19,7 @@ import { auth } from "../../lib/firebase";
 import { fetchProfile, patchProfile, deleteAccount } from "../../lib/auth/api";
 import { clearAppJwt } from "../../lib/auth/tokenStore";
 import { University, StudentProfile } from "../../types/profile";
-import { UNIVERSITIES } from "../../data/mockColleges";
-import { computeCollegeMatches } from "./matchEngine";
+import { useCollegeMatches } from "./matchEngine";
 
 import ProfileInfoCard from "./cards/ProfileInfoCard";
 import AcademicInfoCard from "./cards/AcademicInfoCard";
@@ -35,7 +34,6 @@ import ChangeEmailModal from "./modals/ChangeEmailModal";
 import DeactivateAccountModal from "./modals/DeactivateAccountModal";
 
 interface ProfileDashboardProps {
-  onQuickViewUniversity?: (uni: University) => void;
   /**
    * Real authenticated user, used to seed contact info. `createdAt`/`lastLogin`
    * come from the user's DB record (ISO strings) when available.
@@ -177,29 +175,64 @@ function mergeProfile(
   };
 }
 
+// Order-insensitive comparison of two string arrays (used for the multi-value
+// preference fields, where selection order carries no meaning).
+function sameStringSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((v, i) => v === sortedB[i]);
+}
+
 /**
- * Map the edit form's values to the snake_case PATCH /profile body. Email is
- * never included (managed in Firebase). `preferred_states` is an array of
- * 2-letter codes; `preferred_degree_level` is the canonical string from
- * GET /degree-levels.
+ * Build the PATCH /profile body from the edit form. The API allowlists
+ * *camelCase* keys and silently drops anything else — including the snake_case
+ * names GET /profile returns — so the keys here must match its contract
+ * exactly (`satMath`, `highSchoolName`, `preferredStates`…). We only include
+ * fields the user actually changed (vs. `prev`); omitting a key means "not
+ * provided". Email is never sent (Firebase-managed). `preferredStates` is
+ * normalized to uppercase 2-letter codes, and the full intended array is sent
+ * for the multi-value fields since the API replaces the whole set.
  */
 function toProfilePatch(
+  prev: StudentProfile,
   values: Omit<StudentProfile, "createdDate" | "lastLogin">,
 ): Record<string, unknown> {
-  return {
-    display_name: values.fullName,
-    phone: values.phone,
-    address: values.address,
-    high_school_name: values.highSchoolName,
-    graduation_year: values.graduationYear,
-    gpa: values.gpa,
-    sat_reading_writing: values.satReadingWriting,
-    sat_math: values.satMath,
-    act_score: values.actScore,
-    preferred_states: values.preferredStates,
-    preferred_programs: values.preferredPrograms,
-    preferred_degree_level: values.preferredDegreeLevel,
+  const patch: Record<string, unknown> = {};
+
+  const setIfChanged = (key: string, next: unknown, before: unknown) => {
+    if (next !== before) patch[key] = next;
   };
+
+  setIfChanged("fullName", values.fullName, prev.fullName);
+  setIfChanged("phone", values.phone, prev.phone);
+  setIfChanged("address", values.address, prev.address);
+  setIfChanged("highSchoolName", values.highSchoolName, prev.highSchoolName);
+  setIfChanged("graduationYear", values.graduationYear, prev.graduationYear);
+  setIfChanged("gpa", values.gpa, prev.gpa);
+  setIfChanged(
+    "satReadingWriting",
+    values.satReadingWriting,
+    prev.satReadingWriting,
+  );
+  setIfChanged("satMath", values.satMath, prev.satMath);
+  setIfChanged("actScore", values.actScore, prev.actScore);
+  setIfChanged(
+    "preferredDegreeLevel",
+    values.preferredDegreeLevel,
+    prev.preferredDegreeLevel,
+  );
+
+  const nextStates = (values.preferredStates ?? []).map((s) => s.toUpperCase());
+  if (!sameStringSet(nextStates, prev.preferredStates)) {
+    patch.preferredStates = nextStates;
+  }
+  const nextPrograms = values.preferredPrograms ?? [];
+  if (!sameStringSet(nextPrograms, prev.preferredPrograms)) {
+    patch.preferredPrograms = nextPrograms;
+  }
+
+  return patch;
 }
 
 // Friendly text for the Firebase auth error codes surfaced by credential changes.
@@ -220,20 +253,7 @@ function getAuthErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-export default function ProfileDashboard({
-  onQuickViewUniversity,
-  authUser,
-}: ProfileDashboardProps) {
-  // Quick view falls back to an informational toast when no handler is supplied
-  // (the mock universities have no live detail page).
-  const handleQuickView = (uni: University) => {
-    if (onQuickViewUniversity) {
-      onQuickViewUniversity(uni);
-    } else {
-      message.info(`${uni.name} — detailed view is coming soon.`);
-    }
-  };
-
+export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
   // Primary student profile. Starts blank (identity from the signed-in user,
   // academics/preferences empty) and is populated solely by GET /profile — no
   // mock/sample data is ever shown.
@@ -259,33 +279,11 @@ export default function ProfileDashboard({
     };
   }, []);
 
-  // Saved Colleges list - prepopulated with 12 colleges for the "Saved Colleges (12)" display.
-  const [savedColleges, setSavedColleges] = useState<University[]>([
-    ...UNIVERSITIES, // Stanford, Berkeley, MIT, Harvard, NYU, Columbia, UT Austin, Rice, UChicago, UW, UPenn
-    {
-      id: "caltech",
-      unitid: "110404",
-      name: "California Institute of Technology",
-      city: "Pasadena",
-      state: "CA",
-      type: "Private",
-      ranking: 5,
-      acceptanceRate: 3.9,
-      annualCost: 60800,
-      rating: 4.9,
-      description:
-        "The California Institute of Technology is a private research university in Pasadena, California, esteemed for its groundbreaking science and engineering fields.",
-      logoColor: "bg-orange-600 text-white",
-      image:
-        "https://images.unsplash.com/photo-1544535830-9df3f56fff6a?q=80&w=800&auto=format&fit=crop",
-    },
-  ]);
-
-  // Active compared colleges list - starts with two selected for interactive comparison
-  const [compareList, setCompareList] = useState<University[]>([
-    UNIVERSITIES[0], // Stanford
-    UNIVERSITIES[1], // UC Berkeley
-  ]);
+  // Saved set used only by the match tiles' heart indicator. Starts empty — no
+  // mock/seed colleges. (Comparison selections are handled directly by the
+  // match section via the shared `/compare/selected` store; the Saved Colleges
+  // and Compare sections below self-fetch their own data from the backend.)
+  const [savedColleges, setSavedColleges] = useState<University[]>([]);
 
   const [savedCollegesView, setSavedCollegesView] = useState<"Grid" | "List">(
     "Grid",
@@ -299,15 +297,23 @@ export default function ProfileDashboard({
   const [accountDeactivatedStatus, setAccountDeactivatedStatus] =
     useState(false);
 
-  // Dynamic College Matchmaker — combines SAT score, preferred states, programs and degree level.
-  const matches = useMemo(() => computeCollegeMatches(profile), [profile]);
+  // College matches — driven by the user's target states & majors, pulled live
+  // from the backend (no mock data). Re-runs when those preferences change.
+  const { matches, loading: matchesLoading } = useCollegeMatches(profile);
 
   // Handle Profile Update Confirmation — persists via PATCH /profile.
   const onProfileSave = async (
     values: Omit<StudentProfile, "createdDate" | "lastLogin">,
   ) => {
-    // Map to the snake_case backend body; email is never sent (Firebase-managed).
-    const patch = toProfilePatch(values);
+    // Map to the camelCase backend body (only changed fields); email is never
+    // sent (Firebase-managed).
+    const patch = toProfilePatch(profile, values);
+
+    // Nothing changed — skip the network round-trip.
+    if (Object.keys(patch).length === 0) {
+      setIsEditProfileOpen(false);
+      return;
+    }
 
     try {
       const updated = await patchProfile<Record<string, unknown>>(patch);
@@ -320,27 +326,9 @@ export default function ProfileDashboard({
     }
   };
 
-  // Action: Add/Remove from Compare List
-  const handleToggleCompare = (uni: University) => {
-    setCompareList((prev) => {
-      const exists = prev.some((u) => u.id === uni.id);
-      if (exists) {
-        message.info(`Removed ${uni.name} from comparison.`);
-        return prev.filter((u) => u.id !== uni.id);
-      }
-      if (prev.length >= 4) {
-        message.warning("You can compare a maximum of 4 colleges at a time.");
-        return prev;
-      }
-      message.success(`Added ${uni.name} to compare list.`);
-      return [...prev, uni];
-    });
-  };
-
   // Action: Remove from Saved List
   const handleRemoveSaved = (id: string, name: string) => {
     setSavedColleges((prev) => prev.filter((u) => u.id !== id));
-    setCompareList((prev) => prev.filter((u) => u.id !== id));
     message.success(`${name} removed from your saved list.`);
   };
 
@@ -473,7 +461,7 @@ export default function ProfileDashboard({
           type="info"
           showIcon
           className="rounded-2xl"
-          message="Complete your profile to get personalized recommendations"
+          title="Complete your profile to get personalized recommendations"
           description="Add your academic details and preferences so we can match you with the right colleges."
           action={
             <Button
@@ -515,10 +503,8 @@ export default function ProfileDashboard({
       {/* My Matches */}
       <CollegeMatchesSection
         matches={matches}
+        loading={matchesLoading}
         savedColleges={savedColleges}
-        compareList={compareList}
-        onQuickView={handleQuickView}
-        onToggleCompare={handleToggleCompare}
         onRemoveSaved={handleRemoveSaved}
         onAddSaved={handleAddSaved}
       />

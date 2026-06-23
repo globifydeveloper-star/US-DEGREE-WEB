@@ -6,7 +6,11 @@ import StickerPrice from "./StickerPrice";
 import { Button, message } from "antd";
 import CompareIconAnimation from "./CompareIconAnimation";
 import { useSavedCollege, toggleSaved } from "./useSavedColleges";
-import { setCompareSelected } from "./useCompareSelected";
+import {
+  toggleCompare as toggleCompareStore,
+  useCompareSelectedItem,
+  MAX_COMPARE,
+} from "./useCompareSelected";
 
 export interface ResultCardProps {
   id?: number | string;
@@ -159,8 +163,12 @@ export default function ResultCard({
 
   const shouldShowFit = isCalculated && hasSatData;
 
-  const [isCompared, setIsCompared] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Canonical id for the comparison store (id and unitid are the same UNITID).
+  const compareId = String(unitid ?? id ?? "");
+  // Selected-for-comparison state from the single shared store.
+  const isCompared = useCompareSelectedItem(compareId);
 
   // Saved-college state (shared store; loads once across all visible cards).
   const isSavedCollege = useSavedCollege(unitid);
@@ -190,66 +198,28 @@ export default function ResultCard({
     }
   };
 
-  useEffect(() => {
-    // Initial read happens post-mount (not via lazy useState) so the server-
-    // rendered markup matches the first client render — localStorage is
-    // client-only, and reading it during render would break SSR/hydration.
-    const list = JSON.parse(localStorage.getItem("compared_colleges") || "[]");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsCompared(list.includes(String(id)));
-
-    const handleUpdate = () => {
-      const updatedList = JSON.parse(
-        localStorage.getItem("compared_colleges") || "[]",
-      );
-      setIsCompared(updatedList.includes(String(id)));
-    };
-
-    window.addEventListener("compared-colleges-updated", handleUpdate);
-    return () =>
-      window.removeEventListener("compared-colleges-updated", handleUpdate);
-  }, [id]);
-
-  const toggleCompare = () => {
-    let list = JSON.parse(localStorage.getItem("compared_colleges") || "[]");
-    let detailsList = JSON.parse(
-      localStorage.getItem("compared_colleges_details") || "[]",
-    );
-    const nextState = !isCompared;
-    if (nextState) {
-      if (list.length >= 5) {
-        alert("You can compare a maximum of 5 colleges simultaneously.");
-        return;
-      }
-      if (!list.includes(String(id))) {
-        list.push(String(id));
-        detailsList.push({
-          id: String(id),
-          name: university,
-          logoColor: logoColor || "bg-blue-600",
-          location: location,
-          cipCode: cipCode || "default",
-          schoolUrl: formattedSchoolUrl || "",
-        });
-      }
-    } else {
-      list = list.filter((cid: string) => cid !== String(id));
-      detailsList = detailsList.filter((c: { id: string }) => c.id !== String(id));
+  const toggleCompare = async () => {
+    if (!compareId) {
+      message.error("This college can't be compared (missing identifier).");
+      return;
     }
-    localStorage.setItem("compared_colleges", JSON.stringify(list));
-    localStorage.setItem(
-      "compared_colleges_details",
-      JSON.stringify(detailsList),
-    );
-    setIsCompared(nextState);
-    window.dispatchEvent(new Event("compared-colleges-updated"));
-
-    // Persist the selection to the backend so the profile's "Selected for
-    // Comparison" section reflects it. Best-effort; the store reverts on error.
-    if (unitid) {
-      setCompareSelected(unitid, nextState).catch((err) =>
-        console.error("Failed to sync comparison selection:", err),
-      );
+    try {
+      const result = await toggleCompareStore({
+        id: compareId,
+        name: university,
+        location,
+        cipCode: cipCode || "default",
+        schoolUrl: formattedSchoolUrl || "",
+        logoColor: logoColor || "bg-blue-600",
+      });
+      if (result === "full") {
+        message.warning(
+          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update comparison selection:", err);
+      message.error("Could not update your comparison list. Please try again.");
     }
   };
 

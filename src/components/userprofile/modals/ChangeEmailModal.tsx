@@ -58,7 +58,7 @@ export default function ChangeEmailModal({
           type="info"
           showIcon
           className="text-xs rounded-xl mb-4"
-          message="We'll email a verification link to your new address. Your email changes only after you click that link — and is reflected here on your next sign-in."
+          title="We'll email a verification link to your new address. Your email changes only after you click that link — and is reflected here on your next sign-in."
         />
 
         <Form.Item label="Current Email Address">

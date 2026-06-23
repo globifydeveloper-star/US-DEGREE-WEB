@@ -1,36 +1,127 @@
 "use client";
 
 import React from "react";
-import { Card, Button, Progress, Row, Col, Space, Badge, Tooltip } from "antd";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Space,
+  Tooltip,
+  Empty,
+  Spin,
+  message,
+} from "antd";
 import {
   GlobalOutlined,
   HeartOutlined,
   HeartFilled,
   SyncOutlined,
   CompassOutlined,
+  ReadOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { University } from "../../../types/profile";
 import { CollegeMatch } from "../matchEngine";
+import {
+  toggleCompare as toggleCompareStore,
+  useCompareIds,
+  MAX_COMPARE,
+} from "../../search/useCompareSelected";
 
 interface CollegeMatchesSectionProps {
   matches: CollegeMatch[];
+  loading: boolean;
   savedColleges: University[];
-  compareList: University[];
-  onQuickView: (uni: University) => void;
-  onToggleCompare: (uni: University) => void;
   onRemoveSaved: (id: string, name: string) => void;
   onAddSaved: (uni: University) => void;
 }
 
+// Display helpers — render the backend value when present, otherwise "N/A".
+const fmtPercent = (v: number | null) =>
+  v === null ? "N/A" : `${v.toFixed(1)}%`;
+const fmtMoney = (v: number | null) =>
+  v === null ? "N/A" : `$${Math.round(v).toLocaleString()}`;
+
+// Build the minimal University shape the save/compare handlers expect from a
+// match. Only identity + a couple of stats are used downstream.
+function toUniversity(match: CollegeMatch): University {
+  return {
+    id: match.id,
+    unitid: match.unitid,
+    name: match.name,
+    city: match.city,
+    state: match.state,
+    type: match.isPrivate ? "Private" : "Public",
+    ranking: 0,
+    acceptanceRate: match.acceptanceRate ?? 0,
+    annualCost: match.tuition ?? 0,
+    rating: 0,
+    description: "",
+    logoColor: "bg-blue-600 text-white",
+    image: "",
+  };
+}
+
 export default function CollegeMatchesSection({
   matches,
+  loading,
   savedColleges,
-  compareList,
-  onQuickView,
-  onToggleCompare,
   onRemoveSaved,
   onAddSaved,
 }: CollegeMatchesSectionProps) {
+  const router = useRouter();
+
+  // Selected-for-comparison set, from the single shared store. Kept in sync with
+  // selections made anywhere (search cards, university page, /compare page).
+  const comparedIds = useCompareIds();
+
+  // Add/remove a matched college via the shared store, which handles the
+  // localStorage mirror, the backend `/compare/selected` set, and the 5-max.
+  const toggleCompare = async (match: CollegeMatch) => {
+    try {
+      const result = await toggleCompareStore({
+        id: match.id,
+        name: match.name,
+        location:
+          match.city && match.state
+            ? `${match.city}, ${match.state}`
+            : match.city || match.state || "",
+        cipCode: match.cipCode || "default",
+      });
+      if (result === "removed") {
+        message.info(`Removed ${match.name} from comparison.`);
+      } else if (result === "added") {
+        message.success(`Added ${match.name} to comparison.`);
+      } else if (result === "full") {
+        message.warning(
+          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update comparison selection:", err);
+      message.error("Could not update your comparison list. Please try again.");
+    }
+  };
+
+  // Open the college's full details page, mirroring the search ResultCard's
+  // "View Full Details" link (route /university/:id with prefill query params).
+  const goToDetails = (match: CollegeMatch) => {
+    const params = new URLSearchParams({
+      cip: match.cipCode || "default",
+      name: match.name,
+      city: match.city,
+      state: match.state,
+      degree: match.programTitle,
+      type: match.isPrivate ? "Private" : "Public",
+      admissionRate: fmtPercent(match.acceptanceRate),
+      tuition: fmtMoney(match.tuition),
+      avgSalary: fmtMoney(match.medianSalary1yr),
+    });
+    router.push(`/university/${match.id}?${params.toString()}`);
+  };
+
   return (
     <Card
       id="college_matches_section"
@@ -43,8 +134,7 @@ export default function CollegeMatchesSection({
                 My Intelligent College Matches
               </span>
               <span className="text-xs text-neutral-400 font-normal block">
-                Calculated using standardized SAT profile, target state, and
-                major alignments
+                Matched to your target states and majors
               </span>
             </div>
           </Space>
@@ -59,205 +149,196 @@ export default function CollegeMatchesSection({
       variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100 bg-linear-to-b from-white to-blue-50/10"
     >
-      <Row gutter={[20, 20]}>
-        {matches.slice(0, 3).map((match) => {
-          const isSaved = savedColleges.some(
-            (u) => u.id === match.university.id,
-          );
-          const isCompared = compareList.some(
-            (u) => u.id === match.university.id,
-          );
+      {/* Loading first paint */}
+      {loading && matches.length === 0 ? (
+        <div className="flex justify-center py-12">
+          <Spin />
+        </div>
+      ) : matches.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="Add your target states and majors to see matched colleges."
+        />
+      ) : (
+        <Row gutter={[20, 20]}>
+          {matches.map((match) => {
+            const isSaved = savedColleges.some((u) => u.id === match.id);
+            const isCompared = comparedIds.includes(match.id);
+            const uni = toUniversity(match);
 
-          // Determine badge color
-          let badgeColorStr = "blue";
-          if (match.badgeType === "Strong Match") badgeColorStr = "success";
-          else if (match.badgeType === "Reach School")
-            badgeColorStr = "warning";
+            return (
+              <Col xs={24} sm={12} md={12} lg={6} key={match.id}>
+                <Card
+                  variant="outlined"
+                  hoverable
+                  className="rounded-2xl h-full overflow-hidden border-neutral-150 shadow-xs flex flex-col justify-between"
+                  styles={{
+                    body: {
+                      padding: "0",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      height: "100%",
+                    },
+                  }}
+                >
+                  <div>
+                    {/* Brand accent bar (on-theme, replaces the heavy banner) */}
+                    <div className="h-1.5 bg-linear-to-r from-[#3b5bdb] to-[#2b55ff]" />
 
-          return (
-            <Col xs={24} md={8} key={match.university.id}>
-              <Card
-                variant="outlined"
-                hoverable
-                className="rounded-2xl h-full border-neutral-150 shadow-xs flex flex-col justify-between"
-                styles={{
-                  body: {
-                    padding: "20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    height: "100%",
-                  },
-                }}
-              >
-                <div className="space-y-4">
-                  {/* Header: Match Score Progress & Score Badge */}
-                  <div className="flex justify-between items-start">
-                    <div className="text-center">
-                      <Progress
-                        type="circle"
-                        percent={match.percentage}
-                        size={54}
-                        strokeWidth={10}
-                        strokeColor={{
-                          "0%": "#108ee9",
-                          "100%": "#87d068",
-                        }}
-                        format={(percent?: number) => (
-                          <span className="font-extrabold text-xs text-neutral-900">
-                            {percent}%
+                    <div className="px-4 pt-3.5 pb-1 space-y-3">
+                      {/* School name + location directly beneath it */}
+                      <div>
+                        <div className="flex items-start justify-between gap-2 min-h-[2.5rem]">
+                          <h4 className="text-sm font-extrabold text-neutral-800 line-clamp-2 leading-snug flex-1">
+                            {match.name}
+                          </h4>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-50 border border-neutral-200 px-1.5 py-0.5 rounded-md shrink-0 self-start">
+                            {match.isPrivate ? "Private" : "Public"}
                           </span>
-                        )}
-                      />
-                      <span className="text-[9px] text-neutral-400 block font-bold uppercase mt-1">
-                        Match Percentage
-                      </span>
-                    </div>
+                        </div>
+                        <p className="text-xs text-neutral-500 flex items-center gap-1.5 mt-0.5 font-medium">
+                          <GlobalOutlined className="text-[#3b5bdb]" />
+                          {match.city && match.state
+                            ? `${match.city}, ${match.state}`
+                            : match.city || match.state || "—"}
+                        </p>
+                      </div>
 
-                    <Badge
-                      status={
-                        badgeColorStr === "success"
-                          ? "success"
-                          : badgeColorStr === "warning"
-                            ? "warning"
-                            : "processing"
-                      }
-                      text={
-                        <span
-                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                            match.badgeType === "Strong Match"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : match.badgeType === "Reach School"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-blue-50 text-blue-700"
-                          }`}
-                        >
-                          {match.badgeType}
-                        </span>
-                      }
-                    />
+                      {/* Matched program + degree level (custom pills so long
+                          program names wrap inside the card instead of clipping) */}
+                      {(match.programTitle || match.degreeLevel) && (
+                        <div className="space-y-1.5">
+                          {match.programTitle && (
+                            <div className="flex items-start gap-1.5 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-md px-2 py-1">
+                              <ReadOutlined className="mt-0.5 shrink-0" />
+                              <span className="break-words leading-snug">
+                                {match.programTitle}
+                              </span>
+                            </div>
+                          )}
+                          {match.degreeLevel && (
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-2 py-1">
+                              <TrophyOutlined className="shrink-0" />
+                              <span>{match.degreeLevel}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Stats: tuition, acceptance, graduation, employment, 1-yr salary */}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-emerald-50 rounded-lg px-2.5 py-2">
+                          <span className="text-[10px] text-emerald-600/80 font-semibold block">
+                            Tuition
+                          </span>
+                          <span className="font-bold text-emerald-700">
+                            {fmtMoney(match.tuition)}
+                            {match.tuition !== null && "/yr"}
+                          </span>
+                        </div>
+                        <div className="bg-blue-50 rounded-lg px-2.5 py-2">
+                          <span className="text-[10px] text-blue-600/80 font-semibold block">
+                            Acceptance Rate
+                          </span>
+                          <span className="font-bold text-blue-700">
+                            {fmtPercent(match.acceptanceRate)}
+                          </span>
+                        </div>
+                        <div className="bg-violet-50 rounded-lg px-2.5 py-2">
+                          <span className="text-[10px] text-violet-600/80 font-semibold block">
+                            Graduation Rate
+                          </span>
+                          <span className="font-bold text-violet-700">
+                            {fmtPercent(match.graduationRate)}
+                          </span>
+                        </div>
+                        <div className="bg-amber-50 rounded-lg px-2.5 py-2">
+                          <span className="text-[10px] text-amber-600/80 font-semibold block">
+                            Employment Rate
+                          </span>
+                          <span className="font-bold text-amber-700">
+                            {fmtPercent(match.employmentRate)}
+                          </span>
+                        </div>
+                        <div className="bg-teal-50 rounded-lg px-2.5 py-2 col-span-2">
+                          <span className="text-[10px] text-teal-600/80 font-semibold block">
+                            1-Year Median Salary
+                          </span>
+                          <span className="font-bold text-teal-700">
+                            {fmtMoney(match.medianSalary1yr)}
+                            {match.medianSalary1yr !== null && "/yr"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* University Basic Info */}
-                  <div className="pt-2">
-                    <h4 className="text-sm font-extrabold text-neutral-800 line-clamp-1">
-                      {match.university.name}
-                    </h4>
-                    <p className="text-xs text-neutral-400 flex items-center gap-1.5 mt-0.5 font-medium">
-                      <GlobalOutlined />
-                      {match.university.city}, {match.university.state}
-                    </p>
-                  </div>
-
-                  {/* Quality factors statistic row */}
-                  <div className="grid grid-cols-2 gap-2 border-y border-neutral-100 py-3 text-xs bg-neutral-50/50 rounded-xl px-2">
-                    <div>
-                      <span className="text-[10px] text-neutral-400 font-semibold block">
-                        Tuition rate
-                      </span>
-                      <span className="font-bold text-neutral-700">
-                        ${match.university.annualCost.toLocaleString()}/yr
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-neutral-400 font-semibold block">
-                        Acceptance Gate
-                      </span>
-                      <span className="font-bold text-neutral-700">
-                        {match.university.acceptanceRate}%
-                      </span>
-                    </div>
-                    <div className="pt-2 border-t border-neutral-100/50">
-                      <span className="text-[10px] text-neutral-400 font-semibold block">
-                        Graduation rate
-                      </span>
-                      <span className="font-bold text-neutral-700">
-                        {match.graduationRate}%
-                      </span>
-                    </div>
-                    <div className="pt-2 border-t border-neutral-100/50">
-                      <span className="text-[10px] text-neutral-400 font-semibold block">
-                        Post Salary Mean
-                      </span>
-                      <span className="font-bold text-neutral-700">
-                        ${match.estimatedSalary.toLocaleString()}/yr
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions buttons */}
-                <div className="pt-4 flex items-center justify-between gap-2">
-                  <Button
-                    type="text"
-                    onClick={() => onQuickView(match.university)}
-                    className="text-xs font-semibold hover:text-blue-600 px-0 flex items-center gap-1"
-                  >
-                    Quick Review Detail →
-                  </Button>
-
-                  <div className="flex gap-2">
-                    <Tooltip
-                      title={
-                        isCompared
-                          ? "Remove from comparison"
-                          : "Add to comparison block"
-                      }
+                  {/* Actions: quick view + compare + save (unchanged behaviour) */}
+                  <div className="px-4 pt-3 pb-4 mt-1 border-t border-neutral-100 flex items-center justify-between gap-2">
+                    <Button
+                      type="text"
+                      onClick={() => goToDetails(match)}
+                      className="text-xs font-semibold hover:text-blue-600 px-0 flex items-center gap-1"
                     >
-                      <Button
-                        icon={
-                          isCompared ? (
-                            <SyncOutlined spin className="text-blue-500" />
-                          ) : (
-                            <SyncOutlined className="text-neutral-400" />
-                          )
-                        }
-                        onClick={() => onToggleCompare(match.university)}
-                        className={
-                          isCompared ? "border-blue-500" : "border-neutral-200"
-                        }
-                        size="small"
-                        shape="circle"
-                      />
-                    </Tooltip>
+                      Quick Review Detail →
+                    </Button>
 
-                    <Tooltip
-                      title={
-                        isSaved
-                          ? "Already in saved colleges"
-                          : "Save this college"
-                      }
-                    >
-                      <Button
-                        icon={
-                          isSaved ? (
-                            <HeartFilled className="text-red-500" />
-                          ) : (
-                            <HeartOutlined className="text-neutral-400" />
-                          )
+                    <div className="flex gap-2">
+                      <Tooltip
+                        title={
+                          isCompared
+                            ? "Remove from comparison"
+                            : "Add to comparison block"
                         }
-                        onClick={() => {
-                          if (isSaved) {
-                            onRemoveSaved(
-                              match.university.id,
-                              match.university.name,
-                            );
-                          } else {
-                            onAddSaved(match.university);
+                      >
+                        <Button
+                          type={isCompared ? "primary" : "default"}
+                          ghost={isCompared}
+                          icon={<SyncOutlined spin={isCompared} />}
+                          onClick={() => toggleCompare(match)}
+                          className={
+                            isCompared
+                              ? ""
+                              : "border-neutral-200 text-neutral-400"
                           }
-                        }}
-                        className={`${isSaved ? "border-red-500 bg-red-50/10" : "border-neutral-200"}`}
-                        size="small"
-                        shape="circle"
-                      />
-                    </Tooltip>
+                          size="small"
+                          shape="circle"
+                        />
+                      </Tooltip>
+
+                      <Tooltip
+                        title={
+                          isSaved
+                            ? "Already in saved colleges"
+                            : "Save this college"
+                        }
+                      >
+                        <Button
+                          danger={isSaved}
+                          icon={isSaved ? <HeartFilled /> : <HeartOutlined />}
+                          onClick={() => {
+                            if (isSaved) {
+                              onRemoveSaved(match.id, match.name);
+                            } else {
+                              onAddSaved(uni);
+                            }
+                          }}
+                          className={
+                            isSaved ? "" : "border-neutral-200 text-neutral-400"
+                          }
+                          size="small"
+                          shape="circle"
+                        />
+                      </Tooltip>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </Col>
-          );
-        })}
-      </Row>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+      )}
     </Card>
   );
 }

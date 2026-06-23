@@ -70,7 +70,7 @@ export default function DeactivateAccountModal({
     >
       <Form form={form} layout="vertical" className="pt-4 space-y-4">
         <Alert
-          message="This decision triggers irreversible data erasure. There is no grace period for restoration."
+          title="This decision triggers irreversible data erasure. There is no grace period for restoration."
           type="warning"
           showIcon
           className="text-xs rounded-xl"
