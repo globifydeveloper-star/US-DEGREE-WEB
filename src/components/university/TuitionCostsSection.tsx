@@ -1,16 +1,30 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { TuitionCostsSectionProps } from '@/types/university/TuitionCostsSection';
+import React, { useEffect, useRef, useState } from "react";
+import { Tooltip } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import { TuitionCostsSectionProps } from "@/types/university/TuitionCostsSection";
 
-const fmt = (val: number): string => {
-  if (!Number.isFinite(val)) return 'N/A';
-  return '$' + Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const fmt = (val: number | null | undefined): string => {
+  if (val == null || !Number.isFinite(val)) return "N/A";
+  return (
+    "$" +
+    Math.round(val)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  );
 };
+
+// Sum that returns null if any operand is missing, so totals don't silently
+// treat a missing value as 0.
+const sumOrNull = (...vals: (number | null | undefined)[]): number | null =>
+  vals.some((v) => v == null)
+    ? null
+    : vals.reduce((a: number, b) => a + (b as number), 0);
 
 export default function TuitionCostsSection({
   tuitionData,
-  schoolName = 'this university',
+  schoolName = "this university",
   tuitionType: propTuitionType,
   setTuitionType: propSetTuitionType,
 }: TuitionCostsSectionProps) {
@@ -44,70 +58,98 @@ export default function TuitionCostsSection({
           }, stepTime);
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.05 },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, [hasAnimated]);
-  const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
-  const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? 25000;
-  const bookSupply = tuitionData?.tuition?.booksupply ?? 1200;
-  const roomBoardOnCampus = tuitionData?.housing?.roomboard_oncampus ?? 7348;
-  const roomBoardOffCampus = tuitionData?.housing?.roomboard_offcampus ?? 8500;
-  const otherExpenseOnCampus = tuitionData?.expenses?.otherexpense_oncampus ?? 2832;
-  const otherExpenseOffCampus = tuitionData?.expenses?.otherexpense_offcampus ?? 3200;
-  const otherExpenseWithFamily = tuitionData?.expenses?.otherexpense_withfamily ?? 2000;
-  const aidPercentage = tuitionData?.financial_aid?.aid_percentage ?? 70;
-  const studentsWithLoan = tuitionData?.financial_aid?.students_with_any_loan != null
-    ? Math.round(tuitionData.financial_aid.students_with_any_loan * 100)
-    : 50;
+  const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? null;
+  const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? null;
+  const bookSupply = tuitionData?.tuition?.booksupply ?? null;
+  const roomBoardOnCampus = tuitionData?.housing?.roomboard_oncampus ?? null;
+  const roomBoardOffCampus = tuitionData?.housing?.roomboard_offcampus ?? null;
+  const otherExpenseOnCampus =
+    tuitionData?.expenses?.otherexpense_oncampus ?? null;
+  const otherExpenseOffCampus =
+    tuitionData?.expenses?.otherexpense_offcampus ?? null;
+  const otherExpenseWithFamily =
+    tuitionData?.expenses?.otherexpense_withfamily ?? null;
+  const stickerPriceByApi = tuitionData?.tuition?.sticker_price_by_api ?? null;
+  const aidPercentage = tuitionData?.financial_aid?.aid_percentage ?? null;
+  const studentsWithLoan =
+    tuitionData?.financial_aid?.students_with_any_loan != null
+      ? Math.round(tuitionData.financial_aid.students_with_any_loan * 100)
+      : null;
 
   const getLoanMessage = (pct: number) => {
-    if (pct <= 19) return "Relatively few students rely on loans to help finance their education";
-    if (pct <= 39) return "Some students use loans as part of their education funding strategy.";
-    if (pct <= 59) return "Student loans are a common source of funding for many students.";
-    if (pct <= 79) return "A large share of students rely on loans to support their educational costs.";
+    if (pct <= 19)
+      return "Relatively few students rely on loans to help finance their education";
+    if (pct <= 39)
+      return "Some students use loans as part of their education funding strategy.";
+    if (pct <= 59)
+      return "Student loans are a common source of funding for many students.";
+    if (pct <= 79)
+      return "A large share of students rely on loans to support their educational costs.";
     return "Student loans play a major role in helping most students finance their education.";
   };
-  const loanMessage = getLoanMessage(studentsWithLoan);
+  const loanMessage =
+    studentsWithLoan != null ? getLoanMessage(studentsWithLoan) : "N/A";
 
-  const netPrices = {
-    '0-30000': tuitionData?.net_price?.income_0_30000 ?? 8500,
-    '30001-48000': tuitionData?.net_price?.income_30001_48000 ?? 9500,
-    '48001-75000': tuitionData?.net_price?.income_48001_75000 ?? 12500,
-    '75001-110000': tuitionData?.net_price?.income_75001_110000 ?? 16800,
-    '110001+': tuitionData?.net_price?.income_110001_plus ?? 21000,
+  const netPrices: Record<string, number | null> = {
+    "0-30000": tuitionData?.net_price?.income_0_30000 ?? null,
+    "30001-48000": tuitionData?.net_price?.income_30001_48000 ?? null,
+    "48001-75000": tuitionData?.net_price?.income_48001_75000 ?? null,
+    "75001-110000": tuitionData?.net_price?.income_75001_110000 ?? null,
+    "110001+": tuitionData?.net_price?.income_110001_plus ?? null,
   };
 
-  const [localTuitionType, setLocalTuitionType] = useState<'in_state' | 'out_state'>('in_state');
+  const [localTuitionType, setLocalTuitionType] = useState<
+    "in_state" | "out_state"
+  >("in_state");
   const tuitionType = propTuitionType ?? localTuitionType;
   const setTuitionType = propSetTuitionType ?? setLocalTuitionType;
 
-  const activeTuition = tuitionType === 'in_state' ? tuitionInState : tuitionOutState;
-  const stickerInState = bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
-  const stickerOutState = bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
-  const activeStickerPrice = tuitionType === 'in_state' ? stickerInState : stickerOutState;
+  const activeTuition =
+    tuitionType === "in_state" ? tuitionInState : tuitionOutState;
+  const stickerInState = sumOrNull(
+    bookSupply,
+    tuitionInState,
+    roomBoardOnCampus,
+    otherExpenseOnCampus,
+  );
+  const stickerOutState = sumOrNull(
+    bookSupply,
+    tuitionOutState,
+    roomBoardOnCampus,
+    otherExpenseOnCampus,
+  );
+  const activeStickerPrice =
+    tuitionType === "in_state" ? stickerInState : stickerOutState;
 
   const [sliderValue, setSliderValue] = useState(23144);
-  const [incomeRange, setIncomeRange] = useState<keyof typeof netPrices>('0-30000');
+  const [incomeRange, setIncomeRange] =
+    useState<keyof typeof netPrices>("0-30000");
   const [inputVal, setInputVal] = useState("23,144");
 
   const handleSliderChange = (val: number) => {
     setSliderValue(val);
     setInputVal(val.toLocaleString());
-    if (val <= 30000) setIncomeRange('0-30000');
-    else if (val <= 48000) setIncomeRange('30001-48000');
-    else if (val <= 75000) setIncomeRange('48001-75000');
-    else if (val <= 110000) setIncomeRange('75001-110000');
-    else setIncomeRange('110001+');
+    if (val <= 30000) setIncomeRange("0-30000");
+    else if (val <= 48000) setIncomeRange("30001-48000");
+    else if (val <= 75000) setIncomeRange("48001-75000");
+    else if (val <= 110000) setIncomeRange("75001-110000");
+    else setIncomeRange("110001+");
   };
 
   const handleBracketClick = (range: keyof typeof netPrices) => {
     setIncomeRange(range);
     const midpoints: Record<string, number> = {
-      '0-30000': 15000, '30001-48000': 39000,
-      '48001-75000': 61500, '75001-110000': 92500, '110001+': 130000,
+      "0-30000": 15000,
+      "30001-48000": 39000,
+      "48001-75000": 61500,
+      "75001-110000": 92500,
+      "110001+": 130000,
     };
     const val = midpoints[range];
     setSliderValue(val);
@@ -115,47 +157,91 @@ export default function TuitionCostsSection({
   };
 
   const currentNetPrice = netPrices[incomeRange];
-  const currentFinAid = Math.max(0, activeStickerPrice - currentNetPrice);
+  const currentFinAid =
+    activeStickerPrice != null && currentNetPrice != null
+      ? Math.max(0, activeStickerPrice - currentNetPrice)
+      : null;
 
   const costCards = [
-    { label: 'Tuition In State', value: activeTuition, bg: '#F5F3FF' },
-    { label: 'Tuition Out State', value: tuitionOutState, bg: '#C6D4FF' },
-    { label: 'Book & Supply', value: bookSupply, bg: '#FEDDDD' },
-    { label: 'Room & Board On Campus', value: roomBoardOnCampus, bg: '#C6FFF2' },
-    { label: 'Room & Board Off Campus', value: roomBoardOffCampus, bg: '#EFC8FF' },
-    { label: 'Other Expenses On Campus', value: otherExpenseOnCampus, bg: '#FFEDB2' },
-    { label: 'Other Expenses Off Campus', value: otherExpenseOffCampus, bg: '#FFD0C0' },
-    { label: 'Other Expenses With Family', value: otherExpenseWithFamily, bg: '#CEFFD0' },
+    { label: "Tuition In State", value: activeTuition, bg: "#F5F3FF" },
+    { label: "Tuition Out State", value: tuitionOutState, bg: "#C6D4FF" },
+    { label: "Book & Supply", value: bookSupply, bg: "#FEDDDD" },
+    {
+      label: "Room & Board On Campus",
+      value: roomBoardOnCampus,
+      bg: "#C6FFF2",
+    },
+    {
+      label: "Room & Board Off Campus",
+      value: roomBoardOffCampus,
+      bg: "#EFC8FF",
+    },
+    {
+      label: "Other Expenses On Campus",
+      value: otherExpenseOnCampus,
+      bg: "#FFEDB2",
+    },
+    {
+      label: "Other Expenses Off Campus",
+      value: otherExpenseOffCampus,
+      bg: "#FFD0C0",
+    },
+    {
+      label: "Other Expenses With Family",
+      value: otherExpenseWithFamily,
+      bg: "#CEFFD0",
+    },
+    {
+      label: "Average Annual Cost of Attendance",
+      value: stickerPriceByApi,
+      bg: "#CEFFD0",
+      disclaimer:
+        "Estimated annual cost before financial aid — tuition, fees, books, housing, and living expenses combined. Not a personalized quote. Source: College Scorecard (U.S. Dept. of Education).",
+    },
   ];
 
   const brackets: Array<keyof typeof netPrices> = [
-    '0-30000', '30001-48000', '48001-75000', '75001-110000', '110001+',
+    "0-30000",
+    "30001-48000",
+    "48001-75000",
+    "75001-110000",
+    "110001+",
   ];
 
   const bracketLabels: Record<string, string> = {
-    '0-30000': '$0 – $30,000',
-    '30001-48000': '$30,001 – $48,000',
-    '48001-75000': '$48,001 – $75,000',
-    '75001-110000': '$75,001 – $110,000',
-    '110001+': '$110,001+',
+    "0-30000": "$0 – $30,000",
+    "30001-48000": "$30,001 – $48,000",
+    "48001-75000": "$48,001 – $75,000",
+    "75001-110000": "$75,001 – $110,000",
+    "110001+": "$110,001+",
   };
 
   return (
     <div ref={containerRef} className="flex flex-col gap-8 py-6 max-w-4xl">
-
       {/* ── 1. Cost of Attendance ── */}
       <div>
-        <h2 className="text-2xl font-bold text-black font-poppins mb-4">Cost of Attendance</h2>
+        <h2 className="text-2xl font-bold text-black font-poppins mb-4">
+          Cost of Attendance
+        </h2>
 
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
           {costCards.map((card, i) => (
             <div
               key={i}
-              className="rounded-xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[80px] sm:min-h-[90px]"
-              style={{ background: card.bg, outline: '1.27px #E2E8F0 solid' }}
+              className="relative rounded-xl p-2.5 sm:p-4 flex flex-col justify-between min-h-[80px] sm:min-h-[90px]"
+              style={{ background: card.bg, outline: "1.27px #E2E8F0 solid" }}
             >
-              <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins ">{card.label}</p>
-              <p className="text-sm sm:text-base md:text-xl font-bold font-poppins text-black">{fmt(card.value)}</p>
+              {card.disclaimer && (
+                <Tooltip title={card.disclaimer}>
+                  <QuestionCircleOutlined className="absolute top-2 right-2 text-slate-500 hover:text-slate-700 cursor-help text-xs sm:text-sm" />
+                </Tooltip>
+              )}
+              <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins pr-4">
+                {card.label}
+              </p>
+              <p className="text-sm sm:text-base md:text-xl font-bold font-poppins text-black">
+                {fmt(card.value)}
+              </p>
             </div>
           ))}
         </div>
@@ -164,21 +250,35 @@ export default function TuitionCostsSection({
       {/* ── 2. Financial Aid Cards ── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-4 sm:p-6 flex flex-col gap-2 sm:gap-3">
-          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(aidPercentage * animProgress)}%</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">
+            {aidPercentage != null
+              ? `${Math.round(aidPercentage * animProgress)}%`
+              : "N/A"}
+          </p>
           <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Receive Financial Aid
           </p>
           <p className="text-[10px] sm:text-xs text-slate-500 font-poppins leading-normal sm:leading-relaxed">
-            Students receive need-based grants to ease the cost of education. Financial aid
-            programs help lower overall tuition expenses and make college more accessible.
+            Students receive need-based grants to ease the cost of education.
+            Financial aid programs help lower overall tuition expenses and make
+            college more accessible.
           </p>
           <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
-            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${aidPercentage * animProgress}%` }} />
+            <div
+              className="h-full bg-[#0ACC4E] rounded-full"
+              style={{
+                width: `${(aidPercentage ?? 0) * animProgress}%`,
+              }}
+            />
           </div>
         </div>
 
         <div className="bg-[#ECFDF5] rounded-xl border border-[#E2E8F0] p-4 sm:p-6 flex flex-col gap-2 sm:gap-3">
-          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">{Math.round(studentsWithLoan * animProgress)}%</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#0ACC4E] font-poppins">
+            {studentsWithLoan != null
+              ? `${Math.round(studentsWithLoan * animProgress)}%`
+              : "N/A"}
+          </p>
           <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Students with any loan
           </p>
@@ -186,7 +286,12 @@ export default function TuitionCostsSection({
             {loanMessage}
           </p>
           <div className="w-full h-2 rounded-full bg-[#E2E8F0] overflow-hidden mt-auto">
-            <div className="h-full bg-[#0ACC4E] rounded-full" style={{ width: `${studentsWithLoan * animProgress}%` }} />
+            <div
+              className="h-full bg-[#0ACC4E] rounded-full"
+              style={{
+                width: `${(studentsWithLoan ?? 0) * animProgress}%`,
+              }}
+            />
           </div>
         </div>
       </div>
@@ -198,21 +303,38 @@ export default function TuitionCostsSection({
         </h2>
         <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
           {[
-            { label: 'Books & supplies', value: bookSupply, bold: false },
-            { label: 'In-state tuition fees', value: activeTuition, bold: false },
-            { label: 'Room & board', value: roomBoardOnCampus, bold: false },
-            { label: 'Other on-campus expenses', value: otherExpenseOnCampus, bold: false },
-            { label: 'Total sticker price', value: activeStickerPrice, bold: true  },
+            { label: "Books & supplies", value: bookSupply, bold: false },
+            {
+              label: "In-state tuition fees",
+              value: activeTuition,
+              bold: false,
+            },
+            { label: "Room & board", value: roomBoardOnCampus, bold: false },
+            {
+              label: "Other on-campus expenses",
+              value: otherExpenseOnCampus,
+              bold: false,
+            },
+            {
+              label: "Total sticker price",
+              value: activeStickerPrice,
+              bold: true,
+            },
           ].map((row, i) => (
             <div
               key={i}
-              className={`flex justify-between items-center px-6 py-3 ${i < 4 ? 'border-b border-[#E2E8F0]' : ''
-                }`}
+              className={`flex justify-between items-center px-6 py-3 ${
+                i < 4 ? "border-b border-[#E2E8F0]" : ""
+              }`}
             >
-              <span className={`text-sm font-poppins ${row.bold ? 'font-bold' : 'font-light'} text-black`}>
+              <span
+                className={`text-sm font-poppins ${row.bold ? "font-bold" : "font-light"} text-black`}
+              >
                 {row.label}
               </span>
-              <span className={`text-sm text-[#334155] ${row.bold ? 'font-extrabold' : 'font-semibold'}`}>
+              <span
+                className={`text-sm text-[#334155] ${row.bold ? "font-extrabold" : "font-semibold"}`}
+              >
                 {fmt(row.value)}
               </span>
             </div>
@@ -222,36 +344,57 @@ export default function TuitionCostsSection({
 
       {/* ── 4. Net Price Calculator ── */}
       <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col gap-5">
-
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <div className="bg-[#FFE6C4] rounded-xl p-3.5 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Sticker price</p>
-            <p className="text-sm sm:text-base md:text-xl font-bold text-[#6D6D6D] font-poppins">{fmt(activeStickerPrice)}
+          <div
+            className="bg-[#FFE6C4] rounded-xl p-3.5 flex flex-col gap-1"
+            style={{ outline: "1.22px #E2E8F0 solid" }}
+          >
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">
+              Sticker price
+            </p>
+            <p className="text-sm sm:text-base md:text-xl font-bold text-[#6D6D6D] font-poppins">
+              {fmt(activeStickerPrice)}
               <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
-          <div className="bg-[#FFE2F5] rounded-xl p-3.5 flex flex-col gap-1" style={{ outline: '1.22px #E2E8F0 solid' }}>
-            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Est. Financial Aid</p>
+          <div
+            className="bg-[#FFE2F5] rounded-xl p-3.5 flex flex-col gap-1"
+            style={{ outline: "1.22px #E2E8F0 solid" }}
+          >
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">
+                Your Net Price 
+            </p>
             <p className="text-sm sm:text-base md:text-xl font-bold text-[#7C7C7C] font-poppins">
-              {fmt(currentNetPrice)} <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
+              {fmt(currentNetPrice)}{" "}
+              <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
           <div className="bg-[#C0FFF0] rounded-xl p-3.5 flex flex-col gap-1 col-span-2 md:col-span-1">
-            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">Your Net Price</p>
-            <p className="text-sm sm:text-base md:text-xl font-bold font-poppins" style={{ color: '#34C759' }}>{fmt(currentFinAid)}
+            <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">
+           Est. Financial Aid
+            </p>
+            <p
+              className="text-sm sm:text-base md:text-xl font-bold font-poppins"
+              style={{ color: "#34C759" }}
+            >
+              {fmt(currentFinAid)}
               <span className="text-[10px] sm:text-xs font-bold">/ yr</span>
             </p>
           </div>
-
         </div>
 
-        <p className="text-sm font-normal text-black font-poppins">Net price by income bracket (per year)</p>
+        <p className="text-sm font-normal text-black font-poppins">
+          Net price by income bracket (per year)
+        </p>
 
         {/* Slider */}
         <div
           className="rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4"
-          style={{ background: 'rgba(251,147,147,0.35)', boxShadow: '4px 4px 4px rgba(0,0,0,0.15)' }}
+          style={{
+            background: "rgba(251,147,147,0.35)",
+            boxShadow: "4px 4px 4px rgba(0,0,0,0.15)",
+          }}
         >
           <div className="flex justify-between items-center md:contents gap-2">
             <span className="text-sm font-normal text-black font-poppins">
@@ -267,20 +410,20 @@ export default function TuitionCostsSection({
                   setInputVal(rawText);
 
                   // Parse numbers from the input text
-                  const numeric = rawText.replace(/[^0-9]/g, '');
+                  const numeric = rawText.replace(/[^0-9]/g, "");
                   if (numeric) {
                     const num = parseInt(numeric, 10);
                     const clamped = Math.min(150000, Math.max(0, num));
                     setSliderValue(clamped);
                     // Update income range based on clamped value
-                    if (clamped <= 30000) setIncomeRange('0-30000');
-                    else if (clamped <= 48000) setIncomeRange('30001-48000');
-                    else if (clamped <= 75000) setIncomeRange('48001-75000');
-                    else if (clamped <= 110000) setIncomeRange('75001-110000');
-                    else setIncomeRange('110001+');
+                    if (clamped <= 30000) setIncomeRange("0-30000");
+                    else if (clamped <= 48000) setIncomeRange("30001-48000");
+                    else if (clamped <= 75000) setIncomeRange("48001-75000");
+                    else if (clamped <= 110000) setIncomeRange("75001-110000");
+                    else setIncomeRange("110001+");
                   } else {
                     setSliderValue(0);
-                    setIncomeRange('0-30000');
+                    setIncomeRange("0-30000");
                   }
                 }}
                 onBlur={() => {
@@ -288,7 +431,7 @@ export default function TuitionCostsSection({
                   setInputVal(sliderValue.toLocaleString());
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     setInputVal(sliderValue.toLocaleString());
                     e.currentTarget.blur();
                   }
@@ -296,7 +439,9 @@ export default function TuitionCostsSection({
                 className="w-full text-right font-extrabold text-[#334155] text-sm focus:outline-none bg-transparent"
                 placeholder="0"
               />
-              <span className="text-slate-400 font-bold text-xs whitespace-nowrap">/ Yr</span>
+              <span className="text-slate-400 font-bold text-xs whitespace-nowrap">
+                / Yr
+              </span>
             </div>
           </div>
           <div className="flex-1 relative h-2.5 my-1 md:my-0">
@@ -328,12 +473,18 @@ export default function TuitionCostsSection({
                 onClick={() => handleBracketClick(range)}
                 className="flex justify-between items-center px-5 py-3 rounded-full cursor-pointer transition-all"
                 style={{
-                  background: isActive ? 'rgba(75,117,254,0.35)' : 'rgba(255,255,255,0.35)',
-                  boxShadow: '4px 4px 4px rgba(0,0,0,0.15)',
-                  outline: isActive ? 'none' : '2px rgba(132,132,132,0.38) solid',
+                  background: isActive
+                    ? "rgba(75,117,254,0.35)"
+                    : "rgba(255,255,255,0.35)",
+                  boxShadow: "4px 4px 4px rgba(0,0,0,0.15)",
+                  outline: isActive
+                    ? "none"
+                    : "2px rgba(132,132,132,0.38) solid",
                 }}
               >
-                <span className={`text-sm font-poppins ${isActive ? 'font-bold' : 'font-normal'} text-black`}>
+                <span
+                  className={`text-sm font-poppins ${isActive ? "font-bold" : "font-normal"} text-black`}
+                >
                   {bracketLabels[range]}
                 </span>
                 <span className="text-sm font-extrabold text-[#334155]">
@@ -344,7 +495,6 @@ export default function TuitionCostsSection({
           })}
         </div>
       </div>
-
     </div>
   );
 }
