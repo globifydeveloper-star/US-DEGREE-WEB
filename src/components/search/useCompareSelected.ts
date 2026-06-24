@@ -1,13 +1,21 @@
 "use client";
 
 /**
- * Shared client-side store for the "selected for comparison" set, backed by the
- * backend (GET/POST/DELETE /compare/selected). Mirrors useSavedColleges: the
- * set of unitids loads once per session and is shared across cards via a window
- * event; mutations are optimistic and revert on failure.
+ * SINGLE SOURCE OF TRUTH for the "selected for comparison" set.
  *
- * This is distinct from the localStorage `compared_colleges` bucket that drives
- * the /compare matrix page — that uses the `compared-colleges-updated` event.
+ * Canonical state is the backend `/compare/selected` set. This module also
+ * maintains a localStorage mirror — `compared_colleges` (unitids) and
+ * `compared_colleges_details` (display info: name/location/cipCode/…) — for:
+ *   - instant, SSR-safe reads (the Navbar badge),
+ *   - the /compare matrix page + CompareDeck, which render the detail info.
+ *
+ * Every selection mutation (add/remove/clear) goes through this module, which
+ * updates BOTH the in-memory set and the localStorage mirror, persists to the
+ * backend, and notifies subscribers via a single dispatch. The 5-college cap is
+ * enforced here, centrally, so it holds no matter where the college is added
+ * from (search cards, university page, college matches, or the compare page).
+ *
+ * Mutations are optimistic and revert on backend failure.
  */
 
 import { useEffect, useState } from "react";
@@ -17,33 +25,122 @@ import {
   removeCompareSelected,
 } from "@/lib/auth/api";
 
+// Fired for store subscribers (cards, Navbar, profile section).
 export const COMPARE_SELECTED_EVENT = "compare-selected-updated";
+// Legacy event still listened to by the matrix page + CompareDeck; dispatched
+// alongside the above so those keep working unchanged.
+export const COMPARE_BUCKET_EVENT = "compared-colleges-updated";
+export const MAX_COMPARE = 5;
+
+const BUCKET_KEY = "compared_colleges";
+const DETAILS_KEY = "compared_colleges_details";
+
+/** Display info for one selected college (kept in the localStorage mirror). */
+export interface CompareDetail {
+  id: string;
+  name?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  schoolType?: string;
+  cipCode?: string;
+  schoolUrl?: string;
+  logoColor?: string;
+}
 
 let selectedSet = new Set<string>();
 let loaded = false;
+let initialized = false;
 let inflight: Promise<void> | null = null;
+
+// ---- localStorage mirror helpers (SSR-safe) ----
+function readBucket(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const v = JSON.parse(localStorage.getItem(BUCKET_KEY) || "[]");
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readDetails(): CompareDetail[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const v = JSON.parse(localStorage.getItem(DETAILS_KEY) || "[]");
+    return Array.isArray(v) ? (v as CompareDetail[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeBucket(ids: string[], details: CompareDetail[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(BUCKET_KEY, JSON.stringify(ids));
+  localStorage.setItem(DETAILS_KEY, JSON.stringify(details));
+}
 
 function dispatch() {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(COMPARE_SELECTED_EVENT));
+    window.dispatchEvent(new Event(COMPARE_BUCKET_EVENT));
   }
 }
 
+// Seed the in-memory set from the localStorage mirror once, so reads are
+// correct immediately on a fresh page (before the backend load resolves).
+function initFromBucket() {
+  if (initialized || typeof window === "undefined") return;
+  initialized = true;
+  selectedSet = new Set(readBucket());
+}
+
+// ---- Synchronous getters ----
 export function isCompareSelected(unitid: string): boolean {
+  initFromBucket();
   return selectedSet.has(String(unitid));
 }
 
-/** Load the selected set once. Repeat calls are no-ops / await the in-flight load. */
+export function getCompareIds(): string[] {
+  initFromBucket();
+  return Array.from(selectedSet);
+}
+
+export function getCompareCount(): number {
+  initFromBucket();
+  return selectedSet.size;
+}
+
+/** Load the backend set once (authoritative), reconciling the mirror. */
 export async function ensureCompareLoaded(): Promise<void> {
+  initFromBucket();
   if (loaded) return;
   if (inflight) return inflight;
   inflight = (async () => {
     try {
       const list = await fetchCompareSelected();
-      selectedSet = new Set(list.map((c) => String(c.unitid)));
+      const ids = list.map((c) => String(c.unitid));
+      selectedSet = new Set(ids);
+
+      // Keep existing local details for known ids; synthesise minimal details
+      // (from the backend enrichment) for any the mirror doesn't have yet.
+      const byId = new Map(readDetails().map((d) => [String(d.id), d]));
+      const mergedDetails: CompareDetail[] = ids.map((id) => {
+        const existing = byId.get(id);
+        if (existing) return existing;
+        const row = list.find((c) => String(c.unitid) === id);
+        return {
+          id,
+          name: row?.name,
+          location: row?.location,
+          cipCode: "default",
+        };
+      });
+      writeBucket(ids, mergedDetails);
       loaded = true;
       dispatch();
     } catch (err) {
+      // Offline / not authed → keep the localStorage-seeded set as a fallback.
       console.error("Failed to load comparison set:", err);
     } finally {
       inflight = null;
@@ -52,40 +149,114 @@ export async function ensureCompareLoaded(): Promise<void> {
   return inflight;
 }
 
-/** Force a reload (e.g. after the profile section removes an entry). */
+/** Force a reload from the backend. */
 export async function reloadCompareSelected(): Promise<void> {
   loaded = false;
   return ensureCompareLoaded();
 }
 
-/**
- * Set a unitid's selected state explicitly (POST to add, DELETE to remove).
- * Optimistic; reverts on failure. No-op if already in the desired state.
- */
-export async function setCompareSelected(
-  unitid: string,
-  selected: boolean,
-): Promise<void> {
-  const key = String(unitid);
-  if (selectedSet.has(key) === selected) return;
+export type AddResult = "added" | "exists" | "full";
 
-  if (selected) selectedSet.add(key);
-  else selectedSet.delete(key);
+/** Add a college to the comparison set. Returns "full" when the cap is hit. */
+export async function addToCompare(detail: CompareDetail): Promise<AddResult> {
+  initFromBucket();
+  const id = String(detail.id);
+  if (!id) return "exists";
+  if (selectedSet.has(id)) return "exists";
+  if (selectedSet.size >= MAX_COMPARE) return "full";
+
+  // Optimistic update of the set + mirror.
+  selectedSet.add(id);
+  const ids = readBucket();
+  if (!ids.includes(id)) ids.push(id);
+  const details = readDetails();
+  if (!details.some((d) => String(d.id) === id)) {
+    details.push({
+      cipCode: "default",
+      logoColor: "bg-blue-600",
+      ...detail,
+      id,
+    });
+  }
+  writeBucket(ids, details);
   dispatch();
 
   try {
-    if (selected) await addCompareSelected(key);
-    else await removeCompareSelected(key);
+    await addCompareSelected(id);
   } catch (err) {
-    // Revert on failure.
-    if (selected) selectedSet.delete(key);
-    else selectedSet.add(key);
+    selectedSet.delete(id);
+    writeBucket(
+      readBucket().filter((x) => x !== id),
+      readDetails().filter((d) => String(d.id) !== id),
+    );
     dispatch();
+    throw err;
+  }
+  return "added";
+}
+
+/** Remove a college from the comparison set. */
+export async function removeFromCompare(unitid: string): Promise<void> {
+  initFromBucket();
+  const id = String(unitid);
+  const had = selectedSet.has(id);
+  const prevDetails = readDetails();
+
+  selectedSet.delete(id);
+  writeBucket(
+    readBucket().filter((x) => x !== id),
+    prevDetails.filter((d) => String(d.id) !== id),
+  );
+  dispatch();
+
+  try {
+    await removeCompareSelected(id);
+  } catch (err) {
+    if (had) {
+      selectedSet.add(id);
+      const ids = readBucket();
+      if (!ids.includes(id)) ids.push(id);
+      const restored = prevDetails.find((d) => String(d.id) === id);
+      const details = readDetails();
+      if (restored && !details.some((d) => String(d.id) === id)) {
+        details.push(restored);
+      }
+      writeBucket(ids, details);
+      dispatch();
+    }
     throw err;
   }
 }
 
-/** React hook: reactive selected-state for a single card's unitid. */
+/** Clear the entire comparison set. */
+export async function clearCompare(): Promise<void> {
+  initFromBucket();
+  const ids = Array.from(selectedSet);
+  selectedSet = new Set();
+  writeBucket([], []);
+  dispatch();
+  try {
+    await Promise.all(ids.map((id) => removeCompareSelected(id)));
+  } catch (err) {
+    console.error("Failed to clear comparison set on backend:", err);
+    throw err;
+  }
+}
+
+/** Toggle a college's membership; returns the resulting action. */
+export async function toggleCompare(
+  detail: CompareDetail,
+): Promise<AddResult | "removed"> {
+  if (isCompareSelected(detail.id)) {
+    await removeFromCompare(detail.id);
+    return "removed";
+  }
+  return addToCompare(detail);
+}
+
+// ---- React hooks ----
+
+/** Reactive selected-state for a single card's unitid. */
 export function useCompareSelectedItem(unitid?: string | null): boolean {
   const [selected, setSelected] = useState<boolean>(
     unitid ? isCompareSelected(unitid) : false,
@@ -101,4 +272,34 @@ export function useCompareSelectedItem(unitid?: string | null): boolean {
   }, [unitid]);
 
   return selected;
+}
+
+/** Reactive list of selected unitids (for components that render the whole set). */
+export function useCompareIds(): string[] {
+  const [ids, setIds] = useState<string[]>(getCompareIds());
+
+  useEffect(() => {
+    ensureCompareLoaded();
+    const handler = () => setIds(getCompareIds());
+    handler();
+    window.addEventListener(COMPARE_SELECTED_EVENT, handler);
+    return () => window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
+  }, []);
+
+  return ids;
+}
+
+/** Reactive count of selected colleges (used by the Navbar badge). */
+export function useCompareCount(): number {
+  const [count, setCount] = useState<number>(getCompareCount());
+
+  useEffect(() => {
+    ensureCompareLoaded();
+    const handler = () => setCount(getCompareCount());
+    handler();
+    window.addEventListener(COMPARE_SELECTED_EVENT, handler);
+    return () => window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
+  }, []);
+
+  return count;
 }

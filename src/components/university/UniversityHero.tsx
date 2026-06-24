@@ -1,71 +1,61 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Bookmark, Share2, GitCompareArrows, MapPin, ExternalLink, X } from 'lucide-react';
-import { UniversityHeroProps } from '@/types/university/UniversityHero';
-import { Button } from 'antd';
-import CompareIconAnimation from '../search/CompareIconAnimation';
-
-
-
-
+import React, { useState } from "react";
+import { Bookmark, MapPin, ExternalLink } from "lucide-react";
+import { UniversityHeroProps } from "@/types/university/UniversityHero";
+import { Button } from "antd";
+import CompareIconAnimation from "../search/CompareIconAnimation";
+import {
+  toggleCompare as toggleCompareStore,
+  useCompareSelectedItem,
+  MAX_COMPARE,
+} from "../search/useCompareSelected";
 
 export default function UniversityHero({
-  id, name, location, type, rank, admissionRate, tuitionFee, logoColor, tuitionData, tuitionType = 'in_state', schoolUrl, accreditor
+  id,
+  name,
+  location,
+  type,
+  admissionRate,
+  tuitionFee,
+  logoColor,
+  tuitionData,
+  tuitionType = "in_state",
+  schoolUrl,
+  accreditor,
 }: UniversityHeroProps) {
-  const [isCompared, setIsCompared] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    if (!id) return;
-    const list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    setIsCompared(list.includes(String(id)));
+  // Selected-for-comparison state from the single shared store.
+  const compareId = String(id ?? "");
+  const isCompared = useCompareSelectedItem(compareId);
 
-    const handleUpdate = () => {
-      const updatedList = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-      setIsCompared(updatedList.includes(String(id)));
-    };
-
-    window.addEventListener('compared-colleges-updated', handleUpdate);
-    return () => window.removeEventListener('compared-colleges-updated', handleUpdate);
-  }, [id]);
-
-  const toggleCompare = () => {
-    if (!id) return;
-    let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
-    const nextState = !isCompared;
-
-    if (nextState) {
-      if (list.length >= 5) {
-        alert("You can compare a maximum of 5 colleges simultaneously.");
-        return;
+  const toggleCompare = async () => {
+    if (!compareId) return;
+    try {
+      const result = await toggleCompareStore({
+        id: compareId,
+        name,
+        location,
+        cipCode: "default",
+        schoolUrl: schoolUrl || "",
+        logoColor: logoColor || "bg-blue-600",
+      });
+      if (result === "full") {
+        alert(
+          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+        );
       }
-      if (!list.includes(String(id))) {
-        list.push(String(id));
-        detailsList.push({
-          id: String(id),
-          name: name,
-          logoColor: logoColor || 'bg-blue-600',
-          location: location,
-          cipCode: 'default',
-          schoolUrl: schoolUrl || ""
-        });
-      }
-    } else {
-      list = list.filter((cid: string) => cid !== String(id));
-      detailsList = detailsList.filter((c: any) => c.id !== String(id));
+    } catch (err) {
+      console.error("Failed to update comparison selection:", err);
     }
-    localStorage.setItem('compared_colleges', JSON.stringify(list));
-    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
-    setIsCompared(nextState);
-    window.dispatchEvent(new Event('compared-colleges-updated'));
   };
   const isStanford = name.toLowerCase().includes("stanford");
 
   const formattedSchoolUrl = schoolUrl
-    ? (schoolUrl.trim().startsWith("http://") || schoolUrl.trim().startsWith("https://")
+    ? schoolUrl.trim().startsWith("http://") ||
+      schoolUrl.trim().startsWith("https://")
       ? schoolUrl.trim()
-      : `https://${schoolUrl.trim()}`)
+      : `https://${schoolUrl.trim()}`
     : "";
 
   // Fallbacks if database has nulls or if tuitionData is absent
@@ -73,12 +63,16 @@ export default function UniversityHero({
   const tuitionOutState = tuitionData?.tuition?.tuition_out_state ?? 25000;
   const bookSupply = tuitionData?.tuition?.booksupply ?? 1200;
   const roomBoardOnCampus = tuitionData?.housing?.roomboard_oncampus ?? 7348;
-  const otherExpenseOnCampus = tuitionData?.expenses?.otherexpense_oncampus ?? 2832;
+  const otherExpenseOnCampus =
+    tuitionData?.expenses?.otherexpense_oncampus ?? 2832;
 
-  const stickerInState = bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
-  const stickerOutState = bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
+  const stickerInState =
+    bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
+  const stickerOutState =
+    bookSupply + tuitionOutState + roomBoardOnCampus + otherExpenseOnCampus;
 
-  const activeStickerVal = tuitionType === 'in_state' ? stickerInState : stickerOutState;
+  const activeStickerVal =
+    tuitionType === "in_state" ? stickerInState : stickerOutState;
   const activeStickerPrice = tuitionData
     ? `$${Math.round(activeStickerVal).toLocaleString()}`
     : tuitionFee;
@@ -108,12 +102,15 @@ export default function UniversityHero({
               />
             </div>
           ) : (
-            <div className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0 overflow-hidden`}>
+            <div
+              className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0 overflow-hidden`}
+            >
               <img
                 src="/images/Colleges_105154_logo.png"
                 alt={`${name} logo`}
                 className="w-full h-full object-contain p-2"
-              />            </div>
+              />{" "}
+            </div>
           )}
 
           {/* Name & Badges */}
@@ -145,18 +142,25 @@ export default function UniversityHero({
               <p className="text-xl font-black text-red-600">{rank}</p>
             </div> */}
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Admission Rate</p>
-              <p className="text-xl font-black text-gray-900">{admissionRate}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Admission Rate
+              </p>
+              <p className="text-xl font-black text-gray-900">
+                {admissionRate}
+              </p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tuition Fee</p>
-              <p className="text-xl font-black text-gray-900">{activeStickerPrice}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Tuition Fee
+              </p>
+              <p className="text-xl font-black text-gray-900">
+                {activeStickerPrice}
+              </p>
             </div>
           </div>
 
           <div className="w-full md:w-auto mt-4 md:mt-0">
             <div className="flex flex-col sm:flex-row md:flex-nowrap gap-3 font-medium">
-
               {formattedSchoolUrl && (
                 <a
                   href={formattedSchoolUrl}
@@ -180,10 +184,11 @@ export default function UniversityHero({
                   onClick={toggleCompare}
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
-                  className={`!h-10 !px-4 sm:!px-5 !rounded-full !text-xs sm:!text-sm !font-semibold transition-all duration-300 w-full md:w-auto flex items-center justify-center ${isCompared
-                      ? '!bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-md'
-                      : '!text-gray-600 !border-gray-300 hover:!text-blue-600 hover:!border-blue-600'
-                    }`}
+                  className={`!h-10 !px-4 sm:!px-5 !rounded-full !text-xs sm:!text-sm !font-semibold transition-all duration-300 w-full md:w-auto flex items-center justify-center ${
+                    isCompared
+                      ? "!bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-md"
+                      : "!text-gray-600 !border-gray-300 hover:!text-blue-600 hover:!border-blue-600"
+                  }`}
                   icon={
                     <CompareIconAnimation
                       active={isCompared}
@@ -194,7 +199,6 @@ export default function UniversityHero({
                   {isCompared ? "Added" : "Compare"}
                 </Button>
               </div>
-
             </div>
           </div>
         </div>
@@ -202,4 +206,3 @@ export default function UniversityHero({
     </div>
   );
 }
-

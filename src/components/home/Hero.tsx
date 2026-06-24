@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Brain, GraduationCap, Search } from "lucide-react";
+import Image from "next/image";
+import { Search } from "lucide-react";
 import { Select } from "antd";
 
 const MOCK_STATES = [
@@ -91,45 +92,63 @@ export default function Hero() {
     fetchOptions();
   }, []);
 
-  const fetchCourses = useCallback(async () => {
-    setIsCoursesLoading(true);
-    setSelectedCourse(null);
+  const fetchCourses = useCallback(
+    async (level: string | null, state: string | null) => {
+      setIsCoursesLoading(true);
+      setSelectedCourse(null);
 
-    try {
-      const queryParams = new URLSearchParams();
-      if (selectedLevel) queryParams.append("credential_title", selectedLevel);
-      if (selectedState) queryParams.append("state", selectedState);
+      try {
+        const queryParams = new URLSearchParams();
+        if (level) queryParams.append("credential_title", level);
+        if (state) queryParams.append("state", state);
 
-      const apiUrl = "/api/proxy";
-      const res = await fetch(`${apiUrl}/courses?${queryParams.toString()}`);
+        const apiUrl = "/api/proxy";
+        const res = await fetch(`${apiUrl}/courses?${queryParams.toString()}`);
 
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setCourses(
-            data.map((item: { title: string }) => ({
-              value: item.title,
-              label: item.title,
-            }))
-          );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setCourses(
+              data.map((item: { title: string }) => ({
+                value: item.title,
+                label: item.title,
+              }))
+            );
+          }
         }
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+        // Keep MOCK_COURSES fallback if fetch fails
+        setCourses(MOCK_COURSES);
+      } finally {
+        setIsCoursesLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching courses:", err);
-      // Keep MOCK_COURSES fallback if fetch fails
-      setCourses(MOCK_COURSES);
-    } finally {
-      setIsCoursesLoading(false);
-    }
-  }, [selectedLevel, selectedState]);
+    },
+    []
+  );
 
-  useEffect(() => {
-    if (selectedLevel || selectedState) {
-      fetchCourses();
-    } else {
-      setCourses(MOCK_COURSES);
-    }
-  }, [selectedLevel, selectedState, fetchCourses]);
+  // Courses depend on the chosen level/state — react to the change event
+  // directly rather than via an effect to avoid cascading renders.
+  const updateCourses = useCallback(
+    (level: string | null, state: string | null) => {
+      if (level || state) {
+        fetchCourses(level, state);
+      } else {
+        setCourses(MOCK_COURSES);
+      }
+    },
+    [fetchCourses]
+  );
+
+  const handleLevelChange = (value: string | null) => {
+    setSelectedLevel(value);
+    updateCourses(value, selectedState);
+  };
+
+  const handleStateChange = (value: string | null) => {
+    setSelectedState(value);
+    updateCourses(selectedLevel, value);
+  };
 
   const handleSearch = () => {
     setIsLoading(true);
@@ -221,11 +240,13 @@ export default function Hero() {
 
               {/* Mobile-only Image (Upside of the search bar on mobile) */}
               <div className="relative mb-6 block lg:hidden w-full">
-                <div className="relative z-10 overflow-hidden rounded-[24px] w-full">
-                  <img
+                <div className="relative z-10 overflow-hidden rounded-[24px] w-full h-[220px] sm:h-[300px]">
+                  <Image
                     src="/images/collage.webp"
                     alt="Students sitting under a tree"
-                    className="h-[220px] sm:h-[300px] w-full object-cover object-center"
+                    fill
+                    sizes="100vw"
+                    className="object-cover object-center"
                   />
                 </div>
               </div>
@@ -274,7 +295,7 @@ export default function Hero() {
                       placeholder="Select Credential Level"
                       options={levels}
                       value={selectedLevel}
-                      onChange={setSelectedLevel}
+                      onChange={handleLevelChange}
                       className="w-full"
                     />
                   </div>
@@ -290,7 +311,7 @@ export default function Hero() {
                       placeholder="Select a State"
                       options={states}
                       value={selectedState}
-                      onChange={setSelectedState}
+                      onChange={handleStateChange}
                       className="w-full"
                     />
                   </div>
@@ -337,11 +358,13 @@ export default function Hero() {
 
           {/* Right Image */}
           <div className="relative min-h-[220px] lg:min-h-[320px] hidden lg:block">
-            <div className="relative z-10 overflow-hidden rounded-[48px]">
-              <img
+            <div className="relative z-10 overflow-hidden rounded-[48px] w-full h-[220px] lg:h-[420px]">
+              <Image
                 src="/images/collage.webp"
                 alt="Students sitting under a tree"
-                className="h-[220px] w-full object-cover object-center lg:h-[420px]"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover object-center"
               />
             </div>
           </div>
@@ -391,7 +414,7 @@ export default function Hero() {
                   placeholder="Select Credential Level"
                   options={levels}
                   value={selectedLevel}
-                  onChange={setSelectedLevel}
+                  onChange={handleLevelChange}
                   className="w-full"
                 />
               </div>
@@ -406,7 +429,7 @@ export default function Hero() {
                   placeholder="Select a State"
                   options={states}
                   value={selectedState}
-                  onChange={setSelectedState}
+                  onChange={handleStateChange}
                   className="w-full"
                 />
               </div>

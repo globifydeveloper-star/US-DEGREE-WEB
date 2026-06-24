@@ -2,6 +2,11 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { College, CollegeDetail } from "@/types/university/ComparisonTable";
 import { authedFetch } from "@/lib/auth/api";
+import {
+  addToCompare,
+  removeFromCompare,
+  clearCompare,
+} from "@/components/search/useCompareSelected";
 
 const INITIAL_LIST_SIZE = 20;
 const MIN_SEARCH_CHARS = 4;
@@ -659,73 +664,42 @@ export function useCompareColleges() {
       allUniversitiesRef.current.get(String(id)) ||
       selectOptions.find((u) => u.id === id) ||
       initialUniversities.find((u) => u.id === id);
-    if (opt) {
-      try {
-        const stored = localStorage.getItem("compared_colleges_details");
-        const list: StoredDetail[] = stored ? JSON.parse(stored) : [];
-        if (
-          Array.isArray(list) &&
-          !list.some((d) => String(d.id) === String(id))
-        ) {
-          list.push({
-            id: String(id),
-            name: opt.name,
-            city: opt.city || "",
-            state: opt.state || "",
-            schoolType: opt.schoolType || "Public",
-            location:
-              opt.city && opt.state
-                ? `${opt.city}, ${opt.state}`
-                : opt.city || opt.state || "",
-            cipCode: "default",
-          });
-          localStorage.setItem(
-            "compared_colleges_details",
-            JSON.stringify(list),
-          );
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
 
-    const updatedIds = [...comparedIds, id];
-    localStorage.setItem("compared_colleges", JSON.stringify(updatedIds));
-    window.dispatchEvent(new Event("compared-colleges-updated"));
-    syncUrlParams(updatedIds);
+    // Update the matrix view (URL) and delegate the selection to the shared
+    // store, which owns the backend set + localStorage mirror + the 5-max.
+    syncUrlParams([...comparedIds, id]);
+    addToCompare({
+      id: String(id),
+      name: opt?.name,
+      city: opt?.city || "",
+      state: opt?.state || "",
+      schoolType: opt?.schoolType || "Public",
+      location:
+        opt?.city && opt?.state
+          ? `${opt.city}, ${opt.state}`
+          : opt?.city || opt?.state || "",
+      cipCode: "default",
+    })
+      .then((res) => {
+        if (res === "full") setIsLimitModalOpen(true);
+      })
+      .catch((err) =>
+        console.error("Failed to sync comparison selection:", err),
+      );
   };
 
   const handleRemoveCollege = (id: string) => {
-    const updatedIds = comparedIds.filter((cid) => cid !== id);
-    localStorage.setItem("compared_colleges", JSON.stringify(updatedIds));
-
-    const details = localStorage.getItem("compared_colleges_details");
-    if (details) {
-      try {
-        const detailsList = JSON.parse(details);
-        if (Array.isArray(detailsList)) {
-          const updatedDetails = detailsList.filter(
-            (c: StoredDetail) => String(c.id) !== String(id),
-          );
-          localStorage.setItem(
-            "compared_colleges_details",
-            JSON.stringify(updatedDetails),
-          );
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    window.dispatchEvent(new Event("compared-colleges-updated"));
-    syncUrlParams(updatedIds);
+    syncUrlParams(comparedIds.filter((cid) => cid !== id));
+    removeFromCompare(String(id)).catch((err) =>
+      console.error("Failed to sync comparison selection:", err),
+    );
   };
 
   const handleClearAll = () => {
-    localStorage.setItem("compared_colleges", JSON.stringify([]));
-    localStorage.setItem("compared_colleges_details", JSON.stringify([]));
-    window.dispatchEvent(new Event("compared-colleges-updated"));
     syncUrlParams([]);
+    clearCompare().catch((err) =>
+      console.error("Failed to sync comparison selection:", err),
+    );
   };
 
   return {

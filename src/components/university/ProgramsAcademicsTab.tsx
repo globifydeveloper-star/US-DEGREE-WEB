@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ProgramsAcademicsTabProps } from '@/types/university/ProgramsAcademicsTab';
+import { ProgramsAcademicsTabProps, PopularField, DegreeLevel } from '@/types/university/ProgramsAcademicsTab';
 
 export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps) {
-  if (!data) return null;
+  const name = data?.name || "N/A";
+  const admissionRate = String(data?.admissionRate ?? "N/A");
+  const totalStudents = data?.totalStudents;
+  const completionRate = data?.completionRate ?? "N/A";
+  const facultyRatio = data?.facultyRatio ?? "N/A";
 
-  const name = data.name || "N/A";
-  const admissionRate = data.admissionRate || "N/A";
-  const totalStudents = data.totalStudents;
-  const completionRate = data.completionRate || "N/A";
-  const facultyRatio = data.facultyRatio || "N/A";
-
-  const toPercentVal = (val: any) => {
+  const toPercentVal = (val: unknown) => {
     if (val === null || val === undefined) return null;
     const num = Number(val);
     if (isNaN(num)) return null;
     return num < 2 ? Math.round(num * 100) : Math.round(num);
   };
 
-  const rawRepayment = data.campusData?.repayment?.all_borrowers_3yr;
+  const rawRepayment = data?.campusData?.repayment?.all_borrowers_3yr;
   const loanRepaymentVal = toPercentVal(rawRepayment);
   const loanRepaymentDisplay = loanRepaymentVal !== null ? `${loanRepaymentVal}%` : "N/A";
 
@@ -29,9 +27,9 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
   // Dynamic tuition parser
   let tuitionDisplay = "N/A";
-  if (data.tuitionFee && data.tuitionFee !== "N/A") {
+  if (data?.tuitionFee && data.tuitionFee !== "N/A") {
     tuitionDisplay = data.tuitionFee;
-  } else if (data.tuitionData?.tuition?.tuition_in_state) {
+  } else if (data?.tuitionData?.tuition?.tuition_in_state) {
     const parsed = parseFloat(String(data.tuitionData.tuition.tuition_in_state).replace(/[^0-9.]/g, ''));
     tuitionDisplay = isNaN(parsed) ? String(data.tuitionData.tuition.tuition_in_state) : `$${Math.round(parsed).toLocaleString()}`;
   }
@@ -115,14 +113,16 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
   }, [barsVisible]);
 
   const colors = ['#10B981', '#EC4899', '#EF4444', '#06B6D4', '#F97316'];
-  const popularFields = data.programsData?.popular_fields || [];
+  const popularFields = data?.programsData?.popular_fields || [];
 
-  const programBars = popularFields.slice(0, 5).map((field: any, idx: number) => ({
+  const programBars = popularFields.slice(0, 5).map((field: PopularField, idx: number) => ({
     label: field.field_name,
     pct: field.percentage,
     color: colors[idx % colors.length],
     delay: `${idx * 0.15}s`
   }));
+
+  if (!data) return null;
 
   return (
     <div className="flex flex-col gap-12 py-6 w-full">
@@ -230,7 +230,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
         {/* Animated progress bar lists */}
         <div ref={barsRef} className="flex flex-col gap-4.5 bg-white border border-gray-150 rounded-3xl p-8 shadow-sm">
           {programBars.length > 0 ? (
-            programBars.map((bar: any) => (
+            programBars.map((bar) => (
               <div key={bar.label} className="space-y-2">
                 <div className="flex justify-between text-xs font-bold text-gray-900">
                   <span>{bar.label}</span>
@@ -262,7 +262,7 @@ export default function ProgramsAcademicsTab({ data }: ProgramsAcademicsTabProps
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {["Undergraduate", "Graduate", "Professional"].map((levelName: string, idx: number) => {
-            const levelData = (data.programsData?.comprehensive_degree_levels || []).find((l: any) => l.level === levelName) || { level: levelName, total_programs: 0, top_titles: [] };
+            const levelData: DegreeLevel = (data.programsData?.comprehensive_degree_levels || []).find((l) => l.level === levelName) || { level: levelName, total_programs: 0, top_titles: [] };
             
             let bg = "bg-gray-50/40";
             let border = "border-gray-200/50";

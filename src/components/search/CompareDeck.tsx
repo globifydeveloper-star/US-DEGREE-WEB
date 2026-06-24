@@ -1,17 +1,56 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { X, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { X, ArrowRight } from "lucide-react";
+import { removeFromCompare, clearCompare } from "./useCompareSelected";
+
+// Display shape for one college chip in the deck (also the localStorage detail shape).
+interface DeckCollege {
+  id: string;
+  name: string;
+  logo?: string;
+  logoColor: string;
+  location: string;
+  cipCode: string;
+  schoolUrl: string;
+}
+
+// Minimal shapes for the API responses we read here.
+interface DeckApiSchool {
+  school_name?: string;
+  name?: string;
+  city?: string;
+  state?: string;
+  school_url?: string;
+}
+interface DeckOverview {
+  school_name?: string;
+  school_url?: string;
+  school?: DeckApiSchool;
+}
+interface DeckCollegeApi {
+  school_name?: string;
+  name?: string;
+  city?: string;
+  state?: string;
+  school_url?: string;
+}
 
 export default function CompareDeck() {
   const router = useRouter();
-  const [colleges, setColleges] = useState<any[]>([]);
+  const [colleges, setColleges] = useState<DeckCollege[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   const loadColleges = async () => {
-    const list = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('compared_colleges') || '[]') : [];
-    const detailsList = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('compared_colleges_details') || '[]') : [];
+    const list: string[] =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("compared_colleges") || "[]")
+        : [];
+    const detailsList: DeckCollege[] =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("compared_colleges_details") || "[]")
+        : [];
 
     if (list.length === 0) {
       setColleges([]);
@@ -19,45 +58,51 @@ export default function CompareDeck() {
     }
 
     // Filter detailsList to only include items that are in list
-    let currentColleges = detailsList.filter((c: any) => list.includes(String(c.id)));
+    const currentColleges = detailsList.filter((c) =>
+      list.includes(String(c.id)),
+    );
 
     // Find which IDs in list are missing details
-    const existingIds = currentColleges.map((c: any) => String(c.id));
-    const missingIds = list.filter((id: string) => !existingIds.includes(String(id)));
+    const existingIds = currentColleges.map((c) => String(c.id));
+    const missingIds = list.filter((id) => !existingIds.includes(String(id)));
 
     if (missingIds.length > 0) {
       const apiUrl = "/api/proxy";
       try {
         const fetchedDetails = await Promise.all(
-          missingIds.map(async (id: string) => {
+          missingIds.map(async (id): Promise<DeckCollege> => {
             try {
               const [overviewRes, collegeRes] = await Promise.all([
                 fetch(`${apiUrl}/overview/${id}/default`),
-                fetch(`${apiUrl}/colleges/${id}`)
+                fetch(`${apiUrl}/colleges/${id}`),
               ]);
 
-              let overviewData: any = {};
-              let collegeData: any = {};
+              let overviewData: DeckOverview = {};
+              let collegeData: DeckCollegeApi = {};
 
               if (overviewRes.ok) overviewData = await overviewRes.json();
               if (collegeRes.ok) collegeData = await collegeRes.json();
 
-              const name = collegeData?.school_name
-                || collegeData?.name
-                || overviewData?.school_name
-                || overviewData?.school?.school_name
-                || overviewData?.school?.name
-                || `College ${id}`;
+              const name =
+                collegeData?.school_name ||
+                collegeData?.name ||
+                overviewData?.school_name ||
+                overviewData?.school?.school_name ||
+                overviewData?.school?.name ||
+                `College ${id}`;
 
-              const rawUrl = collegeData?.school_url
-                || overviewData?.school?.school_url
-                || overviewData?.school_url
-                || "";
+              const rawUrl =
+                collegeData?.school_url ||
+                overviewData?.school?.school_url ||
+                overviewData?.school_url ||
+                "";
 
               let website = "";
               if (rawUrl && rawUrl.trim()) {
                 const trimmed = rawUrl.trim();
-                website = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+                website = trimmed.startsWith("http")
+                  ? trimmed
+                  : `https://${trimmed}`;
               }
 
               let logo = "";
@@ -65,22 +110,28 @@ export default function CompareDeck() {
                 try {
                   logo = `https://logo.clearbit.com/${new URL(website).hostname}`;
                 } catch (urlErr) {
-                  console.error("Failed to parse website URL for logo:", urlErr);
+                  console.error(
+                    "Failed to parse website URL for logo:",
+                    urlErr,
+                  );
                 }
               }
 
-              const city = collegeData?.city || overviewData?.school?.city || "";
-              const state = collegeData?.state || overviewData?.school?.state || "";
-              const location = city && state ? `${city}, ${state}` : (city || state || 'US');
+              const city =
+                collegeData?.city || overviewData?.school?.city || "";
+              const state =
+                collegeData?.state || overviewData?.school?.state || "";
+              const location =
+                city && state ? `${city}, ${state}` : city || state || "US";
 
               return {
                 id,
                 name,
                 logo,
-                logoColor: 'bg-blue-600',
+                logoColor: "bg-blue-600",
                 location,
-                cipCode: 'default',
-                schoolUrl: website
+                cipCode: "default",
+                schoolUrl: website,
               };
             } catch (e) {
               console.error("Failed to fetch basic overview for deck:", e);
@@ -88,24 +139,27 @@ export default function CompareDeck() {
             return {
               id,
               name: `College ${id}`,
-              logoColor: 'bg-blue-600',
-              location: 'US',
-              cipCode: 'default',
-              schoolUrl: ""
+              logoColor: "bg-blue-600",
+              location: "US",
+              cipCode: "default",
+              schoolUrl: "",
             };
-          })
+          }),
         );
 
         // Merge without duplicates
         const merged = [...currentColleges];
-        fetchedDetails.forEach((fd: any) => {
-          if (!merged.some(m => String(m.id) === String(fd.id))) {
+        fetchedDetails.forEach((fd) => {
+          if (!merged.some((m) => String(m.id) === String(fd.id))) {
             merged.push(fd);
           }
         });
 
         setColleges(merged);
-        localStorage.setItem('compared_colleges_details', JSON.stringify(merged));
+        localStorage.setItem(
+          "compared_colleges_details",
+          JSON.stringify(merged),
+        );
       } catch (e) {
         console.error(e);
         setColleges(currentColleges);
@@ -116,45 +170,47 @@ export default function CompareDeck() {
   };
 
   useEffect(() => {
-    loadColleges();
-    window.addEventListener('compared-colleges-updated', loadColleges);
-    return () => window.removeEventListener('compared-colleges-updated', loadColleges);
+    // Defer the initial load so its setState calls aren't synchronous within
+    // the effect body. Subsequent loads are driven by the external event below.
+    queueMicrotask(() => {
+      void loadColleges();
+    });
+    window.addEventListener("compared-colleges-updated", loadColleges);
+    return () =>
+      window.removeEventListener("compared-colleges-updated", loadColleges);
   }, []);
 
   useEffect(() => {
-    if (colleges.length > 0) {
-      const t = setTimeout(() => setIsVisible(true), 50);
-      return () => clearTimeout(t);
-    } else {
-      setIsVisible(false);
-    }
+    // Both transitions are scheduled (not synchronous) so the deck still slides
+    // in after a 50ms delay and out when emptied.
+    const t = setTimeout(
+      () => setIsVisible(colleges.length > 0),
+      colleges.length > 0 ? 50 : 0,
+    );
+    return () => clearTimeout(t);
   }, [colleges.length]);
 
   const handleRemove = (id: string) => {
-    let list = JSON.parse(localStorage.getItem('compared_colleges') || '[]');
-    let detailsList = JSON.parse(localStorage.getItem('compared_colleges_details') || '[]');
-
-    list = list.filter((cid: string) => String(cid) !== String(id));
-    detailsList = detailsList.filter((c: any) => String(c.id) !== String(id));
-
-    localStorage.setItem('compared_colleges', JSON.stringify(list));
-    localStorage.setItem('compared_colleges_details', JSON.stringify(detailsList));
-
-    window.dispatchEvent(new Event('compared-colleges-updated'));
+    // Route through the shared store (updates backend + localStorage mirror +
+    // notifies the Navbar badge / profile section).
+    removeFromCompare(String(id)).catch((err) =>
+      console.error("Failed to remove from comparison:", err),
+    );
   };
 
   const handleClearAll = () => {
-    localStorage.setItem('compared_colleges', JSON.stringify([]));
-    localStorage.setItem('compared_colleges_details', JSON.stringify([]));
-    window.dispatchEvent(new Event('compared-colleges-updated'));
+    clearCompare().catch((err) =>
+      console.error("Failed to clear comparison set:", err),
+    );
   };
 
   if (colleges.length === 0) return null;
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-2rem)] max-w-4xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 transform bg-white border border-slate-200/80 shadow-[0_10px_50px_rgba(0,0,0,0.15)] rounded-2xl ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-        }`}
+      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[40] w-[calc(100%-2rem)] max-w-4xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 transform bg-white border border-slate-200/80 shadow-[0_10px_50px_rgba(0,0,0,0.15)] rounded-2xl ${
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      }`}
     >
       {/* College List */}
       <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto degree-scrollbar py-1 pr-2">
@@ -165,20 +221,26 @@ export default function CompareDeck() {
           >
             {/* Logo/Initials */}
             {c.logo ? (
+              // Third-party Clearbit logo (arbitrary runtime host) with an
+              // onError → initials fallback; intentionally a plain <img> rather
+              // than next/image, which would route every external logo through
+              // the image optimizer.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={c.logo}
                 alt={c.name}
                 className="w-7 h-7 rounded-lg object-contain bg-white p-0.5 shrink-0"
                 onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                  const fallback = (e.target as HTMLElement).nextElementSibling as HTMLElement;
-                  if (fallback) fallback.style.display = 'flex';
+                  (e.target as HTMLElement).style.display = "none";
+                  const fallback = (e.target as HTMLElement)
+                    .nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = "flex";
                 }}
               />
             ) : null}
             <div
               className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-[10px] uppercase shrink-0"
-              style={{ display: c.logo ? 'none' : 'flex' }}
+              style={{ display: c.logo ? "none" : "flex" }}
             >
               {c.name.charAt(0)}
             </div>
@@ -209,7 +271,9 @@ export default function CompareDeck() {
           Clear All
         </button>
         <button
-          onClick={() => router.push(`/compare?ids=${colleges.map(c => c.id).join(',')}`)}
+          onClick={() =>
+            router.push(`/compare?ids=${colleges.map((c) => c.id).join(",")}`)
+          }
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-5 rounded-full shadow-md active:scale-95 hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5 select-none"
         >
           <span>Compare ({colleges.length}/5)</span>
