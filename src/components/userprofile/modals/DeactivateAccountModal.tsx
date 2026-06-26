@@ -10,15 +10,15 @@ import {
   Alert,
   Button,
   Space,
-  message,
 } from "antd";
 import { WarningOutlined } from "@ant-design/icons";
 import { DEACTIVATION_REASONS } from "../../../data/profileOptions";
+import type { DeactivationPayload } from "../../../lib/auth/api";
 
 interface DeactivateAccountModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (payload: DeactivationPayload) => void | Promise<void>;
 }
 
 export default function DeactivateAccountModal({
@@ -27,13 +27,11 @@ export default function DeactivateAccountModal({
   onConfirm,
 }: DeactivateAccountModalProps) {
   const [form] = Form.useForm();
-  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [understandDeactivateCheckbox, setUnderstandDeactivateCheckbox] =
     useState(false);
   const [deactivateReasonCode, setDeactivateReasonCode] = useState<string>("");
 
   const resetLocalState = () => {
-    setDeleteConfirmInput("");
     setUnderstandDeactivateCheckbox(false);
     setDeactivateReasonCode("");
     form.resetFields();
@@ -44,12 +42,29 @@ export default function DeactivateAccountModal({
     onClose();
   };
 
-  const handleConfirm = () => {
-    if (deleteConfirmInput !== "DELETE") {
-      message.error("Please type 'DELETE' exactly to confirm your choice.");
+  const handleConfirm = async () => {
+    let values;
+    try {
+      values = await form.validateFields();
+    } catch {
+      // Invalid/missing fields are surfaced inline by the form.
       return;
     }
-    onConfirm();
+
+    const selected = DEACTIVATION_REASONS.find(
+      (r) => r.value === values.deactivationReason,
+    );
+
+    const payload: DeactivationPayload = {
+      reason_code: values.deactivationReason,
+      reason_label: selected?.label ?? values.deactivationReason,
+      other_reason:
+        values.deactivationReason === "5" ? values.otherReason : undefined,
+      improvement_feedback: values.improvement || undefined,
+      acknowledged: true,
+    };
+
+    await onConfirm(payload);
     resetLocalState();
   };
 
@@ -143,33 +158,12 @@ export default function DeactivateAccountModal({
           </Checkbox>
         </Form.Item>
 
-        <div className="bg-neutral-50/70 p-4 rounded-2xl border border-neutral-150 space-y-3">
-          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest block">
-            Erase Protection: String Verification
-          </span>
-          <span className="text-xs text-neutral-600 block">
-            Type the word{" "}
-            <b className="text-red-600 font-extrabold select-all">DELETE</b>{" "}
-            below to confirm you consent to the deletion:
-          </span>
-          <Input
-            placeholder="Type DELETE"
-            value={deleteConfirmInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setDeleteConfirmInput(e.target.value)
-            }
-            className="font-bold uppercase tracking-wider text-center py-2 text-sm"
-          />
-        </div>
-
         <div className="flex justify-end gap-3 pt-4 border-t border-neutral-100">
           <Button onClick={handleClose}>Cancel</Button>
           <Button
             danger
             type="primary"
-            disabled={
-              deleteConfirmInput !== "DELETE" || !understandDeactivateCheckbox
-            }
+            disabled={!understandDeactivateCheckbox}
             onClick={handleConfirm}
             style={{ borderRadius: "8px" }}
           >

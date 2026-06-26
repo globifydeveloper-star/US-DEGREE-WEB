@@ -16,7 +16,12 @@ import {
   signOut,
 } from "firebase/auth";
 import { auth } from "../../lib/firebase";
-import { fetchProfile, patchProfile, deleteAccount } from "../../lib/auth/api";
+import {
+  fetchProfile,
+  patchProfile,
+  deleteAccount,
+  type DeactivationPayload,
+} from "../../lib/auth/api";
 import { clearAppJwt } from "../../lib/auth/tokenStore";
 import { University, StudentProfile } from "../../types/profile";
 import { useCollegeMatches } from "./matchEngine";
@@ -417,9 +422,9 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
   // Account deletion: backend soft-delete, then Firebase sign-out + clear the
   // app JWT (validation handled inside the modal).
-  const onConfirmDeactivate = async () => {
+  const onConfirmDeactivate = async (payload: DeactivationPayload) => {
     try {
-      await deleteAccount(); // POST /account/delete (app JWT)
+      await deleteAccount(payload); // POST /account/delete (app JWT)
     } catch (err) {
       console.error("Account deletion failed:", err);
       message.error("We couldn't deactivate your account. Please try again.");

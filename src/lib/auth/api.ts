@@ -124,9 +124,25 @@ export async function patchProfile<T = unknown>(
   return parseJson<T>(res, "Save profile");
 }
 
-/** POST /account/delete — soft-deletes the account on the backend. */
-export async function deleteAccount(): Promise<void> {
-  const res = await authedFetch("/account/delete", { method: "POST" });
+/** Reason/feedback captured by the deactivation modal. */
+export interface DeactivationPayload {
+  reason_code: string;
+  reason_label: string;
+  other_reason?: string;
+  improvement_feedback?: string;
+  acknowledged: boolean;
+}
+
+/**
+ * POST /account/delete — soft-deletes the account on the backend and records the
+ * deactivation reason/feedback in usduser_deactivations.
+ */
+export async function deleteAccount(payload: DeactivationPayload): Promise<void> {
+  const res = await authedFetch("/account/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
   await parseJson<{ ok: boolean }>(res, "Delete account");
 }
 
