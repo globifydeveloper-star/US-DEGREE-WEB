@@ -80,10 +80,10 @@ function SearchContent() {
   const category = searchParams.get("category") || "";
   const categoryLabel = category
     ? CATEGORY_LABELS[category] ||
-      category
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ")
+    category
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ")
     : "";
   const [showBackToTop, setShowBackToTop] = useState(false);
 
