@@ -41,7 +41,7 @@ function CompareContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* 1. Header */}
-        <CompareHeader />
+        <CompareHeader comparedIds={comparedIds} />
 
         {/* 2. Selection search bar */}
         <CompareSearchBar

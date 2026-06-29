@@ -173,7 +173,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-[#f5f8fc] px-4 sm:px-10 lg:px-[49px] pb-0 pt-[30px] flex justify-center">
+    <section className="relative overflow-hidden bg-[#f5f8fc] px-4 sm:px-10 lg:px-[49px] pb-10 sm:pb-12 lg:pb-16 pt-[30px] flex justify-center">
       <div
         className="
           pointer-events-none
@@ -252,7 +252,7 @@ export default function Hero() {
               </div>
 
               {/* Search Card (Mobile/Tablet only) */}
-              <div className="w-full rounded-[20px] sm:rounded-[32px] bg-white p-4 sm:p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)] mb-6 border border-slate-100 lg:hidden">
+              <div className="w-full rounded-[20px] sm:rounded-[32px] bg-white p-4 sm:p-6 shadow-[0_30px_90px_rgba(0,0,0,0.08)] mb-6 border border-slate-100 lg:hidden">
                 {/* Toggle */}
                 <div className="flex justify-center mb-6">
                   <div className="flex bg-[#f5f5f5] p-1 rounded-full text-[11px] sm:text-sm">
@@ -372,7 +372,7 @@ export default function Hero() {
 
         {/* Centered Search Card (Desktop only) */}
         <div className="hidden lg:flex justify-center mt-12">
-          <div className="w-full max-w-[1100px] rounded-[32px] bg-white p-6 shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
+          <div className="w-full max-w-[1100px] rounded-[32px] bg-white p-6 shadow-[0_30px_50px_rgba(0,0,0,0.08)]">
             {/* Toggle */}
             <div className="flex justify-center mb-8">
               <div className="flex bg-[#f5f5f5] p-1 rounded-full">
