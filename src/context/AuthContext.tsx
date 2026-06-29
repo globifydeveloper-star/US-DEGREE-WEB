@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const authActionInProgress = useRef(false);
 
+    const currentUidRef = useRef<string | null>(null);
+
     const getActionCodeSettings = () => {
         return {
             url: typeof window !== 'undefined' ? window.location.origin : 'https://usdegrees.web.app',
@@ -97,22 +99,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
     };
 
+    const broadcastAuthChange = (type: 'LOGIN' | 'LOGOUT') => {
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('auth_sync_event', JSON.stringify({ type, timestamp: Date.now() }));
+            } catch (e) {
+                console.error("Storage event broadcast failed:", e);
+            }
+        }
+    };
+
     const login = async (email: string, password: string, rememberMe = false): Promise<AuthUser> => {
         authActionInProgress.current = true;
         try {
-            // Drop any app JWT minted for a previously signed-in user, so the
-            // backend never resolves this session to the wrong account.
+            // Drop any app JWT minted for a previously signed-in user
             clearAppJwt();
 
-            // Persist the session across browser restarts only when "Remember me" is checked.
-            await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+            // Set persistent auth across tabs and restarts
+            await setPersistence(auth, browserLocalPersistence);
 
             let credential;
             try {
-                credential = await signInWithEmailAndPassword(auth, email, password);
+                credential = await signInWithEmailAndPassword(auth, email.trim(), password);
             } catch (err) {
-                // A recently deactivated account no longer exists in Firebase, so
-                // login fails generically. Surface the 24h cooldown message instead.
                 const avail = await checkEmailAvailability(email);
                 if (!avail.available) throw cooldownError(avail.eligibleAt);
                 throw err;
@@ -151,7 +160,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 authProvider: 'credentials',
                 emailVerified: credential.user.emailVerified
             };
+            currentUidRef.current = credential.user.uid;
             setUser(mappedUser);
+            broadcastAuthChange('LOGIN');
             window.dispatchEvent(new Event('auth-state-changed'));
             return mappedUser;
         } finally {
@@ -162,21 +173,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signup = async (email: string, password: string, displayName: string, role?: string): Promise<AuthUser> => {
         authActionInProgress.current = true;
         try {
-            // Drop any app JWT from a previously signed-in user before switching.
             clearAppJwt();
 
-            // Block re-registration while the email is inside its deactivation
-            // cooldown — checked before creating any Firebase user.
             const avail = await checkEmailAvailability(email);
             if (!avail.available) throw cooldownError(avail.eligibleAt);
 
-            const credential = await createUserWithEmailAndPassword(auth, email, password);
+            const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
             
             if (credential.user) {
-                await updateProfile(credential.user, { displayName });
+                await updateProfile(credential.user, { displayName: displayName.trim() });
                 await sendEmailVerification(credential.user, getActionCodeSettings());
                 
-                // Create user in Postgres DB (with email_verified = false initially)
                 try {
                     await fetch('/api/proxy/user', {
                         method: 'POST',
@@ -196,7 +203,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.error("Postgres user creation error during signup:", err);
                 }
             }
-            // Always throw EMAIL_NOT_VERIFIED so that the user starts in a non-logged-in verification pending state
             throw new Error("EMAIL_NOT_VERIFIED");
         } finally {
             authActionInProgress.current = false;
@@ -204,21 +210,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithGoogle = async (): Promise<FirebaseUser> => {
-        // Drop any app JWT from a previously signed-in user before switching.
         clearAppJwt();
+        await setPersistence(auth, browserLocalPersistence);
         const result = await signInWithPopup(auth, googleProvider);
+        if (result.user) {
+            currentUidRef.current = result.user.uid;
+            broadcastAuthChange('LOGIN');
+        }
         return result.user;
     };
 
     const logout = async (): Promise<void> => {
-        // Clear the backend app JWT so the next user can't inherit this session.
         clearAppJwt();
+        currentUidRef.current = null;
         try {
             await signOut(auth);
         } catch (err) {
             console.error("Firebase signOut error:", err);
         }
         setUser(null);
+        broadcastAuthChange('LOGOUT');
         window.dispatchEvent(new Event('auth-state-changed'));
     };
 
@@ -235,7 +246,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             if (verified) {
                 let dbUser = null;
-                // Sync verification with Postgres DB
                 try {
                     const res = await fetch('/api/proxy/user', {
                         method: 'POST',
@@ -258,7 +268,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.error("Sync verified status with database failed:", e);
                 }
                 
-                // Set user context
                 const mappedUser: AuthUser = {
                     id: dbUser?.id,
                     displayName: dbUser?.display_name || auth.currentUser.displayName,
@@ -268,7 +277,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     authProvider: auth.currentUser.providerData.some(p => p.providerId === 'password') ? 'credentials' : 'firebase',
                     emailVerified: true
                 };
+                currentUidRef.current = auth.currentUser.uid;
                 setUser(mappedUser);
+                broadcastAuthChange('LOGIN');
                 window.dispatchEvent(new Event('auth-state-changed'));
             }
             return verified;
@@ -279,7 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const resendVerificationForUnverifiedUser = async (email: string, password: string): Promise<void> => {
         authActionInProgress.current = true;
         try {
-            const credential = await signInWithEmailAndPassword(auth, email, password);
+            const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
             await sendEmailVerification(credential.user, getActionCodeSettings());
         } finally {
             authActionInProgress.current = false;
@@ -287,8 +298,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const sendPasswordReset = async (email: string): Promise<void> => {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, email.trim());
     };
+
+    // Cross-tab auth synchronization listener
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'auth_sync_event' && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    if (data.type === 'LOGOUT') {
+                        clearAppJwt();
+                        currentUidRef.current = null;
+                        setUser(null);
+                        window.dispatchEvent(new Event('auth-state-changed'));
+                    } else if (data.type === 'LOGIN') {
+                        if (auth.currentUser && auth.currentUser.emailVerified) {
+                            // Re-verify auth state if needed
+                            window.dispatchEvent(new Event('auth-state-changed'));
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error parsing auth sync event:", err);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     useEffect(() => {
         let active = true;
@@ -298,10 +336,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (active) {
                 unsubscribeFirebase = onAuthStateChanged(auth, async (firebaseUser) => {
                     if (!active) return;
-                    // The signed-in identity may have changed — drop any app JWT
-                    // so authedFetch re-mints one for whoever is now current.
-                    clearAppJwt();
+                    
                     if (firebaseUser) {
+                        // Only clear app JWT if switching users
+                        if (currentUidRef.current !== firebaseUser.uid) {
+                            clearAppJwt();
+                            currentUidRef.current = firebaseUser.uid;
+                        }
+
                         if (authActionInProgress.current) {
                             return;
                         }
@@ -314,7 +356,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                         const isPasswordAuth = firebaseUser.providerData.some(p => p.providerId === 'password');
                         
-                        // Load/Sync profile from Postgres (via POST /user)
                         try {
                             const res = await fetch('/api/proxy/user', {
                                 method: 'POST',
@@ -346,6 +387,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             console.error("Error syncing user:", err);
                         }
                     } else {
+                        currentUidRef.current = null;
+                        clearAppJwt();
                         setUser(null);
                     }
                     setLoading(false);

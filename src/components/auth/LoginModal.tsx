@@ -116,18 +116,21 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     e.preventDefault();
     setError("");
 
+    const cleanEmail = email.trim();
+    const cleanName = name.trim();
+
     if (mode === 'forgot_password') {
-      if (!email) {
+      if (!cleanEmail) {
         setError('Email address is required');
         return;
       }
-      if (!/\S+@\S+\.\S+/.test(email)) {
+      if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
         setError('Please enter a valid email address');
         return;
       }
       setIsLoading(true);
       try {
-        await sendPasswordReset(email);
+        await sendPasswordReset(cleanEmail);
         setResetSent(true);
       } catch (err) {
         setError(getFriendlyErrorMessage(err));
@@ -138,15 +141,15 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     }
 
     // Common Validation
-    if (mode === "signup" && !name.trim()) {
+    if (mode === "signup" && !cleanName) {
       setError("Full Name is required");
       return;
     }
-    if (!email) {
+    if (!cleanEmail) {
       setError("Email address is required");
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
       setError("Please enter a valid email address");
       return;
     }
@@ -167,15 +170,15 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
 
     try {
       if (mode === 'login') {
-        await login(email, password, rememberMe);
-        onSuccess(email);
+        await login(cleanEmail, password, rememberMe);
+        onSuccess(cleanEmail);
         onClose();
       } else {
-        await signup(email, password, name, isParent ? "parent" : "student");
+        await signup(cleanEmail, password, cleanName, isParent ? "parent" : "student");
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'EMAIL_NOT_VERIFIED') {
-        setVerificationEmail(email);
+        setVerificationEmail(cleanEmail);
         setIsVerificationSent(true);
       } else {
         setError(getFriendlyErrorMessage(err));
@@ -214,12 +217,16 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
   };
 
   const handleGoogleSignIn = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       const firebaseUser = await loginWithGoogle();
       onSuccess(firebaseUser.email!);
       onClose();
     } catch (err) {
       setError(getFriendlyErrorMessage(err));
+    } finally {
+      setIsLoading(false);
     }
   };
 

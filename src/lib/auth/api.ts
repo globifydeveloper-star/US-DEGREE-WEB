@@ -16,44 +16,57 @@ import { auth } from "@/lib/firebase";
 import { getAppJwt, setAppJwt, clearAppJwt } from "./tokenStore";
 
 // All backend traffic goes through the Next.js proxy route, which forwards the
-// Authorization header untouched (see app/api/proxy/[...path]/route.ts).
 const PROXY_BASE = "/api/proxy";
+let pendingExchangePromise: Promise<string> | null = null;
 
 /**
  * Exchange the current Firebase user's ID token for a backend app JWT.
+ * Deduplicates simultaneous calls to prevent race conditions during token exchange.
  *
  * @param forceRefresh force a fresh Firebase ID token (used on 401 so the
  *   re-exchange genuinely gets a new token rather than a cached, expired one).
  */
 export async function exchangeIdToken(forceRefresh = false): Promise<string> {
-  const current = auth.currentUser;
-  if (!current) {
-    clearAppJwt();
-    throw new Error("Cannot exchange token: no authenticated Firebase user");
+  if (pendingExchangePromise && !forceRefresh) {
+    return pendingExchangePromise;
   }
 
-  const idToken = await current.getIdToken(forceRefresh);
+  const doExchange = async (): Promise<string> => {
+    try {
+      const current = auth.currentUser;
+      if (!current) {
+        clearAppJwt();
+        throw new Error("Cannot exchange token: no authenticated Firebase user");
+      }
 
-  const res = await fetch(`${PROXY_BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // Only the Firebase ID token — no uid/email/identity in the body.
-    body: JSON.stringify({ idToken }),
-  });
+      const idToken = await current.getIdToken(forceRefresh);
 
-  if (!res.ok) {
-    clearAppJwt();
-    throw new Error(`Token exchange failed (${res.status})`);
-  }
+      const res = await fetch(`${PROXY_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
 
-  const data = (await res.json()) as { token?: string };
-  if (!data.token) {
-    clearAppJwt();
-    throw new Error("Token exchange returned no app JWT");
-  }
+      if (!res.ok) {
+        clearAppJwt();
+        throw new Error(`Token exchange failed (${res.status})`);
+      }
 
-  setAppJwt(data.token);
-  return data.token;
+      const data = (await res.json()) as { token?: string };
+      if (!data.token) {
+        clearAppJwt();
+        throw new Error("Token exchange returned no app JWT");
+      }
+
+      setAppJwt(data.token);
+      return data.token;
+    } finally {
+      pendingExchangePromise = null;
+    }
+  };
+
+  pendingExchangePromise = doExchange();
+  return pendingExchangePromise;
 }
 
 /**
