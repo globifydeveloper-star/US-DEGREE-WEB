@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Scale, Search, Heart, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { ensureSavedLoaded, SAVED_EVENT } from "@/components/search/useSavedColleges";
+import { SAVED_EVENT } from "@/components/search/useSavedColleges";
 
 const subscribeCompareCount = (onChange: () => void) => {
   window.addEventListener("compared-colleges-updated", onChange);
@@ -25,34 +25,6 @@ const getCompareCountSnapshot = () => {
 };
 const getCompareCountServerSnapshot = () => 0;
 
-// Saved colleges reactive store subscription
-let lastSavedCount = 0;
-const subscribeSavedCount = (onChange: () => void) => {
-  const handler = () => {
-    onChange();
-  };
-  window.addEventListener(SAVED_EVENT, handler);
-  window.addEventListener("storage", handler);
-  return () => {
-    window.removeEventListener(SAVED_EVENT, handler);
-    window.removeEventListener("storage", handler);
-  };
-};
-
-const getSavedCountSnapshot = () => {
-  if (typeof window !== "undefined") {
-    try {
-      // Check window saved set size if accessible
-      const currentSet = (window as unknown as { __savedSetSize?: number }).__savedSetSize;
-      if (currentSet !== undefined) return currentSet;
-    } catch {
-      // fallback
-    }
-  }
-  return lastSavedCount;
-};
-const getSavedCountServerSnapshot = () => 0;
-
 interface MobileNavDockProps {
   onOpenAuthModal?: (mode: "login" | "signup") => void;
 }
@@ -61,35 +33,21 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const compareCount = useSyncExternalStore(
     subscribeCompareCount,
     getCompareCountSnapshot,
-    getCompareCountServerSnapshot
+    getCompareCountServerSnapshot,
   );
 
   const [savedCount, setSavedCount] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      ensureSavedLoaded();
-    }
-    const checkSaved = () => {
-      // Listen to saved event and fetch updated saved state
-      try {
-        const event = new Event(SAVED_EVENT);
-        // sync check
-      } catch {}
-    };
-    window.addEventListener(SAVED_EVENT, checkSaved);
-    return () => window.removeEventListener(SAVED_EVENT, checkSaved);
-  }, [user]);
-
   // Track page scroll progress for top slender indicator bar
   useEffect(() => {
     const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const totalHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
       if (totalHeight > 0) {
         const progress = (window.scrollY / totalHeight) * 100;
         setScrollProgress(Math.min(100, Math.max(0, progress)));
@@ -99,45 +57,69 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Sync saved count dynamically
+  // Keep the saved-colleges badge in sync: fetch the count for a signed-in user
+  // and refresh it whenever a save/unsave happens anywhere this session.
   useEffect(() => {
+    let active = true;
     const updateSavedState = async () => {
-      if (user) {
-        try {
-          const { fetchSavedColleges } = await import("@/lib/auth/api");
-          const list = await fetchSavedColleges();
-          setSavedCount(list.length);
-        } catch {
-          setSavedCount(0);
-        }
-      } else {
-        setSavedCount(0);
+      if (!user) {
+        if (active) setSavedCount(0);
+        return;
+      }
+      try {
+        const { fetchSavedColleges } = await import("@/lib/auth/api");
+        const list = await fetchSavedColleges();
+        if (active) setSavedCount(list.length);
+      } catch {
+        if (active) setSavedCount(0);
       }
     };
 
     updateSavedState();
     window.addEventListener(SAVED_EVENT, updateSavedState);
-    return () => window.removeEventListener(SAVED_EVENT, updateSavedState);
+    return () => {
+      active = false;
+      window.removeEventListener(SAVED_EVENT, updateSavedState);
+    };
   }, [user]);
 
   const navItems = [
     { id: "home", label: "Home", href: "/", icon: Home },
-    { id: "compare", label: "Compare", href: "/compare", icon: Scale, badge: compareCount },
+    {
+      id: "compare",
+      label: "Compare",
+      href: "/compare",
+      icon: Scale,
+      badge: compareCount,
+    },
     { id: "search", label: "Search", href: "/search", icon: Search },
-    { id: "saved", label: "Saved", href: "/profile#saved_colleges_section", icon: Heart, hasNotification: savedCount > 0 },
-    { id: "profile", label: "Account", href: "/profile", icon: User, requiresAuth: true },
+    {
+      id: "saved",
+      label: "Saved",
+      href: "/profile#saved_colleges_section",
+      icon: Heart,
+      hasNotification: savedCount > 0,
+    },
+    {
+      id: "profile",
+      label: "Account",
+      href: "/profile",
+      icon: User,
+      requiresAuth: true,
+    },
   ];
 
   const getActiveIndex = () => {
     if (pathname === "/compare") return 1;
     if (pathname === "/search") return 2;
-    if (pathname.includes("/profile") || pathname.includes("/account")) return 4;
+    if (pathname.includes("/profile") || pathname.includes("/account"))
+      return 4;
     return 0; // default Home
   };
 
   const activeIndex = getActiveIndex();
 
-  const handleItemClick = (e: React.MouseEvent, item: typeof navItems[0]) => {
+  const handleItemClick = (e: React.MouseEvent, item: (typeof navItems)[0]) => {
     if (item.id === "search") {
       e.preventDefault();
       router.push("/search");
@@ -188,11 +170,15 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
               href={item.href}
               onClick={(e) => handleItemClick(e, item)}
               className={`relative z-10 flex-1 flex flex-col items-center justify-center py-2 transition-all active:scale-90 cursor-pointer ${
-                isActive ? "text-blue-600 drop-shadow-sm font-bold" : "text-slate-400 hover:text-slate-700"
+                isActive
+                  ? "text-blue-600 drop-shadow-sm font-bold"
+                  : "text-slate-400 hover:text-slate-700"
               }`}
             >
               <div className="relative flex items-center justify-center">
-                <Icon className={`w-6 h-6 transition-all duration-200 ${isActive ? "stroke-[2.5px] scale-110" : "stroke-[1.8px]"}`} />
+                <Icon
+                  className={`w-6 h-6 transition-all duration-200 ${isActive ? "stroke-[2.5px] scale-110" : "stroke-[1.8px]"}`}
+                />
 
                 {/* Compare Count Badge */}
                 {item.badge !== undefined && item.badge > 0 && (

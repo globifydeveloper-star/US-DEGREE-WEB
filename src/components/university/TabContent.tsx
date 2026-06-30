@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import AboutSection from "./AboutSection";
 import StatsGrid from "./StatsGrid";
 import ProgramDetail from "./ProgramDetail";
@@ -24,9 +24,16 @@ const tabs = [
   "Campus & Students",
 ];
 
+// `data` is a heterogeneous bag assembled in the server page and fanned out to
+// many child components, each with its own (and sometimes conflicting) prop
+// types. Typing it precisely here would force a large cross-component refactor;
+// the page that builds it is the source of truth for each field's shape.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function TabContent({ data }: { data: any }) {
   const [activeTab, setActiveTab] = useState("Overview");
-  const [tuitionType, setTuitionType] = useState<'in_state' | 'out_state'>('in_state');
+  const [tuitionType, setTuitionType] = useState<"in_state" | "out_state">(
+    "in_state",
+  );
 
   return (
     <>
@@ -53,10 +60,11 @@ export default function TabContent({ data }: { data: any }) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${activeTab === tab
-                  ? "text-[#2563EB]"
-                  : "text-[#64748B] hover:text-gray-900"
-                  }`}
+                className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${
+                  activeTab === tab
+                    ? "text-[#2563EB]"
+                    : "text-[#64748B] hover:text-gray-900"
+                }`}
               >
                 {tab}
                 {activeTab === tab && (
@@ -72,10 +80,7 @@ export default function TabContent({ data }: { data: any }) {
         <div className="flex-1 w-full min-w-0">
           {activeTab === "Overview" && (
             <div className="space-y-10">
-              <AboutSection
-                name={data.name}
-                description={data.description}
-              />
+              <AboutSection name={data.name} description={data.description} />
 
               <StatsGrid
                 totalStudents={data.totalStudents}
@@ -136,7 +141,10 @@ export default function TabContent({ data }: { data: any }) {
           )}
 
           {activeTab === "Campus & Students" && (
-            <CampusStudentsTab campusData={data.campusData} fafsaApplications={data.fafsaApplications} />
+            <CampusStudentsTab
+              campusData={data.campusData}
+              fafsaApplications={data.fafsaApplications}
+            />
           )}
 
           {activeTab === "Tuition & Costs" && (
@@ -160,7 +168,9 @@ export default function TabContent({ data }: { data: any }) {
         </div>
       </div>
 
-      {(activeTab === "Overview" || activeTab === "Programs & Academics") && <ProgramSearchBand />}
+      {(activeTab === "Overview" || activeTab === "Programs & Academics") && (
+        <ProgramSearchBand />
+      )}
     </>
   );
 }

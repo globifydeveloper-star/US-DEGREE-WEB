@@ -1,26 +1,28 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { motion, Variants } from 'framer-motion';
+import React from "react";
+import { motion, Variants } from "framer-motion";
 
-export default function CompareIconAnimation({ active, hovered }: { active: boolean; hovered?: boolean }) {
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    if (hovered || active) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [hovered, active]);
+export default function CompareIconAnimation({
+  active,
+  hovered,
+}: {
+  active: boolean;
+  hovered?: boolean;
+}) {
+  // Drive the animation straight from props — framer-motion replays the
+  // "animate" keyframes when the variant changes to it on hover/active, and the
+  // keyframes settle to the same end state as idle/active, so no extra state or
+  // timed reset is needed.
+  const isAnimating = hovered || active;
 
   // Framer Motion variants
   const backCardVariants: Variants = {
     idle: { x: 0, y: 0, scale: 1, opacity: 0.8 },
     animate: {
       scale: [1, 0.9, 1.05, 1],
-      transition: { duration: 0.5 }
-    }
+      transition: { duration: 0.5 },
+    },
   };
 
   const frontCardVariants: Variants = {
@@ -31,8 +33,8 @@ export default function CompareIconAnimation({ active, hovered }: { active: bool
       y: [3, 0],
       opacity: [0, 1],
       scale: [0.8, 1.1, 1],
-      transition: { duration: 0.4, ease: "easeOut" }
-    }
+      transition: { duration: 0.4, ease: "easeOut" },
+    },
   };
 
   const dashVariants1: Variants = {
@@ -42,8 +44,8 @@ export default function CompareIconAnimation({ active, hovered }: { active: bool
       scale: [0.3, 1, 0.5],
       x: [0, 5],
       y: [0, -5],
-      transition: { duration: 0.5, delay: 0.1, ease: "easeOut" }
-    }
+      transition: { duration: 0.5, delay: 0.1, ease: "easeOut" },
+    },
   };
 
   const dashVariants2: Variants = {
@@ -53,8 +55,8 @@ export default function CompareIconAnimation({ active, hovered }: { active: bool
       scale: [0.3, 1, 0.5],
       x: [0, 6],
       y: [0, -1],
-      transition: { duration: 0.5, delay: 0.15, ease: "easeOut" }
-    }
+      transition: { duration: 0.5, delay: 0.15, ease: "easeOut" },
+    },
   };
 
   const dashVariants3: Variants = {
@@ -64,8 +66,8 @@ export default function CompareIconAnimation({ active, hovered }: { active: bool
       scale: [0.3, 1, 0.5],
       x: [0, 2],
       y: [0, -6],
-      transition: { duration: 0.5, delay: 0.08, ease: "easeOut" }
-    }
+      transition: { duration: 0.5, delay: 0.08, ease: "easeOut" },
+    },
   };
 
   return (
@@ -99,7 +101,7 @@ export default function CompareIconAnimation({ active, hovered }: { active: bool
           height="13"
           rx="2"
           variants={frontCardVariants}
-          animate={isAnimating ? "animate" : (active ? "active" : "idle")}
+          animate={isAnimating ? "animate" : active ? "active" : "idle"}
           className="text-current"
         />
 

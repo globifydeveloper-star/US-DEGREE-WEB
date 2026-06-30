@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import React from "react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -7,12 +7,16 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }: PaginationProps) {
+export default function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: PaginationProps) {
   if (totalPages <= 1) return null;
 
   // Build a smart page list with ellipsis for large page counts
-  const getPageNumbers = (): (number | 'ellipsis-start' | 'ellipsis-end')[] => {
-    const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = [];
+  const getPageNumbers = (): (number | "ellipsis-start" | "ellipsis-end")[] => {
+    const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
 
     if (totalPages <= 7) {
       // Show all pages if 7 or fewer
@@ -24,7 +28,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     pages.push(1);
 
     if (currentPage > 3) {
-      pages.push('ellipsis-start');
+      pages.push("ellipsis-start");
     }
 
     // Pages around current
@@ -36,7 +40,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     }
 
     if (currentPage < totalPages - 2) {
-      pages.push('ellipsis-end');
+      pages.push("ellipsis-end");
     }
 
     // Always show last page
@@ -59,7 +63,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         </button>
 
         {pageNumbers.map((item, idx) =>
-          item === 'ellipsis-start' || item === 'ellipsis-end' ? (
+          item === "ellipsis-start" || item === "ellipsis-end" ? (
             <span
               key={`${item}-${idx}`}
               className="w-8 h-8 flex items-center justify-center text-gray-400"
@@ -70,14 +74,15 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             <button
               key={item}
               onClick={() => onPageChange(item)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition ${currentPage === item
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-100 font-medium'
-                }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold transition ${
+                currentPage === item
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100 font-medium"
+              }`}
             >
               {item}
             </button>
-          )
+          ),
         )}
 
         <button
@@ -95,4 +100,3 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     </div>
   );
 }
-

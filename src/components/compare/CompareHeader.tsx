@@ -1,18 +1,21 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button, message, Modal } from 'antd';
-import Image from 'next/image';
-import { FileText, MapPin, Sparkles, X } from 'lucide-react';
-import { authedFetch } from '@/lib/auth/api';
-import { College } from '@/types/university/ComparisonTable';
+import React, { useState } from "react";
+import { Button, message, Modal } from "antd";
+import Image from "next/image";
+import { FileText, MapPin, Sparkles, X } from "lucide-react";
+import { authedFetch } from "@/lib/auth/api";
+import { College } from "@/types/university/ComparisonTable";
 
 interface CompareHeaderProps {
   comparedIds: string[];
   comparedColleges: College[];
 }
 
-export default function CompareHeader({ comparedIds, comparedColleges }: CompareHeaderProps) {
+export default function CompareHeader({
+  comparedIds,
+  comparedColleges,
+}: CompareHeaderProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -20,7 +23,9 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
   // generation is deferred to handleGenerateReport (the modal's "Generate").
   const handleOpenConfirm = () => {
     if (!comparedIds || comparedIds.length === 0) {
-      message.warning("Please select at least two college to compare before generating a report.");
+      message.warning(
+        "Please select at least two college to compare before generating a report.",
+      );
       return;
     }
     setIsConfirmOpen(true);
@@ -28,25 +33,27 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
 
   const handleGenerateReport = async () => {
     if (!comparedIds || comparedIds.length === 0) {
-      message.warning("Please select at least two college to compare before generating a report.");
+      message.warning(
+        "Please select at least two college to compare before generating a report.",
+      );
       return;
     }
 
     setIsConfirmOpen(false);
     setIsGenerating(true);
-    const key = 'generate-report';
+    const key = "generate-report";
     message.open({
       key,
-      type: 'loading',
-      content: 'Analyzing metrics & generating your AI decision report...',
+      type: "loading",
+      content: "Analyzing metrics & generating your AI decision report...",
       duration: 0,
     });
 
     try {
-      const res = await authedFetch('/report/generate', {
-        method: 'POST',
+      const res = await authedFetch("/report/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           selectedColleges: comparedIds.map((id) => Number(id)),
@@ -58,25 +65,25 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
         throw new Error(`Report generation failed: ${res.status}`);
       }
 
-      const result = await res.json() as { pdfUrl: string };
+      const result = (await res.json()) as { pdfUrl: string };
 
       message.open({
         key,
-        type: 'success',
-        content: 'Premium PDF report generated successfully!',
+        type: "success",
+        content: "Premium PDF report generated successfully!",
         duration: 2,
       });
 
       // Open PDF in a new tab
       if (result.pdfUrl) {
-        window.open(result.pdfUrl, '_blank');
+        window.open(result.pdfUrl, "_blank");
       }
     } catch (err) {
       console.error("Report generation error:", err);
       message.open({
         key,
-        type: 'error',
-        content: 'Failed to generate the report. Please try again.',
+        type: "error",
+        content: "Failed to generate the report. Please try again.",
         duration: 3,
       });
     } finally {
@@ -109,7 +116,7 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
           onClick={handleOpenConfirm}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer"
         >
-          {isGenerating ? 'Generating Report...' : 'Generate AI Report'}
+          {isGenerating ? "Generating Report..." : "Generate AI Report"}
         </Button>
       </div>
 
@@ -123,7 +130,7 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
         width={460}
         styles={{
           body: { padding: 0 },
-          container: { padding: 0, borderRadius: 20, overflow: 'hidden' },
+          container: { padding: 0, borderRadius: 20, overflow: "hidden" },
         }}
         className="font-sans"
       >
@@ -143,7 +150,9 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
             </h3>
           </div>
           <p className="text-blue-100 text-xs font-medium">
-            We&apos;ll analyze the {comparedColleges.length} college{comparedColleges.length === 1 ? '' : 's'} below and build your premium PDF report.
+            We&apos;ll analyze the {comparedColleges.length} college
+            {comparedColleges.length === 1 ? "" : "s"} below and build your
+            premium PDF report.
           </p>
         </div>
 
@@ -171,7 +180,7 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
                     />
                   ) : (
                     <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm">
-                      {college.name ? college.name.charAt(0) : 'U'}
+                      {college.name ? college.name.charAt(0) : "U"}
                     </div>
                   )}
                 </div>
@@ -211,4 +220,3 @@ export default function CompareHeader({ comparedIds, comparedColleges }: Compare
     </div>
   );
 }
-

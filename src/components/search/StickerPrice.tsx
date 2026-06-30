@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface StickerPriceProps {
   id?: number | string;
@@ -25,7 +25,7 @@ export default function StickerPrice({ id, estCost }: StickerPriceProps) {
         } else {
           setStickerPrice(estCost || "N/A");
         }
-      } catch (err) {
+      } catch {
         setStickerPrice(estCost || "N/A");
       }
     };
@@ -34,7 +34,9 @@ export default function StickerPrice({ id, estCost }: StickerPriceProps) {
 
   return (
     <div className="flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]">
-      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">Sticker Price</span>
+      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+        Sticker Price
+      </span>
       <span className="text-sm font-extrabold text-gray-900">
         {stickerPrice}
       </span>

@@ -151,7 +151,7 @@ export default function ResultCard({
       ? schoolUrl.trim()
       : `https://${schoolUrl.trim()}`
     : "";
-  const hasSatData = satAct && satAct !== "N/A";
+  const hasSatData = !!satAct && satAct !== "N/A";
 
   const [isCalculated, setIsCalculated] = useState(false);
   const [currentScore, setCurrentScore] = useState(matchScore);
@@ -520,7 +520,9 @@ export default function ResultCard({
                   ? "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 scale-105 shadow-sm"
                   : "text-gray-600 border-gray-300 hover:text-blue-600 hover:border-blue-600 hover:scale-105"
               }`}
-              icon={<CompareIconAnimation active={isCompared} hovered={isHovered} />}
+              icon={
+                <CompareIconAnimation active={isCompared} hovered={isHovered} />
+              }
             >
               {isCompared ? "Added to Compare" : "Compare"}
             </Button>
@@ -534,7 +536,12 @@ export default function ResultCard({
                   ? "bg-rose-500 border-rose-500 text-white hover:bg-rose-600 hover:border-rose-600 scale-105 shadow-sm"
                   : "text-gray-600 border-gray-300 hover:text-rose-500 hover:border-rose-500 hover:scale-105"
               }`}
-              icon={<Heart size={13} className={isSavedCollege ? "fill-current" : ""} />}
+              icon={
+                <Heart
+                  size={13}
+                  className={isSavedCollege ? "fill-current" : ""}
+                />
+              }
             >
               {isSavedCollege ? "Saved" : "Save"}
             </Button>
@@ -619,7 +626,10 @@ export default function ResultCard({
               </span>
             </div>
             <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <svg
+                className="w-full h-full transform -rotate-90"
+                viewBox="0 0 36 36"
+              >
                 <path
                   className="text-blue-200/60 stroke-current"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -644,7 +654,9 @@ export default function ResultCard({
         {/* 2. Program Details & Metrics Strip */}
         <div className="bg-slate-50/80 rounded-lg p-2 border border-slate-100 flex flex-col gap-1 max-w-full overflow-hidden">
           <div className="flex items-center justify-between gap-1 min-w-0">
-            <h3 className="text-xs font-bold text-rose-600 leading-tight truncate">{degree}</h3>
+            <h3 className="text-xs font-bold text-rose-600 leading-tight truncate">
+              {degree}
+            </h3>
             <span className="flex items-center gap-0.5 text-[9.5px] text-slate-500 shrink-0">
               <Clock size={9} className="text-slate-400" /> {duration}
             </span>
@@ -652,20 +664,36 @@ export default function ResultCard({
 
           <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-200/60 min-w-0">
             <div className="min-w-0">
-              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">Admission</p>
-              <p className="text-[10px] font-bold text-slate-800 truncate">{admissionRate}</p>
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                Admission
+              </p>
+              <p className="text-[10px] font-bold text-slate-800 truncate">
+                {admissionRate}
+              </p>
             </div>
             <div className="min-w-0">
-              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">Salary</p>
-              <p className="text-[10px] font-bold text-emerald-600 truncate">{medianSalary ?? "N/A"}</p>
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                Salary
+              </p>
+              <p className="text-[10px] font-bold text-emerald-600 truncate">
+                {medianSalary ?? "N/A"}
+              </p>
             </div>
             <div className="min-w-0">
-              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">Cost</p>
-              <p className="text-[10px] font-bold text-slate-800 truncate">{estCost ?? "N/A"}</p>
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                Cost
+              </p>
+              <p className="text-[10px] font-bold text-slate-800 truncate">
+                {estCost ?? "N/A"}
+              </p>
             </div>
             <div className="min-w-0">
-              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">20yr ROI</p>
-              <p className="text-[10px] font-bold text-blue-600 truncate">{roi ?? "N/A"}</p>
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                20yr ROI
+              </p>
+              <p className="text-[10px] font-bold text-blue-600 truncate">
+                {roi ?? "N/A"}
+              </p>
             </div>
           </div>
         </div>
@@ -681,7 +709,9 @@ export default function ResultCard({
                   ? "bg-blue-600 border-blue-600 text-white shadow-sm"
                   : "text-slate-600 border-slate-300 hover:text-blue-600"
               }`}
-              icon={<CompareIconAnimation active={isCompared} hovered={false} />}
+              icon={
+                <CompareIconAnimation active={isCompared} hovered={false} />
+              }
             >
               {isCompared ? "Compared" : "Compare"}
             </Button>
@@ -695,7 +725,12 @@ export default function ResultCard({
                   ? "bg-rose-500 border-rose-500 text-white shadow-sm"
                   : "text-slate-600 border-slate-300 hover:text-rose-500"
               }`}
-              icon={<Heart size={10} className={isSavedCollege ? "fill-current" : ""} />}
+              icon={
+                <Heart
+                  size={10}
+                  className={isSavedCollege ? "fill-current" : ""}
+                />
+              }
             >
               {isSavedCollege ? "Saved" : "Save"}
             </Button>
@@ -731,7 +766,6 @@ export default function ResultCard({
           validateGpa={validateGpa}
           gpaError={gpaError}
           satError={satError}
-          setSatError={setSatError}
           setTempSat={setTempSat}
           tempSat={tempSat}
           validateSat={validateSat}

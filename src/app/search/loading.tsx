@@ -1,13 +1,16 @@
 "use client";
 
-import React from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import { ResultListSkeleton, SearchHeaderSkeleton, SidebarSkeleton } from '@/components/search/SearchSkeletons';
+import React from "react";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import {
+  ResultListSkeleton,
+  SearchHeaderSkeleton,
+  SidebarSkeleton,
+} from "@/components/search/SearchSkeletons";
 
 export default function SearchLoading() {
   return (
-
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
       <div className="flex-1">

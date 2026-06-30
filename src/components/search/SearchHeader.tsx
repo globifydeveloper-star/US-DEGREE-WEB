@@ -1,33 +1,77 @@
-import React from 'react';
-import { ChevronRight, X, LayoutList, LayoutGrid } from 'lucide-react';
-import { Select } from 'antd';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import React from "react";
+import { ChevronRight, X, LayoutList, LayoutGrid } from "lucide-react";
+import { Select } from "antd";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-type ViewMode = 'list' | 'grid';
+type ViewMode = "list" | "grid";
 
 const STATE_MAP: Record<string, string> = {
-  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
-  CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
-  HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
-  KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
-  MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri',
-  MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
-  NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio',
-  OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
-  SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
-  VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
-  DC: 'District of Columbia', PR: 'Puerto Rico'
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
+  PR: "Puerto Rico",
 };
 
-const FILTER_KEYS = ['state', 'credential_title', 'title', 'school_type'];
-const MULTI_VALUE_KEYS = new Set(['state', 'credential_title']);
+const FILTER_KEYS = ["state", "credential_title", "title", "school_type"];
+const MULTI_VALUE_KEYS = new Set(["state", "credential_title"]);
 
 interface SearchHeaderProps {
   view: ViewMode;
   onViewChange: (v: ViewMode) => void;
 }
 
-export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) {
+export default function SearchHeader({
+  view,
+  onViewChange,
+}: SearchHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -41,19 +85,28 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
   const stateCodes = stateParam?.split(",").filter(Boolean) ?? [];
   const credentialTitles = credentialTitle?.split(",").filter(Boolean) ?? [];
 
-  const firstStateName = stateCodes.length > 0 ? (STATE_MAP[stateCodes[0].toUpperCase()] || stateCodes[0]) : null;
+  const firstStateName =
+    stateCodes.length > 0
+      ? STATE_MAP[stateCodes[0].toUpperCase()] || stateCodes[0]
+      : null;
   const stateHeading = firstStateName
     ? stateCodes.length > 1
       ? `in ${firstStateName} +${stateCodes.length - 1} more`
       : `in ${firstStateName}`
     : "";
 
-  const headingPrefix = title || (credentialTitles.length === 1 ? credentialTitles[0] : credentialTitles.length > 1 ? "Multiple Degrees" : "Degree");
+  const headingPrefix =
+    title ||
+    (credentialTitles.length === 1
+      ? credentialTitles[0]
+      : credentialTitles.length > 1
+        ? "Multiple Degrees"
+        : "Degree");
   const heading = `${headingPrefix} Programs ${stateHeading}`.trim();
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('sort', value);
+    params.set("sort", value);
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -63,7 +116,7 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
     // For multi-value keys, remove only the specific value from the comma list
     if (value && MULTI_VALUE_KEYS.has(key)) {
       const current = params.get(key)?.split(",").filter(Boolean) ?? [];
-      const updated = current.filter(v => v !== value);
+      const updated = current.filter((v) => v !== value);
       if (updated.length > 0) {
         params.set(key, updated.join(","));
       } else {
@@ -80,29 +133,30 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
     const params = new URLSearchParams();
     // Keep sort if it's there? Usually clear means everything or just filters.
     // Let's keep sort.
-    if (searchParams.has('sort')) {
-      params.set('sort', searchParams.get('sort')!);
+    if (searchParams.has("sort")) {
+      params.set("sort", searchParams.get("sort")!);
     }
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const getActiveFilters = () => {
     const active: { key: string; value: string; display: string }[] = [];
-    FILTER_KEYS.forEach(key => {
+    FILTER_KEYS.forEach((key) => {
       const raw = searchParams.get(key);
       if (!raw) return;
 
       if (MULTI_VALUE_KEYS.has(key)) {
         // Split comma-separated values into individual chips
         const values = raw.split(",").filter(Boolean);
-        values.forEach(val => {
+        values.forEach((val) => {
           let display = val;
-          if (key === 'state') display = STATE_MAP[val.toUpperCase()] || val;
+          if (key === "state") display = STATE_MAP[val.toUpperCase()] || val;
           active.push({ key, value: val, display });
         });
       } else {
         let display = raw;
-        if (key === 'school_type') display = raw.charAt(0).toUpperCase() + raw.slice(1);
+        if (key === "school_type")
+          display = raw.charAt(0).toUpperCase() + raw.slice(1);
         active.push({ key, value: raw, display });
       }
     });
@@ -115,11 +169,23 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
     <div className="w-full mb-8">
       {/* Breadcrumbs */}
       <div className="flex items-center text-xs text-gray-500 mb-4 gap-1">
-        <span className="hover:text-blue-600 cursor-pointer" onClick={() => router.push('/')}>Home</span>
+        <span
+          className="hover:text-blue-600 cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          Home
+        </span>
         <ChevronRight size={12} />
-        <span className="hover:text-blue-600 cursor-pointer" onClick={() => router.push('/search')}>Degrees</span>
+        <span
+          className="hover:text-blue-600 cursor-pointer"
+          onClick={() => router.push("/search")}
+        >
+          Degrees
+        </span>
         <ChevronRight size={12} />
-        <span className="text-gray-900 font-medium capitalize">{headingPrefix}</span>
+        <span className="text-gray-900 font-medium capitalize">
+          {headingPrefix}
+        </span>
       </div>
 
       {/* Title Row */}
@@ -136,19 +202,27 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
         {/* View Toggle + Sort */}
         <div className="flex items-center gap-2">
           {/* List / Grid toggle */}
-          <div className="hidden md:flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">            <button
-            onClick={() => onViewChange('list')}
-            title="List view"
-            className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
-              }`}
-          >
-            <LayoutList size={16} />
-          </button>
+          <div className="hidden md:flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">
+            {" "}
             <button
-              onClick={() => onViewChange('grid')}
+              onClick={() => onViewChange("list")}
+              title="List view"
+              className={`p-1.5 rounded-md transition ${
+                view === "list"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-400 hover:text-gray-700"
+              }`}
+            >
+              <LayoutList size={16} />
+            </button>
+            <button
+              onClick={() => onViewChange("grid")}
               title="Tile view"
-              className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-700'
-                }`}
+              className={`p-1.5 rounded-md transition ${
+                view === "grid"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-400 hover:text-gray-700"
+              }`}
             >
               <LayoutGrid size={16} />
             </button>
@@ -156,16 +230,18 @@ export default function SearchHeader({ view, onViewChange }: SearchHeaderProps) 
 
           {/* Sort Dropdown */}
           <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm min-w-[200px]">
-            <span className="text-sm text-gray-500 mr-2 whitespace-nowrap">Sort by:</span>
+            <span className="text-sm text-gray-500 mr-2 whitespace-nowrap">
+              Sort by:
+            </span>
             <Select
               value={sort}
               variant="borderless"
               className="w-full font-medium text-gray-900"
               onChange={handleSortChange}
               options={[
-                { value: 'recommended', label: 'Recommended' },
-                { value: 'tuition_low', label: 'Tuition (Low to High)' },
-                { value: 'admission_high', label: 'Admission Rate (High)' },
+                { value: "recommended", label: "Recommended" },
+                { value: "tuition_low", label: "Tuition (Low to High)" },
+                { value: "admission_high", label: "Admission Rate (High)" },
               ]}
             />
           </div>

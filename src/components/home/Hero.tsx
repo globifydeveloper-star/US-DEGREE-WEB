@@ -16,7 +16,7 @@ const MOCK_STATES = [
   { value: "PA", label: "Pennsylvania" },
   { value: "FL", label: "Florida" },
   { value: "NC", label: "North Carolina" },
-  { value: "GA", label: "Georgia" }
+  { value: "GA", label: "Georgia" },
 ];
 
 const MOCK_LEVELS = [
@@ -24,30 +24,42 @@ const MOCK_LEVELS = [
   { value: "Bachelor's Degree", label: "Bachelor's Degree" },
   { value: "Master's Degree", label: "Master's Degree" },
   { value: "Doctoral Degree", label: "Doctoral Degree" },
-  { value: "Post-Baccalaureate Certificate", label: "Post-Baccalaureate Certificate" }
+  {
+    value: "Post-Baccalaureate Certificate",
+    label: "Post-Baccalaureate Certificate",
+  },
 ];
 
 const MOCK_COURSES = [
   { value: "Computer Science", label: "Computer Science" },
-  { value: "Biology / Biological Sciences", label: "Biology / Biological Sciences" },
+  {
+    value: "Biology / Biological Sciences",
+    label: "Biology / Biological Sciences",
+  },
   { value: "Economics", label: "Economics" },
-  { value: "Management Science & Engineering", label: "Management Science & Engineering" },
-  { value: "Symbolic Systems", label: "Symbolic Systems" }
+  {
+    value: "Management Science & Engineering",
+    label: "Management Science & Engineering",
+  },
+  { value: "Symbolic Systems", label: "Symbolic Systems" },
 ];
 
 export default function Hero() {
   const router = useRouter();
 
-  const [levels, setLevels] = useState<{ value: string; label: string }[]>(MOCK_LEVELS);
-  const [states, setStates] = useState<{ value: string; label: string }[]>(MOCK_STATES);
-  const [courses, setCourses] = useState<{ value: string; label: string }[]>(MOCK_COURSES);
+  const [levels, setLevels] =
+    useState<{ value: string; label: string }[]>(MOCK_LEVELS);
+  const [states, setStates] =
+    useState<{ value: string; label: string }[]>(MOCK_STATES);
+  const [courses, setCourses] =
+    useState<{ value: string; label: string }[]>(MOCK_COURSES);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCoursesLoading, setIsCoursesLoading] = useState(false);
   const [searchType, setSearchType] = useState<"programs" | "universities">(
-    "programs"
+    "programs",
   );
 
   useEffect(() => {
@@ -60,10 +72,12 @@ export default function Hero() {
           const data = await statesRes.json();
           if (Array.isArray(data) && data.length > 0) {
             setStates(
-              data.map((state: { state_code: string; state_title: string }) => ({
-                value: state.state_code,
-                label: state.state_title,
-              }))
+              data.map(
+                (state: { state_code: string; state_title: string }) => ({
+                  value: state.state_code,
+                  label: state.state_title,
+                }),
+              ),
             );
           }
         } else {
@@ -78,7 +92,7 @@ export default function Hero() {
               data.map((credential: { id: number; name: string }) => ({
                 value: credential.name,
                 label: credential.name,
-              }))
+              })),
             );
           }
         } else {
@@ -112,7 +126,7 @@ export default function Hero() {
               data.map((item: { title: string }) => ({
                 value: item.title,
                 label: item.title,
-              }))
+              })),
             );
           }
         }
@@ -124,7 +138,7 @@ export default function Hero() {
         setIsCoursesLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Courses depend on the chosen level/state — react to the change event
@@ -137,7 +151,7 @@ export default function Hero() {
         setCourses(MOCK_COURSES);
       }
     },
-    [fetchCourses]
+    [fetchCourses],
   );
 
   const handleLevelChange = (value: string | null) => {
@@ -156,16 +170,11 @@ export default function Hero() {
     const params = new URLSearchParams();
     params.append("type", searchType);
 
-    if (selectedLevel)
-      params.append("credential_title", selectedLevel);
+    if (selectedLevel) params.append("credential_title", selectedLevel);
 
-    if (selectedState)
-      params.append("state", selectedState);
+    if (selectedState) params.append("state", selectedState);
 
-    if (
-      searchType === "programs" &&
-      selectedCourse
-    ) {
+    if (searchType === "programs" && selectedCourse) {
       params.append("title", selectedCourse);
     }
 
@@ -192,7 +201,8 @@ export default function Hero() {
                 TOP-TIER EDUCATION
               </span>
 
-              <h1 className="
+              <h1
+                className="
                 mb-4 lg:mb-6
                 max-w-[600px]
                 text-[48px]
@@ -202,40 +212,54 @@ export default function Hero() {
                 leading-[0.95]
                 tracking-[-0.04em]
                 text-[#111827]
-              ">
-                The Neutral Way to
-                Choose a
+              "
+              >
+                The Neutral Way to Choose a
                 <span className="text-[#3b5bdb]"> U.S. </span>
                 <span> Degrees </span>
               </h1>
 
               {/* Trust badges */}
-              <p className="
+              <p
+                className="
                 mb-6
                 flex flex-wrap items-center
                 gap-x-1.5 sm:gap-x-2 gap-y-1
                 text-[12px] sm:text-[20px] lg:text-[25px]
                 text-[#1f2937]
                 tracking-[-0.01em]
-              ">
+              "
+              >
                 <span>Family-funded</span>
-                <span className="text-[#9ca3af] text-[6px] sm:text-[8px] lg:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span
+                  className="text-[#9ca3af] text-[6px] sm:text-[8px] lg:text-[10px] leading-none select-none"
+                  aria-hidden="true"
+                >
+                  ●
+                </span>
                 <span>Conflict-free</span>
-                <span className="text-[#9ca3af] text-[6px] sm:text-[8px] lg:text-[10px] leading-none select-none" aria-hidden="true">●</span>
+                <span
+                  className="text-[#9ca3af] text-[6px] sm:text-[8px] lg:text-[10px] leading-none select-none"
+                  aria-hidden="true"
+                >
+                  ●
+                </span>
                 <span>Built on verified data</span>
               </p>
 
-              <p className="
+              <p
+                className="
                 mb-6 lg:mb-8
                 max-w-[650px]
                 text-[16px]
                 sm:text-[18px]
                 leading-[1.3]
                 text-[#4b5563]
-              ">
-                Navigate the complex world of American higher education with ease. Our
-                mission is to connect ambitious students with programs that fuel passion and
-                guarantee success.
+              "
+              >
+                Navigate the complex world of American higher education with
+                ease. Our mission is to connect ambitious students with programs
+                that fuel passion and guarantee success.
               </p>
 
               {/* Mobile-only Image (Upside of the search bar on mobile) */}
@@ -258,20 +282,22 @@ export default function Hero() {
                   <div className="flex bg-[#f5f5f5] p-1 rounded-full text-[11px] sm:text-sm">
                     <button
                       onClick={() => setSearchType("programs")}
-                      className={`px-2.5 sm:px-6 py-2 rounded-full font-medium transition cursor-pointer ${searchType === "programs"
-                        ? "bg-[#2563eb] text-white shadow"
-                        : "text-gray-600"
-                        }`}
+                      className={`px-2.5 sm:px-6 py-2 rounded-full font-medium transition cursor-pointer ${
+                        searchType === "programs"
+                          ? "bg-[#2563eb] text-white shadow"
+                          : "text-gray-600"
+                      }`}
                     >
                       Search Programs
                     </button>
 
                     <button
                       onClick={() => setSearchType("universities")}
-                      className={`px-2.5 sm:px-6 py-2 rounded-full font-medium transition cursor-pointer ${searchType === "universities"
-                        ? "bg-[#2563eb] text-white shadow"
-                        : "text-gray-600"
-                        }`}
+                      className={`px-2.5 sm:px-6 py-2 rounded-full font-medium transition cursor-pointer ${
+                        searchType === "universities"
+                          ? "bg-[#2563eb] text-white shadow"
+                          : "text-gray-600"
+                      }`}
                     >
                       Search Universities
                     </button>
@@ -279,10 +305,11 @@ export default function Hero() {
                 </div>
 
                 <div
-                  className={`grid gap-4 ${searchType === "programs"
-                    ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-                    : "grid-cols-1 sm:grid-cols-2"
-                    }`}
+                  className={`grid gap-4 ${
+                    searchType === "programs"
+                      ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+                      : "grid-cols-1 sm:grid-cols-2"
+                  }`}
                 >
                   {/* Credential Field */}
                   <div className="flex flex-col">
@@ -378,20 +405,22 @@ export default function Hero() {
               <div className="flex bg-[#f5f5f5] p-1 rounded-full">
                 <button
                   onClick={() => setSearchType("programs")}
-                  className={`px-6 py-2 rounded-full font-medium transition cursor-pointer ${searchType === "programs"
-                    ? "bg-[#2563eb] text-white shadow"
-                    : "text-gray-600"
-                    }`}
+                  className={`px-6 py-2 rounded-full font-medium transition cursor-pointer ${
+                    searchType === "programs"
+                      ? "bg-[#2563eb] text-white shadow"
+                      : "text-gray-600"
+                  }`}
                 >
                   Search Programs
                 </button>
 
                 <button
                   onClick={() => setSearchType("universities")}
-                  className={`px-6 py-2 rounded-full font-medium transition cursor-pointer ${searchType === "universities"
-                    ? "bg-[#2563eb] text-white shadow"
-                    : "text-gray-600"
-                    }`}
+                  className={`px-6 py-2 rounded-full font-medium transition cursor-pointer ${
+                    searchType === "universities"
+                      ? "bg-[#2563eb] text-white shadow"
+                      : "text-gray-600"
+                  }`}
                 >
                   Search Universities
                 </button>
@@ -399,10 +428,9 @@ export default function Hero() {
             </div>
 
             <div
-              className={`grid gap-5 ${searchType === "programs"
-                ? "md:grid-cols-3"
-                : "md:grid-cols-2"
-                }`}
+              className={`grid gap-5 ${
+                searchType === "programs" ? "md:grid-cols-3" : "md:grid-cols-2"
+              }`}
             >
               {/* Credential Field */}
               <div className="flex flex-col">

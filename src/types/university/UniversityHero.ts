@@ -1,3 +1,5 @@
+import { TuitionData } from "./TuitionData";
+
 export interface UniversityHeroProps {
   id?: string | number;
   name: string;
@@ -7,8 +9,8 @@ export interface UniversityHeroProps {
   admissionRate: string;
   tuitionFee: string;
   logoColor: string;
-  tuitionData?: any;
-  tuitionType?: 'in_state' | 'out_state';
+  tuitionData?: TuitionData | null;
+  tuitionType?: "in_state" | "out_state";
   schoolUrl?: string | null;
   accreditor?: string | null;
 }
