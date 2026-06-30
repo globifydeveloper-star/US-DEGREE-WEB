@@ -26,7 +26,11 @@ import {
   unsaveCollege,
   SavedCollege,
 } from "../../../lib/auth/api";
-import { SAVED_EVENT, reloadSaved } from "../../search/useSavedColleges";
+import {
+  SAVED_EVENT,
+  reloadSaved,
+  type SavedChangeDetail,
+} from "../../search/useSavedColleges";
 
 interface SavedCollegesSectionProps {
   view: "Grid" | "List";
@@ -87,8 +91,26 @@ export default function SavedCollegesSection({
         if (active) setLoading(false);
       }
     })();
-    // Stay in sync when a card elsewhere toggles save state this session.
-    const handler = () => load();
+    // Stay in sync when a card elsewhere toggles save state this session. When
+    // the event carries a detail payload we update in place for an instant,
+    // delay-free result; otherwise we fall back to a full reload.
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<SavedChangeDetail | undefined>).detail;
+      if (detail?.action === "added") {
+        const rec = detail.record;
+        setColleges((prev) =>
+          prev.some((c) => String(c.unitid) === String(rec.unitid))
+            ? prev
+            : [rec, ...prev],
+        );
+      } else if (detail?.action === "removed") {
+        setColleges((prev) =>
+          prev.filter((c) => String(c.unitid) !== String(detail.unitid)),
+        );
+      } else {
+        load();
+      }
+    };
     window.addEventListener(SAVED_EVENT, handler);
     return () => {
       active = false;

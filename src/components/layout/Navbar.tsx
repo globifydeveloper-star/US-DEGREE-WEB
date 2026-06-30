@@ -230,7 +230,7 @@ const Navbar = () => {
                 className="hover:text-[#2b55ff] transition-colors flex items-center gap-1.5"
               >
                 <span>Compare Colleges</span>
-                {compareCount > 0 && (
+                {isLoggedIn && compareCount > 0 && (
                   <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
                     {compareCount}
                   </span>
@@ -329,7 +329,7 @@ const Navbar = () => {
               className="flex items-center justify-between w-full"
             >
               <span>Compare Colleges</span>
-              {compareCount > 0 && (
+              {isLoggedIn && compareCount > 0 && (
                 <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
                   {compareCount}
                 </span>

@@ -23,7 +23,7 @@ import {
   type DeactivationPayload,
 } from "../../lib/auth/api";
 import { clearAppJwt } from "../../lib/auth/tokenStore";
-import { University, StudentProfile } from "../../types/profile";
+import { StudentProfile } from "../../types/profile";
 import { useCollegeMatches } from "./matchEngine";
 
 import ProfileInfoCard from "./cards/ProfileInfoCard";
@@ -284,12 +284,10 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
     };
   }, []);
 
-  // Saved set used only by the match tiles' heart indicator. Starts empty — no
-  // mock/seed colleges. (Comparison selections are handled directly by the
-  // match section via the shared `/compare/selected` store; the Saved Colleges
-  // and Compare sections below self-fetch their own data from the backend.)
-  const [savedColleges, setSavedColleges] = useState<University[]>([]);
-
+  // The match tiles' heart indicator, the Saved Colleges grid, and the Compare
+  // section all read from their own shared stores (`/saved-colleges` and
+  // `/compare/selected`), which keep each other in sync — so no saved/compare
+  // state is held here.
   const [savedCollegesView, setSavedCollegesView] = useState<"Grid" | "List">(
     "Grid",
   );
@@ -329,22 +327,6 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
       console.error("Profile save failed:", err);
       message.error("Could not save your profile. Please try again.");
     }
-  };
-
-  // Action: Remove from Saved List
-  const handleRemoveSaved = (id: string, name: string) => {
-    setSavedColleges((prev) => prev.filter((u) => u.id !== id));
-    message.success(`${name} removed from your saved list.`);
-  };
-
-  // Action: Add back helper
-  const handleAddSaved = (uni: University) => {
-    if (savedColleges.some((u) => u.id === uni.id)) {
-      message.info(`${uni.name} is already in saved list.`);
-      return;
-    }
-    setSavedColleges((prev) => [...prev, uni]);
-    message.success(`${uni.name} added to your saved colleges.`);
   };
 
   // Action: Password change — Firebase SDK only (no backend endpoint).
@@ -506,13 +488,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
       </Row>
 
       {/* My Matches */}
-      <CollegeMatchesSection
-        matches={matches}
-        loading={matchesLoading}
-        savedColleges={savedColleges}
-        onRemoveSaved={handleRemoveSaved}
-        onAddSaved={handleAddSaved}
-      />
+      <CollegeMatchesSection matches={matches} loading={matchesLoading} />
 
       {/* Saved Colleges — self-fetches from GET /saved-colleges */}
       <SavedCollegesSection

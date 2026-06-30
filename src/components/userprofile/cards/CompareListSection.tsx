@@ -17,6 +17,7 @@ import {
   COMPARE_SELECTED_EVENT,
   removeFromCompare,
   clearCompare,
+  type CompareChangeDetail,
 } from "../../search/useCompareSelected";
 
 // Date ONLY, app locale (en-US), e.g. "Jun 19, 2026". Returns null for
@@ -82,8 +83,26 @@ export default function CompareListSection() {
         if (active) setLoading(false);
       }
     })();
-    // Reflect selections toggled from elsewhere (e.g. a ResultCard) this session.
-    const handler = () => load();
+    // Reflect selections toggled from elsewhere (e.g. a ResultCard or the
+    // college-matches grid) this session. A detail payload lets us update in
+    // place for an instant, delay-free result; otherwise we reload.
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<CompareChangeDetail | undefined>).detail;
+      if (detail?.action === "added") {
+        const rec = detail.record;
+        setItems((prev) =>
+          prev.some((c) => String(c.unitid) === String(rec.unitid))
+            ? prev
+            : [...prev, rec],
+        );
+      } else if (detail?.action === "removed") {
+        setItems((prev) =>
+          prev.filter((c) => String(c.unitid) !== String(detail.unitid)),
+        );
+      } else {
+        load();
+      }
+    };
     window.addEventListener(COMPARE_SELECTED_EVENT, handler);
     return () => {
       active = false;
