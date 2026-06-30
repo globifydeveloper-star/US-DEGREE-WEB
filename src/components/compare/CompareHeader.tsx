@@ -1,16 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, message } from 'antd';
-import { FileText } from 'lucide-react';
+import { Button, message, Modal } from 'antd';
+import Image from 'next/image';
+import { FileText, MapPin, Sparkles, X } from 'lucide-react';
 import { authedFetch } from '@/lib/auth/api';
+import { College } from '@/types/university/ComparisonTable';
 
 interface CompareHeaderProps {
   comparedIds: string[];
+  comparedColleges: College[];
 }
 
-export default function CompareHeader({ comparedIds }: CompareHeaderProps) {
+export default function CompareHeader({ comparedIds, comparedColleges }: CompareHeaderProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  // Open the confirmation modal listing the selected colleges. The actual
+  // generation is deferred to handleGenerateReport (the modal's "Generate").
+  const handleOpenConfirm = () => {
+    if (!comparedIds || comparedIds.length === 0) {
+      message.warning("Please select at least two college to compare before generating a report.");
+      return;
+    }
+    setIsConfirmOpen(true);
+  };
 
   const handleGenerateReport = async () => {
     if (!comparedIds || comparedIds.length === 0) {
@@ -18,6 +32,7 @@ export default function CompareHeader({ comparedIds }: CompareHeaderProps) {
       return;
     }
 
+    setIsConfirmOpen(false);
     setIsGenerating(true);
     const key = 'generate-report';
     message.open({
@@ -91,12 +106,108 @@ export default function CompareHeader({ comparedIds }: CompareHeaderProps) {
           icon={<FileText className="w-4 h-4" />}
           loading={isGenerating}
           disabled={comparedIds.length === 0}
-          onClick={handleGenerateReport}
+          onClick={handleOpenConfirm}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer"
         >
           {isGenerating ? 'Generating Report...' : 'Generate AI Report'}
         </Button>
       </div>
+
+      {/* Confirmation modal: review the selected colleges before generating. */}
+      <Modal
+        open={isConfirmOpen}
+        onCancel={() => setIsConfirmOpen(false)}
+        footer={null}
+        closeIcon={null}
+        centered
+        width={460}
+        styles={{
+          body: { padding: 0 },
+          container: { padding: 0, borderRadius: 20, overflow: 'hidden' },
+        }}
+        className="font-sans"
+      >
+        {/* Header band (brand blue) */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-left relative">
+          <button
+            aria-label="Close"
+            onClick={() => setIsConfirmOpen(false)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-white" />
+            <h3 className="text-lg font-black text-white tracking-tight">
+              Generate AI Decision Report
+            </h3>
+          </div>
+          <p className="text-blue-100 text-xs font-medium">
+            We&apos;ll analyze the {comparedColleges.length} college{comparedColleges.length === 1 ? '' : 's'} below and build your premium PDF report.
+          </p>
+        </div>
+
+        {/* Selected colleges list */}
+        <div className="px-6 py-5 bg-white">
+          <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
+            Colleges in this report
+          </p>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {comparedColleges.map((college) => (
+              <div
+                key={college.id}
+                className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 bg-[#FAFBFD]"
+              >
+                <div className="w-9 h-9 bg-white border border-gray-100 rounded-lg p-1 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                  {college.logo ? (
+                    <Image
+                      src={college.logo}
+                      alt={college.name}
+                      width={28}
+                      height={28}
+                      className="object-contain max-h-full max-w-full"
+                      referrerPolicy="no-referrer"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm">
+                      {college.name ? college.name.charAt(0) : 'U'}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 truncate leading-snug">
+                    {college.shortName || college.name}
+                  </p>
+                  <p className="text-[11px] text-gray-400 font-semibold flex items-center gap-1 truncate">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    {college.location}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="px-6 py-4 bg-white border-t border-gray-100 flex items-center justify-end gap-3">
+          <Button
+            danger
+            onClick={() => setIsConfirmOpen(false)}
+            className="font-bold rounded-xl h-10 px-5 border border-red-200 text-red-500 hover:!text-red-600 hover:!border-red-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            icon={<FileText className="w-4 h-4" />}
+            onClick={handleGenerateReport}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-10 px-5 shadow-md flex items-center gap-2"
+          >
+            Generate
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

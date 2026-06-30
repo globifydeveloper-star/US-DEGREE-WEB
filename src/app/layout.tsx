@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Lexend, Poppins } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import PopupConfig from '@/components/layout/PopupConfig';
 
 const lexend = Lexend({
   subsets: ['latin'],
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <AuthProvider>
       <html lang="en" className={`${lexend.variable} ${poppins.variable}`}>
-        <body className={lexend.className}>{children}</body>
+        <body className={lexend.className}>
+          <PopupConfig />
+          {children}
+        </body>
       </html>
     </AuthProvider>
   );

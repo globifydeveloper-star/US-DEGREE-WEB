@@ -75,6 +75,24 @@ body {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/*
+ * Global Ant Design popup placement.
+ *
+ * antd `message` is fixed to top-center and exposes no bottom/right placement
+ * option (v6), so we reposition its container with CSS. On large screens (>=
+ * 1024px) toasts stack in the bottom-right; on mobile they stay at the top so
+ * they never cover on-screen content. `notification` placement is handled
+ * responsively in JS (PopupConfig) since it supports a `placement` option.
+ */
+@media (min-width: 1024px) {
+  .ant-message {
+    top: auto !important;
+    bottom: 24px !important;
+    text-align: right !important;
+    padding-right: 24px;
+  }
+}
+
 .animate-scale-up {
   animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

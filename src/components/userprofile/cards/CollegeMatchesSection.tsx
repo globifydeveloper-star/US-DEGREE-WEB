@@ -22,20 +22,18 @@ import {
   ReadOutlined,
   TrophyOutlined,
 } from "@ant-design/icons";
-import { University } from "../../../types/profile";
 import { CollegeMatch } from "../matchEngine";
 import {
   toggleCompare as toggleCompareStore,
   useCompareIds,
   MAX_COMPARE,
 } from "../../search/useCompareSelected";
+import { toggleSaved, useSavedIds } from "../../search/useSavedColleges";
+import type { SavedCollege } from "../../../lib/auth/api";
 
 interface CollegeMatchesSectionProps {
   matches: CollegeMatch[];
   loading: boolean;
-  savedColleges: University[];
-  onRemoveSaved: (id: string, name: string) => void;
-  onAddSaved: (uni: University) => void;
 }
 
 // Display helpers — render the backend value when present, otherwise "N/A".
@@ -44,32 +42,9 @@ const fmtPercent = (v: number | null) =>
 const fmtMoney = (v: number | null) =>
   v === null ? "N/A" : `$${Math.round(v).toLocaleString()}`;
 
-// Build the minimal University shape the save/compare handlers expect from a
-// match. Only identity + a couple of stats are used downstream.
-function toUniversity(match: CollegeMatch): University {
-  return {
-    id: match.id,
-    unitid: match.unitid,
-    name: match.name,
-    city: match.city,
-    state: match.state,
-    type: match.isPrivate ? "Private" : "Public",
-    ranking: 0,
-    acceptanceRate: match.acceptanceRate ?? 0,
-    annualCost: match.tuition ?? 0,
-    rating: 0,
-    description: "",
-    logoColor: "bg-blue-600 text-white",
-    image: "",
-  };
-}
-
 export default function CollegeMatchesSection({
   matches,
   loading,
-  savedColleges,
-  onRemoveSaved,
-  onAddSaved,
 }: CollegeMatchesSectionProps) {
   const router = useRouter();
 
@@ -77,19 +52,35 @@ export default function CollegeMatchesSection({
   // selections made anywhere (search cards, university page, /compare page).
   const comparedIds = useCompareIds();
 
+  // Saved-college set, from the same shared store the Saved Colleges grid reads.
+  // Reading it here keeps the heart indicator in sync with saves made anywhere.
+  const savedIds = useSavedIds();
+
   // Add/remove a matched college via the shared store, which handles the
   // localStorage mirror, the backend `/compare/selected` set, and the 5-max.
   const toggleCompare = async (match: CollegeMatch) => {
+    const location =
+      match.city && match.state
+        ? `${match.city}, ${match.state}`
+        : match.city || match.state || "";
     try {
-      const result = await toggleCompareStore({
-        id: match.id,
-        name: match.name,
-        location:
-          match.city && match.state
-            ? `${match.city}, ${match.state}`
-            : match.city || match.state || "",
-        cipCode: match.cipCode || "default",
-      });
+      const result = await toggleCompareStore(
+        {
+          id: match.id,
+          name: match.name,
+          location,
+          cipCode: match.cipCode || "default",
+        },
+        // Enriched record so the profile's comparison grid shows it instantly.
+        {
+          unitid: match.unitid,
+          name: match.name,
+          location,
+          tuitionInState: match.tuition,
+          acceptanceRate: match.acceptanceRate,
+          addedAt: new Date().toISOString(),
+        },
+      );
       if (result === "removed") {
         message.info(`Removed ${match.name} from comparison.`);
       } else if (result === "added") {
@@ -102,6 +93,35 @@ export default function CollegeMatchesSection({
     } catch (err) {
       console.error("Failed to update comparison selection:", err);
       message.error("Could not update your comparison list. Please try again.");
+    }
+  };
+
+  // Save/unsave a matched college via the shared store. The enriched record is
+  // broadcast so the Saved Colleges grid shows (or drops) the card instantly,
+  // and the same call persists to the backend (/saved-colleges).
+  const toggleSave = async (match: CollegeMatch) => {
+    const record: SavedCollege = {
+      unitid: match.unitid,
+      name: match.name,
+      location:
+        match.city && match.state
+          ? `${match.city}, ${match.state}`
+          : match.city || match.state || "",
+      tuitionFee: match.tuition,
+      acceptanceRate: match.acceptanceRate,
+      createdAt: new Date().toISOString(),
+      schoolUrl: null,
+    };
+    try {
+      const nowSaved = await toggleSaved(match.unitid, record);
+      if (nowSaved) {
+        message.success(`Saved ${match.name} to your colleges.`);
+      } else {
+        message.info(`Removed ${match.name} from saved colleges.`);
+      }
+    } catch (err) {
+      console.error("Failed to update saved colleges:", err);
+      message.error("Could not update saved colleges. Please try again.");
     }
   };
 
@@ -162,9 +182,8 @@ export default function CollegeMatchesSection({
       ) : (
         <Row gutter={[20, 20]}>
           {matches.map((match) => {
-            const isSaved = savedColleges.some((u) => u.id === match.id);
+            const isSaved = savedIds.includes(match.unitid);
             const isCompared = comparedIds.includes(match.id);
-            const uni = toUniversity(match);
 
             return (
               <Col xs={24} sm={12} md={12} lg={6} key={match.id}>
@@ -317,13 +336,7 @@ export default function CollegeMatchesSection({
                         <Button
                           danger={isSaved}
                           icon={isSaved ? <HeartFilled /> : <HeartOutlined />}
-                          onClick={() => {
-                            if (isSaved) {
-                              onRemoveSaved(match.id, match.name);
-                            } else {
-                              onAddSaved(uni);
-                            }
-                          }}
+                          onClick={() => toggleSave(match)}
                           className={
                             isSaved ? "" : "border-neutral-200 text-neutral-400"
                           }
