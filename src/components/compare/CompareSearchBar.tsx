@@ -1,7 +1,7 @@
-import React from 'react';
-import { Select, Button, Spin } from 'antd';
-import { Building2 } from 'lucide-react';
-import { UniOption } from './useCompareColleges';
+import React from "react";
+import { Select, Button, Spin } from "antd";
+import { Building2 } from "lucide-react";
+import { UniOption } from "./useCompareColleges";
 
 interface CompareSearchBarProps {
   comparedCount: number;
@@ -70,7 +70,10 @@ export default function CompareSearchBar({
             }}
             options={selectOptions.map((c) => ({
               value: c.id,
-              label: c.city && c.state ? `${c.name} (${c.city}, ${c.state})` : c.name,
+              label:
+                c.city && c.state
+                  ? `${c.name} (${c.city}, ${c.state})`
+                  : c.name,
               disabled: comparedIds.includes(c.id),
             }))}
           />

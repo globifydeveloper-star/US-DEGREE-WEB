@@ -261,9 +261,7 @@ export async function clearCompare(): Promise<void> {
   writeBucket([], []);
   dispatch();
   try {
-    await Promise.all(
-      Array.from(ids).map((id) => removeCompareSelected(id)),
-    );
+    await Promise.all(Array.from(ids).map((id) => removeCompareSelected(id)));
     // Reconcile listeners once the backend set is actually empty.
     dispatch();
   } catch (err) {

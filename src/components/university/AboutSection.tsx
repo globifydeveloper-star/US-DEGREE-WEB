@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import { AboutSectionProps } from '@/types/university/AboutSection';
+import { AboutSectionProps } from "@/types/university/AboutSection";
 
 export default function AboutSection({ name, description }: AboutSectionProps) {
   return (

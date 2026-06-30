@@ -5,8 +5,76 @@ import TabContent from "@/components/university/TabContent";
 import ScrollToTop from "@/components/university/ScrollToTop";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import { TuitionData } from "@/types/university/TuitionData";
 
+// Minimal shapes for the backend JSON this page consumes. Every field is
+// optional because the endpoints may omit data; we only declare what is read.
+type ApiNum = number | string | null;
 
+interface ApiOverview {
+  program?: { cip_code?: string };
+  school?: {
+    school_name?: string;
+    school_description?: string;
+    program_count?: number | null;
+    accreditor?: string | null;
+  };
+  students?: {
+    size?: number | null;
+    student_faculty_ratio?: ApiNum;
+    retention_rate?: number | null;
+    fafsa_applications?: number | null;
+  };
+  admissions?: {
+    admission_rate?: number | null;
+    sat_avg_overall?: ApiNum;
+    sat_rw_min?: number | null;
+    sat_rw_max?: number | null;
+    sat_math_min?: number | null;
+    sat_math_max?: number | null;
+  };
+  completion?: { completion_rate?: number | null };
+  earnings?: {
+    year_1?: ApiNum;
+    year_5?: ApiNum;
+    year_10?: ApiNum;
+    growth_rate?: ApiNum;
+    avg_salary?: ApiNum;
+  };
+  roi?: { roi_20yr?: ApiNum };
+  school_description?: string;
+}
+
+interface ApiOutcomes {
+  earnings?: {
+    year_1?: ApiNum;
+    year_5?: ApiNum;
+    year_10?: ApiNum;
+    growth_rate?: ApiNum;
+    avg_salary?: ApiNum;
+  };
+  roi?: { roi_20yr?: ApiNum };
+  completion?: { emp_factor?: ApiNum };
+  debt_income_ratio?: { debt_income_ratio?: ApiNum };
+}
+
+interface ApiCampus {
+  campus?: { student_faculty_ratio?: ApiNum };
+}
+
+interface ApiCollege {
+  school_name?: string;
+  city?: string;
+  state?: string;
+  school_type?: string;
+  school_url?: string | null;
+  accreditor?: string | null;
+}
+
+interface ApiUni {
+  unitid?: string | number;
+  accreditor?: string | null;
+}
 
 export default async function UniversityPage({
   params,
@@ -29,23 +97,33 @@ export default async function UniversityPage({
   const { id } = await params;
   const sParams = await searchParams;
 
-  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiUrl =
+    process.env.API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://127.0.0.1:8000";
 
-  const sanitizeSalary = (val: any) => {
+  const sanitizeSalary = (val: unknown) => {
     if (val === null || val === undefined) return null;
     const str = String(val).trim();
-    if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+    if (
+      str === "No Value" ||
+      str === "N/A" ||
+      str === "" ||
+      str.toLowerCase() === "null"
+    ) {
       return null;
     }
-    const num = Number(str.replace(/[^0-9.-]/g, ''));
+    const num = Number(str.replace(/[^0-9.-]/g, ""));
     return isNaN(num) ? null : num;
   };
 
   // 1. Gather all data we can fetch from the backend overview endpoint
-  let apiData: any = null;
+  let apiData: ApiOverview | null = null;
   if (sParams.cip) {
     try {
-      const res = await fetch(`${apiUrl}/overview/${id}/${sParams.cip}`, { cache: "no-store" });
+      const res = await fetch(`${apiUrl}/overview/${id}/${sParams.cip}`, {
+        cache: "no-store",
+      });
       if (res.ok) {
         apiData = await res.json();
       }
@@ -54,7 +132,9 @@ export default async function UniversityPage({
     }
   } else {
     try {
-      const res = await fetch(`${apiUrl}/overview/${id}/default`, { cache: "no-store" });
+      const res = await fetch(`${apiUrl}/overview/${id}/default`, {
+        cache: "no-store",
+      });
       if (res.ok) {
         apiData = await res.json();
       }
@@ -65,10 +145,12 @@ export default async function UniversityPage({
 
   // 2. Fetch outcomes details using resolved cip
   const resolvedCip = sParams.cip || apiData?.program?.cip_code;
-  let outcomesData: any = null;
+  let outcomesData: ApiOutcomes | null = null;
   if (resolvedCip) {
     try {
-      const res = await fetch(`${apiUrl}/outcomes/${id}/${resolvedCip}`, { cache: "no-store" });
+      const res = await fetch(`${apiUrl}/outcomes/${id}/${resolvedCip}`, {
+        cache: "no-store",
+      });
       if (res.ok) {
         outcomesData = await res.json();
       }
@@ -78,7 +160,7 @@ export default async function UniversityPage({
   }
 
   // 2b. Fetch campus details
-  let campusData: any = null;
+  let campusData: ApiCampus | null = null;
   try {
     const res = await fetch(`${apiUrl}/campus/${id}`, { cache: "no-store" });
     if (res.ok) {
@@ -89,7 +171,7 @@ export default async function UniversityPage({
   }
 
   // 2c. Fetch tuition details
-  let tuitionData: any = null;
+  let tuitionData: TuitionData | null = null;
   try {
     const res = await fetch(`${apiUrl}/tuition/${id}`, { cache: "no-store" });
     if (res.ok) {
@@ -100,7 +182,7 @@ export default async function UniversityPage({
   }
 
   // 2d. Fetch college details (for school_url)
-  let collegeData: any = null;
+  let collegeData: ApiCollege | null = null;
   try {
     const res = await fetch(`${apiUrl}/colleges/${id}`, { cache: "no-store" });
     if (res.ok) {
@@ -111,7 +193,7 @@ export default async function UniversityPage({
   }
 
   // 2e. Fetch programs details
-  let programsData: any = null;
+  let programsData: unknown = null;
   try {
     const res = await fetch(`${apiUrl}/programs/${id}`, { cache: "no-store" });
     if (res.ok) {
@@ -122,9 +204,11 @@ export default async function UniversityPage({
   }
 
   // 2f. Fetch accreditor from search endpoint (since detail endpoints omit it)
-  let accreditorSearchData: any = null;
+  let accreditorSearchData: ApiUni[] | null = null;
   try {
-    const res = await fetch(`${apiUrl}/search?type=universities`, { cache: "no-store" });
+    const res = await fetch(`${apiUrl}/search?type=universities`, {
+      cache: "no-store",
+    });
     if (res.ok) {
       accreditorSearchData = await res.json();
     }
@@ -132,10 +216,11 @@ export default async function UniversityPage({
     console.error("Error fetching university list for accreditor:", err);
   }
   const matchedUni = Array.isArray(accreditorSearchData)
-    ? accreditorSearchData.find((uni: any) => String(uni.unitid) === String(id))
+    ? accreditorSearchData.find(
+        (uni: ApiUni) => String(uni.unitid) === String(id),
+      )
     : null;
   const fetchedAccreditor = matchedUni?.accreditor || null;
-
 
   // If no backend data is found for this university ID
   if (!collegeData && !apiData) {
@@ -151,7 +236,10 @@ export default async function UniversityPage({
               University Details Unavailable
             </h1>
             <p className="text-slate-600 text-sm leading-relaxed mb-8">
-              We couldn't retrieve the details for this university (ID: <span className="font-semibold text-slate-800">{id}</span>). It may not exist in our database, or there might be a temporary network issue.
+              We couldn&apos;t retrieve the details for this university (ID:{" "}
+              <span className="font-semibold text-slate-800">{id}</span>). It
+              may not exist in our database, or there might be a temporary
+              network issue.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -178,13 +266,18 @@ export default async function UniversityPage({
   const name = sParams.name || collegeData?.school_name || "Unknown University";
   const city = sParams.city || collegeData?.city || "";
   const state = sParams.state || collegeData?.state || "";
-  const location = city && state ? `${city}, ${state}` : (city || state || "Unknown Location");
+  const location =
+    city && state ? `${city}, ${state}` : city || state || "Unknown Location";
 
   const type = sParams.type || collegeData?.school_type || "Private Research";
 
-  const admissionRateRaw = sParams.admissionRate || (apiData?.admissions?.admission_rate !== null && apiData?.admissions?.admission_rate !== undefined
-    ? `${(Number(apiData.admissions.admission_rate) * 100).toFixed(1)}%`
-    : null) || "N/A";
+  const admissionRateRaw =
+    sParams.admissionRate ||
+    (apiData?.admissions?.admission_rate !== null &&
+    apiData?.admissions?.admission_rate !== undefined
+      ? `${(Number(apiData.admissions.admission_rate) * 100).toFixed(1)}%`
+      : null) ||
+    "N/A";
 
   // Calculate real sticker price if tuitionData is available
   let calculatedStickerPriceString = "N/A";
@@ -192,93 +285,134 @@ export default async function UniversityPage({
     const tuitionInState = tuitionData.tuition?.tuition_in_state ?? 12714;
     const bookSupply = tuitionData.tuition?.booksupply ?? 1200;
     const roomBoardOnCampus = tuitionData.housing?.roomboard_oncampus ?? 7348;
-    const otherExpenseOnCampus = tuitionData.expenses?.otherexpense_oncampus ?? 2832;
-    const stickerInState = bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
+    const otherExpenseOnCampus =
+      tuitionData.expenses?.otherexpense_oncampus ?? 2832;
+    const stickerInState =
+      bookSupply + tuitionInState + roomBoardOnCampus + otherExpenseOnCampus;
     calculatedStickerPriceString = `$${Math.round(stickerInState).toLocaleString()}`;
   }
 
   const tuitionRaw = tuitionData
     ? calculatedStickerPriceString
-    : (sParams.tuition || "N/A");
+    : sParams.tuition || "N/A";
 
   const degree = sParams.degree || "Bachelor's Degree";
 
   const cipCode = resolvedCip || "N/A";
 
   // Student body stats from API overview details
-  const totalStudents = apiData?.students?.size !== null && apiData?.students?.size !== undefined
-    ? Number(apiData.students.size)
-    : null;
+  const totalStudents =
+    apiData?.students?.size !== null && apiData?.students?.size !== undefined
+      ? Number(apiData.students.size)
+      : null;
 
-  const rawFacultyRatio = campusData?.campus?.student_faculty_ratio || apiData?.students?.student_faculty_ratio;
+  const rawFacultyRatio =
+    campusData?.campus?.student_faculty_ratio ||
+    apiData?.students?.student_faculty_ratio;
   const facultyRatio = rawFacultyRatio
-    ? (String(rawFacultyRatio).includes(":") ? String(rawFacultyRatio) : `${rawFacultyRatio}:1`)
+    ? String(rawFacultyRatio).includes(":")
+      ? String(rawFacultyRatio)
+      : `${rawFacultyRatio}:1`
     : "N/A";
 
   const rawRetention = apiData?.students?.retention_rate;
-  const retentionRate = rawRetention !== null && rawRetention !== undefined
-    ? `${(Number(rawRetention) * 100).toFixed(0)}%`
-    : "N/A";
+  const retentionRate =
+    rawRetention !== null && rawRetention !== undefined
+      ? `${(Number(rawRetention) * 100).toFixed(0)}%`
+      : "N/A";
 
-  const programs = apiData?.school?.program_count !== null && apiData?.school?.program_count !== undefined
-    ? Number(apiData.school.program_count)
-    : null;
+  const programs =
+    apiData?.school?.program_count !== null &&
+    apiData?.school?.program_count !== undefined
+      ? Number(apiData.school.program_count)
+      : null;
 
-  const fafsaApplications = apiData?.students?.fafsa_applications !== null && apiData?.students?.fafsa_applications !== undefined
-    ? Number(apiData.students.fafsa_applications)
-    : null;
+  const fafsaApplications =
+    apiData?.students?.fafsa_applications !== null &&
+    apiData?.students?.fafsa_applications !== undefined
+      ? Number(apiData.students.fafsa_applications)
+      : null;
 
   const rawCompletion = apiData?.completion?.completion_rate;
-  const completionRate = rawCompletion !== null && rawCompletion !== undefined
-    ? `${Number(rawCompletion).toFixed(0)}%`
-    : "N/A";
+  const completionRate =
+    rawCompletion !== null && rawCompletion !== undefined
+      ? `${Number(rawCompletion).toFixed(0)}%`
+      : "N/A";
 
   // SAT & Student metrics from API if present
-  const satAverage = apiData?.admissions?.sat_avg_overall !== null && apiData?.admissions?.sat_avg_overall !== undefined
-    ? String(apiData.admissions.sat_avg_overall)
-    : "N/A";
+  const satAverage =
+    apiData?.admissions?.sat_avg_overall !== null &&
+    apiData?.admissions?.sat_avg_overall !== undefined
+      ? String(apiData.admissions.sat_avg_overall)
+      : "N/A";
 
-  const satReadingWriting = apiData?.admissions?.sat_rw_min !== null && apiData?.admissions?.sat_rw_max !== null && apiData?.admissions?.sat_rw_min !== undefined && apiData?.admissions?.sat_rw_max !== undefined
-    ? `${apiData.admissions.sat_rw_min} - ${apiData.admissions.sat_rw_max}`
-    : "N/A";
+  const satReadingWriting =
+    apiData?.admissions?.sat_rw_min !== null &&
+    apiData?.admissions?.sat_rw_max !== null &&
+    apiData?.admissions?.sat_rw_min !== undefined &&
+    apiData?.admissions?.sat_rw_max !== undefined
+      ? `${apiData.admissions.sat_rw_min} - ${apiData.admissions.sat_rw_max}`
+      : "N/A";
 
-  const satMath = apiData?.admissions?.sat_math_min !== null && apiData?.admissions?.sat_math_max !== null && apiData?.admissions?.sat_math_min !== undefined && apiData?.admissions?.sat_math_max !== undefined
-    ? `${apiData.admissions.sat_math_min} - ${apiData.admissions.sat_math_max}`
-    : "N/A";
+  const satMath =
+    apiData?.admissions?.sat_math_min !== null &&
+    apiData?.admissions?.sat_math_max !== null &&
+    apiData?.admissions?.sat_math_min !== undefined &&
+    apiData?.admissions?.sat_math_max !== undefined
+      ? `${apiData.admissions.sat_math_min} - ${apiData.admissions.sat_math_max}`
+      : "N/A";
 
   const applicants = apiData?.students?.fafsa_applications
     ? String(apiData.students.fafsa_applications)
     : "N/A";
 
   // Outcomes & Careers statistics
-  const salaryYear1 = sanitizeSalary(outcomesData?.earnings?.year_1)
-    || sanitizeSalary(apiData?.earnings?.year_1)
-    || (id === "1" ? 91200 : id === "2" ? 85000 : null);
-  const salaryYear5 = sanitizeSalary(outcomesData?.earnings?.year_5)
-    || sanitizeSalary(apiData?.earnings?.year_5)
-    || null;
-  const salaryYear10 = sanitizeSalary(outcomesData?.earnings?.year_10)
-    || sanitizeSalary(apiData?.earnings?.year_10)
-    || (id === "1" ? 149696 : id === "2" ? 135000 : null);
+  const salaryYear1 =
+    sanitizeSalary(outcomesData?.earnings?.year_1) ||
+    sanitizeSalary(apiData?.earnings?.year_1) ||
+    (id === "1" ? 91200 : id === "2" ? 85000 : null);
+  const salaryYear5 =
+    sanitizeSalary(outcomesData?.earnings?.year_5) ||
+    sanitizeSalary(apiData?.earnings?.year_5) ||
+    null;
+  const salaryYear10 =
+    sanitizeSalary(outcomesData?.earnings?.year_10) ||
+    sanitizeSalary(apiData?.earnings?.year_10) ||
+    (id === "1" ? 149696 : id === "2" ? 135000 : null);
 
-  const netRoi20Yr = sParams.roi || outcomesData?.roi?.roi_20yr || apiData?.roi?.roi_20yr || null;
+  const netRoi20Yr =
+    sParams.roi ||
+    outcomesData?.roi?.roi_20yr ||
+    apiData?.roi?.roi_20yr ||
+    null;
 
-  const rawGrowth = outcomesData?.earnings?.growth_rate || apiData?.earnings?.growth_rate;
-  const growthRate = rawGrowth !== undefined && rawGrowth !== null
-    ? Number(rawGrowth)
-    : (salaryYear1 && salaryYear10 ? ((Number(salaryYear10) - Number(salaryYear1)) / Number(salaryYear1)) * 100 : null);
+  const rawGrowth =
+    outcomesData?.earnings?.growth_rate || apiData?.earnings?.growth_rate;
+  const growthRate =
+    rawGrowth !== undefined && rawGrowth !== null
+      ? Number(rawGrowth)
+      : salaryYear1 && salaryYear10
+        ? ((Number(salaryYear10) - Number(salaryYear1)) / Number(salaryYear1)) *
+          100
+        : null;
 
-  const empFactor = outcomesData?.completion?.emp_factor !== null && outcomesData?.completion?.emp_factor !== undefined
-    ? Number(outcomesData.completion.emp_factor)
-    : null;
+  const empFactor =
+    outcomesData?.completion?.emp_factor !== null &&
+    outcomesData?.completion?.emp_factor !== undefined
+      ? Number(outcomesData.completion.emp_factor)
+      : null;
 
-  const debtIncomeRatio = outcomesData?.debt_income_ratio?.debt_income_ratio !== null && outcomesData?.debt_income_ratio?.debt_income_ratio !== undefined
-    ? Number(outcomesData.debt_income_ratio.debt_income_ratio)
-    : null;
+  const debtIncomeRatio =
+    outcomesData?.debt_income_ratio?.debt_income_ratio !== null &&
+    outcomesData?.debt_income_ratio?.debt_income_ratio !== undefined
+      ? Number(outcomesData.debt_income_ratio.debt_income_ratio)
+      : null;
 
-  const avgSalary = outcomesData?.earnings?.avg_salary !== null && outcomesData?.earnings?.avg_salary !== undefined
-    ? Number(outcomesData.earnings.avg_salary)
-    : null;
+  const avgSalary =
+    outcomesData?.earnings?.avg_salary !== null &&
+    outcomesData?.earnings?.avg_salary !== undefined
+      ? Number(outcomesData.earnings.avg_salary)
+      : null;
 
   const data = {
     id,
@@ -289,7 +423,9 @@ export default async function UniversityPage({
     admissionRate: admissionRateRaw,
     tuitionFee: tuitionRaw,
     logoColor: "bg-blue-600",
-    description: apiData?.school?.school_description || `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
+    description:
+      apiData?.school?.school_description ||
+      `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
     degree,
     duration: "4 Years",
     format: "Full-time, On-campus",
@@ -333,7 +469,11 @@ export default async function UniversityPage({
 
     // School URL
     schoolUrl: collegeData?.school_url || null,
-    accreditor: collegeData?.accreditor || apiData?.school?.accreditor || fetchedAccreditor || null,
+    accreditor:
+      collegeData?.accreditor ||
+      apiData?.school?.accreditor ||
+      fetchedAccreditor ||
+      null,
   };
 
   return (

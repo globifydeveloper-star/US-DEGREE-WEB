@@ -48,7 +48,7 @@ const Navbar = () => {
     getCompareCountServerSnapshot,
   );
   //    useEffect(() => {
-   
+
   //   const handleOpenAuth = (e: Event) => {
   //     const customEvent = e as CustomEvent<{ mode?: 'login' | 'signup' }>;
   //     const mode = customEvent.detail?.mode || 'signup';

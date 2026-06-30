@@ -1,6 +1,6 @@
-import React from 'react';
-import { HelpCircle } from 'lucide-react';
-import { CourseSummarySideCardProps } from '@/types/university/CourseSummarySideCard';
+import React from "react";
+import { HelpCircle } from "lucide-react";
+import { CourseSummarySideCardProps } from "@/types/university/CourseSummarySideCard";
 
 export default function CourseSummarySideCard({
   degree,
@@ -12,7 +12,6 @@ export default function CourseSummarySideCard({
   return (
     <div className="w-full flex flex-col gap-4">
       {/* Citation Above Card */}
-
 
       {/* Main Course Summary Card */}
       <div className="bg-white border border-[#EAEFF5] rounded-[32px] shadow-sm p-8 flex flex-col gap-6">
@@ -28,22 +27,36 @@ export default function CourseSummarySideCard({
             </span>
           </div>
           <div className="flex items-center justify-between py-4 border-b border-slate-100">
-            <span className="text-sm font-semibold text-slate-400">Duration</span>
-            <span className="text-sm font-black text-slate-900">{duration}</span>
+            <span className="text-sm font-semibold text-slate-400">
+              Duration
+            </span>
+            <span className="text-sm font-black text-slate-900">
+              {duration}
+            </span>
           </div>
           <div className="flex items-center justify-between py-4 border-b border-slate-100">
             <span className="text-sm font-semibold text-slate-400">Format</span>
             <span className="text-sm font-black text-slate-900">{format}</span>
           </div>
           <div className="flex items-center justify-between py-4">
-            <span className="text-sm font-semibold text-slate-400">Financial Aid</span>
-            <span className="text-sm font-black text-emerald-500">{financialAid}</span>
+            <span className="text-sm font-semibold text-slate-400">
+              Financial Aid
+            </span>
+            <span className="text-sm font-black text-emerald-500">
+              {financialAid}
+            </span>
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
           <a
-            href={schoolUrl ? (schoolUrl.startsWith("http") ? schoolUrl : `https://${schoolUrl}`) : "#"}
+            href={
+              schoolUrl
+                ? schoolUrl.startsWith("http")
+                  ? schoolUrl
+                  : `https://${schoolUrl}`
+                : "#"
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="w-full text-center rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10 block"
@@ -55,10 +68,11 @@ export default function CourseSummarySideCard({
       <div className="flex items-start gap-1.5 text-[11px] text-slate-400 leading-tight px-1 select-none">
         <HelpCircle size={13} className="text-slate-400 mt-0.5 shrink-0" />
         <span>
-          Source: Information is based on publicly available data from official U.S. Department of Education sources, including IPEDS, College Scorecard, and College Navigator.
+          Source: Information is based on publicly available data from official
+          U.S. Department of Education sources, including IPEDS, College
+          Scorecard, and College Navigator.
         </span>
       </div>
     </div>
   );
 }
-

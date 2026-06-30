@@ -4,10 +4,26 @@ import React, { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 const programs = [
-  { name: "Aeronautics and Astronautics", school: "School of Engineering", level: "Graduate" },
-  { name: "Comparative Literature", school: "School of Humanities & Sciences", level: "Undergrad/Grad" },
-  { name: "Computational Mathematics", school: "School of Humanities & Sciences", level: "Undergrad" },
-  { name: "Energy Resources Engineering", school: "School of Earth & Sustainability", level: "Graduate" },
+  {
+    name: "Aeronautics and Astronautics",
+    school: "School of Engineering",
+    level: "Graduate",
+  },
+  {
+    name: "Comparative Literature",
+    school: "School of Humanities & Sciences",
+    level: "Undergrad/Grad",
+  },
+  {
+    name: "Computational Mathematics",
+    school: "School of Humanities & Sciences",
+    level: "Undergrad",
+  },
+  {
+    name: "Energy Resources Engineering",
+    school: "School of Earth & Sustainability",
+    level: "Graduate",
+  },
 ];
 
 export default function ProgramSearchBand() {
@@ -34,9 +50,12 @@ export default function ProgramSearchBand() {
     <section className="bg-[#EAF6FF] px-6 py-12 sm:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-black text-gray-950">Search All Programs</h2>
+          <h2 className="text-2xl font-black text-gray-950">
+            Search All Programs
+          </h2>
           <p className="mt-2 text-xs font-medium text-gray-500">
-            Explore the complete catalog of Stanford academic offerings across seven schools.
+            Explore the complete catalog of Stanford academic offerings across
+            seven schools.
           </p>
         </div>
 

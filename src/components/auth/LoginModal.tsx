@@ -20,12 +20,19 @@ interface LoginModalProps {
   onSuccess: (email: string) => void;
 }
 
-export default function LoginModal({ isOpen, initialMode = 'login', onClose, onSuccess }: LoginModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot_password'>(initialMode);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+export default function LoginModal({
+  isOpen,
+  initialMode = "login",
+  onClose,
+  onSuccess,
+}: LoginModalProps) {
+  const [mode, setMode] = useState<"login" | "signup" | "forgot_password">(
+    initialMode,
+  );
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
@@ -33,12 +40,19 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
   const [rememberMe, setRememberMe] = useState(false);
   const [isParent, setIsParent] = useState(false);
   const [isVerificationSent, setIsVerificationSent] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
-  const [resendStatus, setResendStatus] = useState('');
+  const [resendStatus, setResendStatus] = useState("");
   const [resetSent, setResetSent] = useState(false);
 
-  const { login, signup, loginWithGoogle, resendVerificationForUnverifiedUser, checkVerificationStatus, sendPasswordReset } = useAuth();
+  const {
+    login,
+    signup,
+    loginWithGoogle,
+    resendVerificationForUnverifiedUser,
+    checkVerificationStatus,
+    sendPasswordReset,
+  } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Reset the form to a clean state whenever the modal transitions to open.
@@ -55,9 +69,9 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       setConfirmPassword("");
       setIsParent(false);
       setIsVerificationSent(false);
-      setVerificationEmail('');
+      setVerificationEmail("");
       setIsResending(false);
-      setResendStatus('');
+      setResendStatus("");
       setResetSent(false);
     }
   }
@@ -79,7 +93,14 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [isOpen, isVerificationSent, checkVerificationStatus, verificationEmail, onSuccess, onClose]);
+  }, [
+    isOpen,
+    isVerificationSent,
+    checkVerificationStatus,
+    verificationEmail,
+    onSuccess,
+    onClose,
+  ]);
 
   // Close on Esc key press
   useEffect(() => {
@@ -119,13 +140,13 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     const cleanEmail = email.trim();
     const cleanName = name.trim();
 
-    if (mode === 'forgot_password') {
+    if (mode === "forgot_password") {
       if (!cleanEmail) {
-        setError('Email address is required');
+        setError("Email address is required");
         return;
       }
       if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
-        setError('Please enter a valid email address');
+        setError("Please enter a valid email address");
         return;
       }
       setIsLoading(true);
@@ -169,15 +190,20 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
     setIsLoading(true);
 
     try {
-      if (mode === 'login') {
+      if (mode === "login") {
         await login(cleanEmail, password, rememberMe);
         onSuccess(cleanEmail);
         onClose();
       } else {
-        await signup(cleanEmail, password, cleanName, isParent ? "parent" : "student");
+        await signup(
+          cleanEmail,
+          password,
+          cleanName,
+          isParent ? "parent" : "student",
+        );
       }
     } catch (err) {
-      if (err instanceof Error && err.message === 'EMAIL_NOT_VERIFIED') {
+      if (err instanceof Error && err.message === "EMAIL_NOT_VERIFIED") {
         setVerificationEmail(cleanEmail);
         setIsVerificationSent(true);
       } else {
@@ -232,10 +258,10 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
 
   const handleResendVerification = async () => {
     setIsResending(true);
-    setResendStatus('');
+    setResendStatus("");
     try {
       await resendVerificationForUnverifiedUser(verificationEmail, password);
-      setResendStatus('Verification email resent successfully!');
+      setResendStatus("Verification email resent successfully!");
     } catch (err) {
       setResendStatus(getFriendlyErrorMessage(err));
     } finally {
@@ -272,13 +298,17 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
               Verify Your Email
             </h2>
             <p className="text-sm font-semibold text-slate-500 max-w-[320px] leading-relaxed mb-6">
-              We have sent a verification link to <span className="text-blue-600 font-bold">{verificationEmail}</span>. Please check your Gmail inbox and verify your account to log in.
+              We have sent a verification link to{" "}
+              <span className="text-blue-600 font-bold">
+                {verificationEmail}
+              </span>
+              . Please check your Gmail inbox and verify your account to log in.
             </p>
-            
+
             <button
               onClick={() => {
                 setIsVerificationSent(false);
-                setMode('login');
+                setMode("login");
               }}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-99 text-white font-extrabold text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer"
             >
@@ -286,18 +316,20 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
             </button>
 
             <div className="mt-6 text-xs font-semibold text-slate-400">
-              Didnt receive the email?{' '}
+              Didnt receive the email?{" "}
               <button
                 type="button"
                 onClick={handleResendVerification}
                 disabled={isResending}
                 className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer disabled:opacity-50"
               >
-                {isResending ? 'Sending...' : 'Resend verification email'}
+                {isResending ? "Sending..." : "Resend verification email"}
               </button>
             </div>
             {resendStatus && (
-              <p className={`mt-3 text-xs font-bold ${resendStatus.includes('successfully') ? 'text-emerald-600' : 'text-rose-600'}`}>
+              <p
+                className={`mt-3 text-xs font-bold ${resendStatus.includes("successfully") ? "text-emerald-600" : "text-rose-600"}`}
+              >
                 {resendStatus}
               </p>
             )}
@@ -331,30 +363,48 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
         {/* Header Logo & Tabs */}
         <div className="mb-5 text-center">
           <div className="inline-flex w-12 h-12 rounded-2xl bg-blue-600 items-center justify-center text-white mb-3 shadow-lg shadow-blue-500/20">
-            {mode === 'forgot_password' ? <Lock className="w-7 h-7" /> : <GraduationCap className="w-7 h-7" />}
+            {mode === "forgot_password" ? (
+              <Lock className="w-7 h-7" />
+            ) : (
+              <GraduationCap className="w-7 h-7" />
+            )}
           </div>
           <h2 className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-1.5">
-            {mode === 'forgot_password' ? 'Reset Password' : mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            {mode === "forgot_password"
+              ? "Reset Password"
+              : mode === "login"
+                ? "Welcome Back"
+                : "Create Account"}
           </h2>
           <p className="text-xs font-semibold text-slate-400">
-            {mode === 'forgot_password' ? 'Enter your email to receive a password reset link.' : mode === 'login' ? 'Sign in to save your universities & details.' : 'Join us to discover your path to a US degree.'}
+            {mode === "forgot_password"
+              ? "Enter your email to receive a password reset link."
+              : mode === "login"
+                ? "Sign in to save your universities & details."
+                : "Join us to discover your path to a US degree."}
           </p>
         </div>
 
         {/* Mode Toggler Tabs */}
-        {mode !== 'forgot_password' && (
+        {mode !== "forgot_password" && (
           <div className="flex bg-slate-100 p-1 rounded-xl mb-5 text-xs font-bold text-slate-500">
             <button
               type="button"
-              onClick={() => { setMode('login'); setError(''); }}
-              className={`flex-1 py-2.5 rounded-lg transition-all cursor-pointer ${mode === 'login' ? 'bg-white text-blue-600 shadow-sm' : 'hover:text-slate-900'}`}
+              onClick={() => {
+                setMode("login");
+                setError("");
+              }}
+              className={`flex-1 py-2.5 rounded-lg transition-all cursor-pointer ${mode === "login" ? "bg-white text-blue-600 shadow-sm" : "hover:text-slate-900"}`}
             >
               Sign In
             </button>
             <button
               type="button"
-              onClick={() => { setMode('signup'); setError(''); }}
-              className={`flex-1 py-2.5 rounded-lg transition-all cursor-pointer ${mode === 'signup' ? 'bg-white text-blue-600 shadow-sm' : 'hover:text-slate-900'}`}
+              onClick={() => {
+                setMode("signup");
+                setError("");
+              }}
+              className={`flex-1 py-2.5 rounded-lg transition-all cursor-pointer ${mode === "signup" ? "bg-white text-blue-600 shadow-sm" : "hover:text-slate-900"}`}
             >
               Create Account
             </button>
@@ -362,18 +412,31 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
         )}
 
         {/* Social logins */}
-        {mode !== 'forgot_password' && (
+        {mode !== "forgot_password" && (
           <>
             <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
               <button
-                type="button" onClick={handleGoogleSignIn}
+                type="button"
+                onClick={handleGoogleSignIn}
                 className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-98 transition-all text-xs font-bold text-slate-600 cursor-pointer"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Google</span>
               </button>
@@ -381,7 +444,10 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                 type="button"
                 className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-98 transition-all text-xs font-bold text-slate-600 cursor-pointer"
               >
-                <svg className="w-4 h-4 fill-current text-slate-700" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 fill-current text-slate-700"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.1.09 2.23-.58 2.95-1.39z" />
                 </svg>
                 <span className="hidden sm:inline">Apple</span>
@@ -402,7 +468,9 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
 
             <div className="relative flex py-1 items-center mb-4">
               <div className="flex-grow border-t border-slate-150"></div>
-              <span className="flex-shrink mx-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Or continue with</span>
+              <span className="flex-shrink mx-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                Or continue with
+              </span>
               <div className="flex-grow border-t border-slate-150"></div>
             </div>
           </>
@@ -567,23 +635,28 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                 </label>
               </div>
             </>
-          ) : mode === 'forgot_password' ? (
+          ) : mode === "forgot_password" ? (
             <>
               {resetSent ? (
                 <div className="my-4 text-center">
                   <div className="inline-flex w-16 h-16 rounded-3xl bg-emerald-50 items-center justify-center text-emerald-600 mb-4 shadow-inner">
                     <Mail className="w-8 h-8 animate-pulse" />
                   </div>
-                  <h3 className="text-lg font-black text-slate-900 mb-2">Check Your Email</h3>
+                  <h3 className="text-lg font-black text-slate-900 mb-2">
+                    Check Your Email
+                  </h3>
                   <p className="text-xs font-semibold text-slate-500 max-w-[280px] mx-auto leading-relaxed mb-6">
-                    We have sent a password reset link to <span className="text-blue-600 font-bold">{email}</span>. Please check your inbox and follow the instructions to reset your password.
+                    We have sent a password reset link to{" "}
+                    <span className="text-blue-600 font-bold">{email}</span>.
+                    Please check your inbox and follow the instructions to reset
+                    your password.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setResetSent(false);
-                      setMode('login');
-                      setError('');
+                      setMode("login");
+                      setError("");
                     }}
                     className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-99 text-white font-extrabold text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 cursor-pointer"
                   >
@@ -594,7 +667,12 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                 <>
                   {/* Email (Stacked) */}
                   <div className="space-y-1 mb-4">
-                    <label htmlFor="email-field" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">Email</label>
+                    <label
+                      htmlFor="email-field"
+                      className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1"
+                    >
+                      Email
+                    </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <Mail className="w-4 h-4" />
@@ -603,7 +681,10 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                         id="email-field"
                         type="email"
                         value={email}
-                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setError("");
+                        }}
                         placeholder="email@example.com"
                         className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-inner-sm"
                       />
@@ -615,15 +696,16 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                     disabled={isLoading}
                     className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-99 disabled:opacity-50 text-white font-extrabold text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 mt-3 cursor-pointer"
                   >
-                    {isLoading ? 'Sending Link...' : 'Send Reset Link'} <ArrowRight className="w-4 h-4" />
+                    {isLoading ? "Sending Link..." : "Send Reset Link"}{" "}
+                    <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <div className="text-center mt-5">
                     <button
                       type="button"
                       onClick={() => {
-                        setMode('login');
-                        setError('');
+                        setMode("login");
+                        setError("");
                       }}
                       className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                     >
@@ -664,10 +746,19 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
               {/* Password (Stacked) */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center px-1">
-                  <label htmlFor="password-field" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
-                  <button 
-                    type="button" 
-                    onClick={() => { setMode('forgot_password'); setError(''); setResetSent(false); }}
+                  <label
+                    htmlFor="password-field"
+                    className="text-[11px] font-bold text-slate-500 uppercase tracking-wider"
+                  >
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("forgot_password");
+                      setError("");
+                      setResetSent(false);
+                    }}
                     className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
                     Forgot?
@@ -705,9 +796,9 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
           )}
 
           {/* Remember Me / Terms */}
-          {mode !== 'forgot_password' && (
+          {mode !== "forgot_password" && (
             <div className="flex items-center justify-between pl-1 py-0.5">
-              {mode === 'login' ? (
+              {mode === "login" ? (
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -715,20 +806,28 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="text-xs font-bold text-slate-500">Remember me</span>
+                  <span className="text-xs font-bold text-slate-500">
+                    Remember me
+                  </span>
                 </label>
               ) : (
                 <p className="text-[10px] text-slate-400 leading-normal font-medium">
-                  By creating an account, you agree to our{' '}
-                  <span className="text-blue-600 font-bold hover:underline cursor-pointer">Terms</span> and{' '}
-                  <span className="text-blue-600 font-bold hover:underline cursor-pointer">Privacy</span>.
+                  By creating an account, you agree to our{" "}
+                  <span className="text-blue-600 font-bold hover:underline cursor-pointer">
+                    Terms
+                  </span>{" "}
+                  and{" "}
+                  <span className="text-blue-600 font-bold hover:underline cursor-pointer">
+                    Privacy
+                  </span>
+                  .
                 </p>
               )}
             </div>
           )}
 
           {/* Submit */}
-          {mode !== 'forgot_password' && (
+          {mode !== "forgot_password" && (
             <button
               type="submit"
               disabled={isLoading}
@@ -736,30 +835,49 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Processing...
                 </>
               ) : (
                 <>
-                  {mode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-4 h-4" />
+                  {mode === "login" ? "Sign In" : "Create Account"}{" "}
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           )}
         </form>
 
-        {mode !== 'forgot_password' && (
+        {mode !== "forgot_password" && (
           <div className="text-center mt-5">
             <p className="text-xs font-semibold text-slate-500">
-              {mode === 'login' ? (
+              {mode === "login" ? (
                 <>
-                  Dont have an account?{' '}
+                  Dont have an account?{" "}
                   <button
                     type="button"
-                    onClick={() => { setMode('signup'); setError(''); }}
+                    onClick={() => {
+                      setMode("signup");
+                      setError("");
+                    }}
                     className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
                     Register now
@@ -767,10 +885,13 @@ export default function LoginModal({ isOpen, initialMode = 'login', onClose, onS
                 </>
               ) : (
                 <>
-                  Already have an account?{' '}
+                  Already have an account?{" "}
                   <button
                     type="button"
-                    onClick={() => { setMode('login'); setError(''); }}
+                    onClick={() => {
+                      setMode("login");
+                      setError("");
+                    }}
                     className="font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                   >
                     Sign in

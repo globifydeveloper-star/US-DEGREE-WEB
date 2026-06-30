@@ -30,6 +30,6 @@ export interface TuitionCostsSectionProps {
     };
   } | null;
   schoolName?: string;
-  tuitionType?: 'in_state' | 'out_state';
-  setTuitionType?: (type: 'in_state' | 'out_state') => void;
+  tuitionType?: "in_state" | "out_state";
+  setTuitionType?: (type: "in_state" | "out_state") => void;
 }

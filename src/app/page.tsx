@@ -4,7 +4,6 @@ import Stats from "@/components/home/Stats";
 import Journey from "@/components/home/Journey";
 import ProBanner from "@/components/home/ProBanner";
 import Categories from "@/components/home/Categories";
-import Testimonials from "@/components/home/Testimonials";
 import FAQ from "@/components/home/FAQ";
 import CTA from "@/components/home/CTA";
 import Footer from "@/components/layout/Footer";

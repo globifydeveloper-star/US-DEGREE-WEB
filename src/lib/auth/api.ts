@@ -36,7 +36,9 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
       const current = auth.currentUser;
       if (!current) {
         clearAppJwt();
-        throw new Error("Cannot exchange token: no authenticated Firebase user");
+        throw new Error(
+          "Cannot exchange token: no authenticated Firebase user",
+        );
       }
 
       const idToken = await current.getIdToken(forceRefresh);
@@ -150,7 +152,9 @@ export interface DeactivationPayload {
  * POST /account/delete — soft-deletes the account on the backend and records the
  * deactivation reason/feedback in usduser_deactivations.
  */
-export async function deleteAccount(payload: DeactivationPayload): Promise<void> {
+export async function deleteAccount(
+  payload: DeactivationPayload,
+): Promise<void> {
   const res = await authedFetch("/account/delete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -1,21 +1,19 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useId } from 'react';
-import { OutcomesSectionProps } from '@/types/university/OutcomesSection';
+import React, { useEffect, useRef, useState, useId } from "react";
+import { OutcomesSectionProps } from "@/types/university/OutcomesSection";
 
 export default function OutcomesSection({
   salaryYear1,
   salaryYear5,
   salaryYear10,
   netRoi20Yr,
-  growthRate,
   empFactor,
   debtIncomeRatio,
   loanPrincipal,
   avgSalary,
-  programTitle
+  programTitle,
 }: OutcomesSectionProps) {
-
   const containerRef = useRef<HTMLDivElement>(null);
   const chartGradientId = useId();
   const chartClipId = useId();
@@ -48,7 +46,7 @@ export default function OutcomesSection({
           }, stepTime);
         }
       },
-      { threshold: 0.05 }
+      { threshold: 0.05 },
     );
 
     observer.observe(el);
@@ -87,13 +85,18 @@ export default function OutcomesSection({
 
   // 1. Median Salary values
   // AFTER
-  const sanitizeSalary = (val: any) => {
+  const sanitizeSalary = (val: unknown) => {
     if (val === null || val === undefined) return null;
     const str = String(val).trim();
-    if (str === "No Value" || str === "N/A" || str === "" || str.toLowerCase() === "null") {
+    if (
+      str === "No Value" ||
+      str === "N/A" ||
+      str === "" ||
+      str.toLowerCase() === "null"
+    ) {
       return null;
     }
-    const num = Number(str.replace(/[^0-9.-]/g, ''));
+    const num = Number(str.replace(/[^0-9.-]/g, ""));
     return isNaN(num) ? null : num;
   };
 
@@ -105,23 +108,32 @@ export default function OutcomesSection({
   const parsedEmp = parseNumber(empFactor) || 0.94;
 
   // 3. Debt to Income calculations
-  const rawRatio = parseNumber(debtIncomeRatio) || 0.40;
+  const rawRatio = parseNumber(debtIncomeRatio) || 0.4;
   // Multiplier is 1 / ratio, e.g. 1 / 0.4 = 2.5
   const multiplier = rawRatio > 0 ? (1 / rawRatio).toFixed(1) : "2.5";
 
   // Early-career salary (avgSalary from DB, or fallback to s1/1st year earnings, fallback to $45k if very low)
-  const earlyEarnings = avgSalary !== undefined && avgSalary !== null && parseNumber(avgSalary) > 0
-    ? parseNumber(avgSalary)
-    : (s1 != null && s1 > 20000 ? s1 : null);
+  const earlyEarnings =
+    avgSalary !== undefined && avgSalary !== null && parseNumber(avgSalary) > 0
+      ? parseNumber(avgSalary)
+      : s1 != null && s1 > 20000
+        ? s1
+        : null;
   // Average debt = loanPrincipal from aid table (or fallback to earlyEarnings * rawRatio)
-  const avgDebt = loanPrincipal !== undefined && loanPrincipal !== null && parseNumber(loanPrincipal) > 0
-    ? parseNumber(loanPrincipal)
-    : (earlyEarnings !== null ? Math.round(earlyEarnings * rawRatio) : null);
+  const avgDebt =
+    loanPrincipal !== undefined &&
+    loanPrincipal !== null &&
+    parseNumber(loanPrincipal) > 0
+      ? parseNumber(loanPrincipal)
+      : earlyEarnings !== null
+        ? Math.round(earlyEarnings * rawRatio)
+        : null;
 
   // 4. Projected Salary Trajectory SVG Calculations
   const hasSalaryData = s1 !== null || s5 !== null || s10 !== null;
 
-  const s1Val = s1 ?? (s5 ? Math.round(s5 / 1.3) : (s10 ? Math.round(s10 / 1.6) : 40000));
+  const s1Val =
+    s1 ?? (s5 ? Math.round(s5 / 1.3) : s10 ? Math.round(s10 / 1.6) : 40000);
   const s5Val = s5 ?? Math.round(s1Val * 1.3);
   const s10Val = s10 ?? Math.round(s5Val * 1.25);
   const s15Val = Math.round(s10Val * 1.25);
@@ -152,8 +164,14 @@ export default function OutcomesSection({
 
   // Map values to coordinates, scaled by animProgress
   const coords = trajectoryPoints.map((pt, i) => {
-    const x = paddingLeft + (i * (width - paddingLeft - paddingRight) / (trajectoryPoints.length - 1));
-    const targetY = height - paddingBottom - ((pt.val - minVal) * (height - paddingTop - paddingBottom) / safeDiff);
+    const x =
+      paddingLeft +
+      (i * (width - paddingLeft - paddingRight)) /
+        (trajectoryPoints.length - 1);
+    const targetY =
+      height -
+      paddingBottom -
+      ((pt.val - minVal) * (height - paddingTop - paddingBottom)) / safeDiff;
     const y = baselineY + (targetY - baselineY) * animProgress;
     return { x, y };
   });
@@ -165,7 +183,7 @@ export default function OutcomesSection({
     const next = coords[i + 1];
     const cpX1 = curr.x + (next.x - curr.x) / 3;
     const cpY1 = curr.y;
-    const cpX2 = curr.x + 2 * (next.x - curr.x) / 3;
+    const cpX2 = curr.x + (2 * (next.x - curr.x)) / 3;
     const cpY2 = next.y;
     pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
   }
@@ -174,43 +192,88 @@ export default function OutcomesSection({
   const fillD = `${pathD} L ${coords[coords.length - 1].x} ${height - paddingBottom} L ${coords[0].x} ${height - paddingBottom} Z`;
 
   // 5. In-Demand Roles lists tailored to program titles
-  const isBusiness = programTitle?.toLowerCase().includes("bus") || programTitle?.toLowerCase().includes("fin") || programTitle?.toLowerCase().includes("econ");
-  const isHealth = programTitle?.toLowerCase().includes("health") || programTitle?.toLowerCase().includes("bio") || programTitle?.toLowerCase().includes("nurs");
+  const isBusiness =
+    programTitle?.toLowerCase().includes("bus") ||
+    programTitle?.toLowerCase().includes("fin") ||
+    programTitle?.toLowerCase().includes("econ");
+  const isHealth =
+    programTitle?.toLowerCase().includes("health") ||
+    programTitle?.toLowerCase().includes("bio") ||
+    programTitle?.toLowerCase().includes("nurs");
 
   const roles = isBusiness
-    ? ["Investment Banker", "Financial Analyst", "Consultant", "Product Manager", "Business Analyst", "Operations Manager"]
+    ? [
+        "Investment Banker",
+        "Financial Analyst",
+        "Consultant",
+        "Product Manager",
+        "Business Analyst",
+        "Operations Manager",
+      ]
     : isHealth
-      ? ["Clinical Research Associate", "Healthcare Administrator", "Medical Technologist", "Bioinformatics Specialist", "Consultant"]
-      : ["Software Engineer", "Product Manager", "Data Scientist", "Investment Banker", "Consultant", "UX Designer"];
+      ? [
+          "Clinical Research Associate",
+          "Healthcare Administrator",
+          "Medical Technologist",
+          "Bioinformatics Specialist",
+          "Consultant",
+        ]
+      : [
+          "Software Engineer",
+          "Product Manager",
+          "Data Scientist",
+          "Investment Banker",
+          "Consultant",
+          "UX Designer",
+        ];
 
   return (
     <div ref={containerRef} className="flex flex-col gap-10 py-6 max-w-4xl">
-
       {/* 1. Median Salary Section */}
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-4">MEDIAN SALARY</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-4">
+          MEDIAN SALARY
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
           {/* 1 Year */}
           <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">1 Year</p>
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+              1 Year
+            </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
-              {s1 != null ? formatCurrency(s1 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
+              {s1 != null ? (
+                formatCurrency(s1 * animProgress)
+              ) : (
+                <span className="text-gray-300 text-base">No data</span>
+              )}
             </p>
           </div>
 
           {/* 5 Year */}
           <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">5 Year</p>
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+              5 Year
+            </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
-              {s5 != null ? formatCurrency(s5 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
+              {s5 != null ? (
+                formatCurrency(s5 * animProgress)
+              ) : (
+                <span className="text-gray-300 text-base">No data</span>
+              )}
             </p>
           </div>
 
           {/* 10 Year */}
           <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">10 Year</p>
+            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+              10 Year
+            </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
-              {s10 != null ? formatCurrency(s10 * animProgress) : <span className="text-gray-300 text-base">No data</span>}
+              {s10 != null ? (
+                formatCurrency(s10 * animProgress)
+              ) : (
+                <span className="text-gray-300 text-base">No data</span>
+              )}
             </p>
           </div>
         </div>
@@ -221,7 +284,9 @@ export default function OutcomesSection({
         {/* Employment Rate */}
         <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[9px] sm:text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-1 sm:mb-2">EMPLOYMENT RATE</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-1 sm:mb-2">
+              EMPLOYMENT RATE
+            </p>
             <p className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-2 sm:mb-4">
               {formatPercent(parsedEmp)}
             </p>
@@ -229,7 +294,9 @@ export default function OutcomesSection({
           <div className="w-full bg-gray-100 h-2 rounded-full mt-1 sm:mt-2">
             <div
               className="bg-[#2563EB] h-2 rounded-full"
-              style={{ width: `${(parsedEmp < 2 ? parsedEmp * 100 : parsedEmp) * animProgress}%` }}
+              style={{
+                width: `${(parsedEmp < 2 ? parsedEmp * 100 : parsedEmp) * animProgress}%`,
+              }}
             />
           </div>
         </div>
@@ -237,18 +304,24 @@ export default function OutcomesSection({
         {/* 20-Year ROI */}
         <div className="bg-[#FDF4FF] border border-[#F5D0FE]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[9px] sm:text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-1 sm:mb-2">20-YEAR NET ROI</p>
+            <p className="text-[9px] sm:text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-1 sm:mb-2">
+              20-YEAR NET ROI
+            </p>
             <p className="text-2xl sm:text-4xl md:text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
               {formatRoi(netRoi20Yr || null)}
             </p>
-            <p className="text-[10px] sm:text-xs text-gray-400 font-medium">Lifetime premium</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 font-medium">
+              Lifetime premium
+            </p>
           </div>
         </div>
       </div>
 
       {/* 3. Salary Trajectory Line Graph */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Salary Trajectory</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Salary Trajectory
+        </h2>
         <div className="bg-white border border-gray-150 rounded-3xl p-6.5 shadow-sm">
           {hasSalaryData ? (
             <>
@@ -258,18 +331,38 @@ export default function OutcomesSection({
                   className="w-full min-w-[500px] h-auto overflow-visible"
                 >
                   <defs>
-                    <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id={chartGradientId}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+                      <stop
+                        offset="100%"
+                        stopColor="#3B82F6"
+                        stopOpacity="0.0"
+                      />
                     </linearGradient>
                     <clipPath id={chartClipId}>
-                      <rect x="0" y="0" width={width * animProgress} height={height} />
+                      <rect
+                        x="0"
+                        y="0"
+                        width={width * animProgress}
+                        height={height}
+                      />
                     </clipPath>
                   </defs>
 
                   {/* Y Axis Grid Lines & Labels */}
                   {[minVal, (minVal + maxVal) / 2, maxVal].map((yVal, i) => {
-                    const y = height - paddingBottom - ((yVal - minVal) * (height - paddingTop - paddingBottom) / safeDiff);
+                    const y =
+                      height -
+                      paddingBottom -
+                      ((yVal - minVal) *
+                        (height - paddingTop - paddingBottom)) /
+                        safeDiff;
                     return (
                       <g key={i}>
                         <line
@@ -293,7 +386,11 @@ export default function OutcomesSection({
                   })}
 
                   {/* Curve Area Fill */}
-                  <path d={fillD} fill={`url(#${chartGradientId})`} clipPath={`url(#${chartClipId})`} />
+                  <path
+                    d={fillD}
+                    fill={`url(#${chartGradientId})`}
+                    clipPath={`url(#${chartClipId})`}
+                  />
 
                   {/* Curve Line */}
                   <path
@@ -307,7 +404,7 @@ export default function OutcomesSection({
 
                   {/* Data points */}
                   {coords.map((coord, i) => {
-                    const dotVisible = (width * animProgress) >= coord.x;
+                    const dotVisible = width * animProgress >= coord.x;
                     return (
                       <circle
                         key={i}
@@ -318,7 +415,8 @@ export default function OutcomesSection({
                         stroke="#3B82F6"
                         strokeWidth="3.5"
                         style={{
-                          transition: 'r 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          transition:
+                            "r 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
                         }}
                       />
                     );
@@ -341,16 +439,33 @@ export default function OutcomesSection({
 
               <div className="flex justify-center items-center gap-2 mt-4">
                 <span className="w-2.5 h-2.5 bg-[#3B82F6] rounded-full" />
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Projected Growth</span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                  Projected Growth
+                </span>
               </div>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <svg className="w-12 h-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.281m5.94 2.28m0 0a3 3 0 10-3-3M3.75 21h16.5" />
+              <svg
+                className="w-12 h-12 text-gray-300 mb-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.281m5.94 2.28m0 0a3 3 0 10-3-3M3.75 21h16.5"
+                />
               </svg>
-              <p className="text-sm font-semibold text-gray-500">Salary trajectory data is not available for this program</p>
-              <p className="text-[11px] text-gray-400 mt-1">Estimates will populate once federal scorecard updates are released.</p>
+              <p className="text-sm font-semibold text-gray-500">
+                Salary trajectory data is not available for this program
+              </p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Estimates will populate once federal scorecard updates are
+                released.
+              </p>
             </div>
           )}
         </div>
@@ -358,7 +473,9 @@ export default function OutcomesSection({
 
       {/* 4. In-Demand Roles */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">In-Demand Roles</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          In-Demand Roles
+        </h2>
         <div className="flex flex-wrap gap-2.5">
           {roles.map((role, i) => (
             <span
@@ -373,7 +490,9 @@ export default function OutcomesSection({
 
       {/* 5. Debt-to-Income Ratio */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Debt-to-Income Ratio</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Debt-to-Income Ratio
+        </h2>
         <div className="bg-white border border-gray-150 rounded-3xl p-8 shadow-sm flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <span className="px-3 py-1.5 bg-[#E0F2FE] text-[#0369A1] rounded-full text-[9px] font-extrabold uppercase tracking-wider">
@@ -392,9 +511,7 @@ export default function OutcomesSection({
             >
               Debt
             </div>
-            <div
-              className="bg-[#2563EB] flex items-center justify-center flex-1"
-            >
+            <div className="bg-[#2563EB] flex items-center justify-center flex-1">
               Income
             </div>
           </div>
@@ -402,24 +519,33 @@ export default function OutcomesSection({
           <div className="flex justify-between items-center px-1">
             <div className="flex flex-col">
               <span className="text-sm font-black text-gray-900">
-                {avgDebt !== null ? formatCurrency(avgDebt * animProgress) : "N/A"}
+                {avgDebt !== null
+                  ? formatCurrency(avgDebt * animProgress)
+                  : "N/A"}
               </span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average debt</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Average debt
+              </span>
             </div>
             <div className="flex flex-col text-right">
               <span className="text-sm font-black text-gray-900">
-                {earlyEarnings !== null ? formatCurrency(earlyEarnings * animProgress) : "N/A"}
+                {earlyEarnings !== null
+                  ? formatCurrency(earlyEarnings * animProgress)
+                  : "N/A"}
               </span>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average early-career earnings</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Average early-career earnings
+              </span>
             </div>
           </div>
 
           <p className="text-xs text-gray-400 text-center font-medium border-t border-gray-50 pt-4">
-            Students typically earn ~{(Number(multiplier) * animProgress).toFixed(1)}x their debt after graduation
+            Students typically earn ~
+            {(Number(multiplier) * animProgress).toFixed(1)}x their debt after
+            graduation
           </p>
         </div>
       </div>
-
     </div>
   );
 }

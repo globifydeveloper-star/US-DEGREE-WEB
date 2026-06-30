@@ -24,9 +24,7 @@ const sumOrNull = (...vals: (number | null | undefined)[]): number | null =>
 
 export default function TuitionCostsSection({
   tuitionData,
-  schoolName = "this university",
   tuitionType: propTuitionType,
-  setTuitionType: propSetTuitionType,
 }: TuitionCostsSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -104,11 +102,9 @@ export default function TuitionCostsSection({
     "110001+": tuitionData?.net_price?.income_110001_plus ?? null,
   };
 
-  const [localTuitionType, setLocalTuitionType] = useState<
-    "in_state" | "out_state"
-  >("in_state");
-  const tuitionType = propTuitionType ?? localTuitionType;
-  const setTuitionType = propSetTuitionType ?? setLocalTuitionType;
+  // No in/out-state toggle is wired in this view, so the type is driven purely
+  // by the parent (falling back to in-state when rendered standalone).
+  const tuitionType = propTuitionType ?? "in_state";
 
   const activeTuition =
     tuitionType === "in_state" ? tuitionInState : tuitionOutState;
@@ -363,7 +359,7 @@ export default function TuitionCostsSection({
             style={{ outline: "1.22px #E2E8F0 solid" }}
           >
             <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">
-                Your Net Price 
+              Your Net Price
             </p>
             <p className="text-sm sm:text-base md:text-xl font-bold text-[#7C7C7C] font-poppins">
               {fmt(currentNetPrice)}{" "}
@@ -372,7 +368,7 @@ export default function TuitionCostsSection({
           </div>
           <div className="bg-[#C0FFF0] rounded-xl p-3.5 flex flex-col gap-1 col-span-2 md:col-span-1">
             <p className="text-[9px] sm:text-[10px] font-bold text-black font-poppins">
-           Est. Financial Aid
+              Est. Financial Aid
             </p>
             <p
               className="text-sm sm:text-base md:text-xl font-bold font-poppins"
