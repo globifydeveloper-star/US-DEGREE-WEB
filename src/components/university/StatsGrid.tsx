@@ -1,33 +1,37 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { StatsGridProps } from '@/types/university/StatsGrid';
+import React, { useEffect, useRef, useState } from "react";
+import { StatsGridProps } from "@/types/university/StatsGrid";
 
 /** Parse a numeric value from a display string like "17,249", "98%", "5:1", "20+" */
 const extractNumber = (val: string): number | null => {
   // Handle ratio strings like "5:1" — extract the first number
-  if (val.includes(':')) {
+  if (val.includes(":")) {
     const num = parseInt(val);
     return isNaN(num) ? null : num;
   }
-  const cleaned = val.replace(/[^0-9.]/g, '');
+  const cleaned = val.replace(/[^0-9.]/g, "");
   const n = parseFloat(cleaned);
   return isNaN(n) ? null : n;
 };
 
 /** Format an animated number back into its display form based on the label */
-const formatAnimValue = (label: string, current: number, final: string): string => {
-  if (label === 'TOTAL STUDENTS' || label === 'FAFSA APPLICATION') {
+const formatAnimValue = (
+  label: string,
+  current: number,
+  final: string,
+): string => {
+  if (label === "TOTAL STUDENTS" || label === "FAFSA APPLICATION") {
     return Math.round(current).toLocaleString();
   }
-  if (label === 'FACULTY RATIO') {
+  if (label === "FACULTY RATIO") {
     // "5:1" style — animate the left number
     return `${Math.round(current)}:1`;
   }
-  if (label === 'RETENTION RATE' || label === 'COMPLETION') {
+  if (label === "RETENTION RATE" || label === "COMPLETION") {
     return `${Math.round(current)}%`;
   }
-  if (label === 'PROGRAMS') {
+  if (label === "PROGRAMS") {
     return `${Math.round(current)}+`;
   }
   return final;
@@ -76,7 +80,8 @@ export default function StatsGrid({
     },
     {
       label: "FAFSA APPLICATION",
-      value: fafsaApplications != null ? fafsaApplications.toLocaleString() : "N/A",
+      value:
+        fafsaApplications != null ? fafsaApplications.toLocaleString() : "N/A",
       accentColor: "#E11D48",
       accentBg: "#FFF1F2",
       accentBorder: "#FECDD3",
@@ -95,7 +100,7 @@ export default function StatsGrid({
   // ── Count-up animation state ──
   const gridRef = useRef<HTMLDivElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
-  const [animValues, setAnimValues] = useState<string[]>(stats.map(() => '0'));
+  const [animValues, setAnimValues] = useState<string[]>(stats.map(() => "0"));
 
   useEffect(() => {
     const el = gridRef.current;
@@ -120,9 +125,9 @@ export default function StatsGrid({
             setAnimValues(
               stats.map((s, i) => {
                 const target = targets[i];
-                if (target === null || s.value === 'N/A') return s.value;
+                if (target === null || s.value === "N/A") return s.value;
                 return formatAnimValue(s.label, eased * target, s.value);
-              })
+              }),
             );
 
             if (step >= steps) {
@@ -133,7 +138,7 @@ export default function StatsGrid({
           }, stepTime);
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
 
     observer.observe(el);
@@ -142,10 +147,7 @@ export default function StatsGrid({
   }, [hasAnimated]);
 
   return (
-    <div
-      ref={gridRef}
-      className="grid grid-cols-2 md:grid-cols-3 gap-3 py-2"
-    >
+    <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 gap-3 py-2">
       {stats.map((stat, i) => (
         <div
           key={stat.label}
@@ -181,10 +183,12 @@ export default function StatsGrid({
           >
             {stat.label === "FAFSA APPLICATION" ? (
               <span style={{ paddingBottom: "2px" }}>
-                {hasAnimated ? animValues[i] : '0'}
+                {hasAnimated ? animValues[i] : "0"}
               </span>
+            ) : hasAnimated ? (
+              animValues[i]
             ) : (
-              hasAnimated ? animValues[i] : '0'
+              "0"
             )}
           </p>
         </div>

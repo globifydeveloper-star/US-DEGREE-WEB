@@ -194,7 +194,7 @@ function SearchContent() {
     };
 
     fetchResults();
-  }, [searchParams]);
+  }, [searchParams, category]);
 
   const mapToCardProps = (result: SearchResult) => {
     const hasValue = (value: number | string | null | undefined) =>

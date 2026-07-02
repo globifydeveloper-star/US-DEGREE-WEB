@@ -23,6 +23,7 @@ import {
   fetchCompareSelected,
   addCompareSelected,
   removeCompareSelected,
+  type SelectedCompareCollege,
 } from "@/lib/auth/api";
 
 // Fired for store subscribers (cards, Navbar, profile section).
@@ -47,6 +48,15 @@ export interface CompareDetail {
   schoolUrl?: string;
   logoColor?: string;
 }
+
+/**
+ * Optional payload carried on COMPARE_SELECTED_EVENT so the profile's "Colleges
+ * Selected for Comparison" grid can update instantly from the in-memory record
+ * instead of waiting on a backend refetch. When absent, listeners reload.
+ */
+export type CompareChangeDetail =
+  | { action: "added"; record: SelectedCompareCollege }
+  | { action: "removed"; unitid: string };
 
 let selectedSet = new Set<string>();
 let loaded = false;
@@ -80,9 +90,9 @@ function writeBucket(ids: string[], details: CompareDetail[]) {
   localStorage.setItem(DETAILS_KEY, JSON.stringify(details));
 }
 
-function dispatch() {
+function dispatch(detail?: CompareChangeDetail) {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(COMPARE_SELECTED_EVENT));
+    window.dispatchEvent(new CustomEvent(COMPARE_SELECTED_EVENT, { detail }));
     window.dispatchEvent(new Event(COMPARE_BUCKET_EVENT));
   }
 }
@@ -157,8 +167,17 @@ export async function reloadCompareSelected(): Promise<void> {
 
 export type AddResult = "added" | "exists" | "full";
 
-/** Add a college to the comparison set. Returns "full" when the cap is hit. */
-export async function addToCompare(detail: CompareDetail): Promise<AddResult> {
+/**
+ * Add a college to the comparison set. Returns "full" when the cap is hit.
+ *
+ * Pass `enriched` (a fully-shaped record) when the caller already has the
+ * college's display fields — it is broadcast on COMPARE_SELECTED_EVENT so the
+ * profile's comparison grid shows the new card immediately, with no refetch.
+ */
+export async function addToCompare(
+  detail: CompareDetail,
+  enriched?: SelectedCompareCollege,
+): Promise<AddResult> {
   initFromBucket();
   const id = String(detail.id);
   if (!id) return "exists";
@@ -179,7 +198,7 @@ export async function addToCompare(detail: CompareDetail): Promise<AddResult> {
     });
   }
   writeBucket(ids, details);
-  dispatch();
+  dispatch(enriched ? { action: "added", record: enriched } : undefined);
 
   try {
     await addCompareSelected(id);
@@ -189,7 +208,7 @@ export async function addToCompare(detail: CompareDetail): Promise<AddResult> {
       readBucket().filter((x) => x !== id),
       readDetails().filter((d) => String(d.id) !== id),
     );
-    dispatch();
+    dispatch({ action: "removed", unitid: id });
     throw err;
   }
   return "added";
@@ -207,7 +226,7 @@ export async function removeFromCompare(unitid: string): Promise<void> {
     readBucket().filter((x) => x !== id),
     prevDetails.filter((d) => String(d.id) !== id),
   );
-  dispatch();
+  dispatch({ action: "removed", unitid: id });
 
   try {
     await removeCompareSelected(id);
@@ -222,6 +241,7 @@ export async function removeFromCompare(unitid: string): Promise<void> {
         details.push(restored);
       }
       writeBucket(ids, details);
+      // No enriched record on hand to restore the card from — reload to reconcile.
       dispatch();
     }
     throw err;
@@ -230,28 +250,39 @@ export async function removeFromCompare(unitid: string): Promise<void> {
 
 /** Clear the entire comparison set. */
 export async function clearCompare(): Promise<void> {
-  initFromBucket();
-  const ids = Array.from(selectedSet);
+  // Load the authoritative backend set first. On the /compare page the
+  // in-memory set is only ever seeded once from the localStorage mirror, which
+  // can be stale (or empty) relative to the backend — clearing just that would
+  // leave colleges behind in the profile's "Colleges Selected for Comparison"
+  // section. Unioning with the mirror covers offline/fallback too.
+  await ensureCompareLoaded();
+  const ids = new Set<string>([...selectedSet, ...readBucket()]);
   selectedSet = new Set();
   writeBucket([], []);
   dispatch();
   try {
-    await Promise.all(ids.map((id) => removeCompareSelected(id)));
+    await Promise.all(Array.from(ids).map((id) => removeCompareSelected(id)));
+    // Reconcile listeners once the backend set is actually empty.
+    dispatch();
   } catch (err) {
     console.error("Failed to clear comparison set on backend:", err);
     throw err;
   }
 }
 
-/** Toggle a college's membership; returns the resulting action. */
+/**
+ * Toggle a college's membership; returns the resulting action. Pass `enriched`
+ * so a fresh selection appears in the profile comparison grid instantly.
+ */
 export async function toggleCompare(
   detail: CompareDetail,
+  enriched?: SelectedCompareCollege,
 ): Promise<AddResult | "removed"> {
   if (isCompareSelected(detail.id)) {
     await removeFromCompare(detail.id);
     return "removed";
   }
-  return addToCompare(detail);
+  return addToCompare(detail, enriched);
 }
 
 // ---- React hooks ----

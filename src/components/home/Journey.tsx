@@ -37,8 +37,10 @@ const steps = [
 
 export default function Journey() {
   return (
-    <section className="bg-[#f5f7fb] py-16 md:py-20 lg:py-24
-px-5 sm:px-8 lg:px-[86px]">
+    <section
+      className="bg-[#f5f7fb] py-16 md:py-20 lg:py-24
+px-5 sm:px-8 lg:px-[86px]"
+    >
       <div className="max-w-[1400px] mx-auto">
         {/* Heading */}
         <div className="text-center mb-16 lg:mb-24">

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { Bookmark, MapPin, ExternalLink } from "lucide-react";
 import { UniversityHeroProps } from "@/types/university/UniversityHero";
 import { Button } from "antd";
@@ -81,10 +82,12 @@ export default function UniversityHero({
     <div className="relative w-full">
       {/* Banner Cover Image */}
       <div className="h-64 md:h-[300px] w-full overflow-hidden relative">
-        <img
+        <Image
           src="/images/2.jpg"
           alt={`${name} campus`}
-          className="w-full h-full object-cover"
+          fill
+          priority
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>
       </div>
@@ -95,9 +98,11 @@ export default function UniversityHero({
           {/* Logo Card */}
           {isStanford ? (
             <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-40 md:h-40 mt-0 md:mt-12 bg-white border border-gray-100 rounded-2xl shadow-xl p-2 md:p-3.5 flex items-center justify-center shrink-0">
-              <img
+              <Image
                 src="/images/stanford_logo.png"
                 alt={`${name} logo`}
+                width={160}
+                height={160}
                 className="w-full h-full object-contain rounded-[16px]"
               />
             </div>
@@ -105,9 +110,11 @@ export default function UniversityHero({
             <div
               className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0 overflow-hidden`}
             >
-              <img
+              <Image
                 src="/images/Colleges_105154_logo.png"
                 alt={`${name} logo`}
+                width={160}
+                height={160}
                 className="w-full h-full object-contain p-2"
               />{" "}
             </div>

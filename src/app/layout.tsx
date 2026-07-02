@@ -1,30 +1,38 @@
-import type { Metadata } from 'next';
-import { Lexend, Poppins } from 'next/font/google';
-import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+import type { Metadata } from "next";
+import { Lexend, Poppins } from "next/font/google";
+import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+import PopupConfig from "@/components/layout/PopupConfig";
 
 const lexend = Lexend({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-lexend',
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-lexend",
 });
 
 const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-poppins',
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
-  title: 'US Degrees',
-  description: 'Search universities in the US',
+  title: "US Degrees",
+  description: "Search universities in the US",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <AuthProvider>
       <html lang="en" className={`${lexend.variable} ${poppins.variable}`}>
-        <body className={lexend.className}>{children}</body>
+        <body className={lexend.className}>
+          <PopupConfig />
+          {children}
+        </body>
       </html>
     </AuthProvider>
   );

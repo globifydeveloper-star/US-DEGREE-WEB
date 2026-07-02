@@ -38,7 +38,43 @@ export interface CollegeMatch {
 }
 
 // How many match tiles to show (and therefore enrich).
-const MAX_MATCHES = 8;
+const TARGET_MATCHES = 10;
+
+// Distribute `total` slots across `n` buckets as evenly as possible, giving the
+// remainder to the earliest buckets. e.g. allocate(10, 2) -> [5, 5];
+// allocate(10, 1) -> [10]; allocate(10, 3) -> [4, 3, 3].
+function allocate(total: number, n: number): number[] {
+  if (n <= 0) return [];
+  const base = Math.floor(total / n);
+  let rem = total % n;
+  return Array.from({ length: n }, () => base + (rem-- > 0 ? 1 : 0));
+}
+
+// Round-robin rows across their state so no single state dominates and every
+// preferred state gets represented before any state gets a second pick. With a
+// single state this is a no-op (all rows are that state).
+function interleaveByState(rows: SearchResult[]): SearchResult[] {
+  const byState = new Map<string, SearchResult[]>();
+  for (const r of rows) {
+    const key = String(r.state ?? "").toUpperCase();
+    const bucket = byState.get(key);
+    if (bucket) bucket.push(r);
+    else byState.set(key, [r]);
+  }
+  const buckets = Array.from(byState.values());
+  const out: SearchResult[] = [];
+  for (let i = 0; out.length < rows.length; i++) {
+    let progressed = false;
+    for (const b of buckets) {
+      if (b[i]) {
+        out.push(b[i]);
+        progressed = true;
+      }
+    }
+    if (!progressed) break;
+  }
+  return out;
+}
 
 // Parse a numeric API value, returning null for anything non-numeric.
 function toNum(val: number | string | null | undefined): number | null {
@@ -88,6 +124,7 @@ export function useCollegeMatches(profile: StudentProfile): {
 
   const states = profile.preferredStates;
   const programs = profile.preferredPrograms;
+  const collegeType = profile.preferredCollegeType;
   // Primitive deps so the effect only re-runs on actual preference changes.
   const statesKey = states.join(",");
   const programsKey = programs.join(",");
@@ -124,27 +161,74 @@ export function useCollegeMatches(profile: StudentProfile): {
           }),
         );
 
-        let rows = resultArrays.flat();
+        // Shared row filter: restrict to preferred states and (when set) the
+        // preferred college type. Applied per major so each major's quota is
+        // filled from its own filtered pool.
+        const wantedStates =
+          states.length > 0
+            ? new Set(states.map((s) => s.toUpperCase()))
+            : null;
+        const wantPrivate = collegeType
+          ? collegeType.toLowerCase() === "private"
+          : null;
+        const passesFilters = (r: SearchResult): boolean => {
+          if (
+            wantedStates &&
+            !(r.state && wantedStates.has(String(r.state).toUpperCase()))
+          ) {
+            return false;
+          }
+          if (wantPrivate !== null) {
+            const isPrivate = String(r.college_type ?? r.school_type ?? "")
+              .toLowerCase()
+              .includes("private");
+            if (isPrivate !== wantPrivate) return false;
+          }
+          return true;
+        };
 
-        // Filter to the full set of preferred states (client-side).
-        if (states.length > 0) {
-          const wanted = new Set(states.map((s) => s.toUpperCase()));
-          rows = rows.filter(
-            (r) => r.state && wanted.has(String(r.state).toUpperCase()),
-          );
-        }
+        // One filtered + state-interleaved pool per query (major). When only
+        // states are set there is a single pool (the "" query).
+        const perMajorPools = resultArrays.map((arr) =>
+          interleaveByState(arr.filter(passesFilters)),
+        );
 
-        // De-duplicate by college (a school can appear once per program row).
+        // Give each major an even share of the 10 slots: 2 majors -> 5 each,
+        // 1 major (or states-only) -> 10.
+        const quotas = allocate(TARGET_MATCHES, perMajorPools.length);
+
         const seen = new Set<string>();
         const unique: SearchResult[] = [];
-        for (const r of rows) {
-          const id = String(r.unitid ?? "");
-          if (!id || seen.has(id)) continue;
-          seen.add(id);
-          unique.push(r);
+
+        // Pass 1: take up to each major's quota, de-duplicating across majors.
+        perMajorPools.forEach((pool, idx) => {
+          let taken = 0;
+          for (const r of pool) {
+            if (taken >= quotas[idx]) break;
+            const id = String(r.unitid ?? "");
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            unique.push(r);
+            taken++;
+          }
+        });
+
+        // Pass 2: backfill from any leftovers so we still reach 10 when a major
+        // was short on results.
+        if (unique.length < TARGET_MATCHES) {
+          for (const pool of perMajorPools) {
+            for (const r of pool) {
+              if (unique.length >= TARGET_MATCHES) break;
+              const id = String(r.unitid ?? "");
+              if (!id || seen.has(id)) continue;
+              seen.add(id);
+              unique.push(r);
+            }
+            if (unique.length >= TARGET_MATCHES) break;
+          }
         }
 
-        const base: CollegeMatch[] = unique.slice(0, MAX_MATCHES).map((r) => ({
+        const base: CollegeMatch[] = unique.slice(0, TARGET_MATCHES).map((r) => ({
           id: String(r.unitid),
           unitid: String(r.unitid),
           name: r.school_name || "Unknown University",
@@ -211,7 +295,7 @@ export function useCollegeMatches(profile: StudentProfile): {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statesKey, programsKey]);
+  }, [statesKey, programsKey, collegeType]);
 
   return { matches, loading };
 }

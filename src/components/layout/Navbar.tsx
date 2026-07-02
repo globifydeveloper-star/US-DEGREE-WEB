@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "@/context/AuthContext";
 import LoginModal from "../auth/LoginModal";
+import MobileNavDock from "./MobileNavDock";
 
 // Subscribe to the compared-colleges list stored in localStorage so the badge
 // count stays in sync across tabs and in-app updates.
@@ -47,7 +48,7 @@ const Navbar = () => {
     getCompareCountServerSnapshot,
   );
   //    useEffect(() => {
-   
+
   //   const handleOpenAuth = (e: Event) => {
   //     const customEvent = e as CustomEvent<{ mode?: 'login' | 'signup' }>;
   //     const mode = customEvent.detail?.mode || 'signup';
@@ -229,7 +230,7 @@ const Navbar = () => {
                 className="hover:text-[#2b55ff] transition-colors flex items-center gap-1.5"
               >
                 <span>Compare Colleges</span>
-                {compareCount > 0 && (
+                {isLoggedIn && compareCount > 0 && (
                   <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
                     {compareCount}
                   </span>
@@ -328,7 +329,7 @@ const Navbar = () => {
               className="flex items-center justify-between w-full"
             >
               <span>Compare Colleges</span>
-              {compareCount > 0 && (
+              {isLoggedIn && compareCount > 0 && (
                 <span className="bg-[#3b5bdb] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[18px] text-center leading-none">
                   {compareCount}
                 </span>
@@ -401,6 +402,9 @@ const Navbar = () => {
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={() => setIsLoginModalOpen(false)}
       />
+
+      {/* Floating Mobile Navigation Dock with Sliding Highlight */}
+      <MobileNavDock onOpenAuthModal={openAuthModal} />
     </>
   );
 };

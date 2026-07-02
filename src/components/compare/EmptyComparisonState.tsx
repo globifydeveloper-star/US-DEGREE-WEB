@@ -1,6 +1,6 @@
-import React from 'react';
-import { Building2, Plus } from 'lucide-react';
-import { UniOption } from './useCompareColleges';
+import React from "react";
+import { Building2, Plus } from "lucide-react";
+import { UniOption } from "./useCompareColleges";
 
 interface EmptyComparisonStateProps {
   initialUniversities: UniOption[];
@@ -20,7 +20,8 @@ export default function EmptyComparisonState({
         No colleges selected for comparison
       </h3>
       <p className="text-gray-500 font-medium text-sm sm:text-base mb-8 sm:mb-10 max-w-md mx-auto leading-relaxed">
-        Add up to 5 universities from the database search selector to instantly evaluate and discover your best academic and financial match.
+        Add up to 5 universities from the database search selector to instantly
+        evaluate and discover your best academic and financial match.
       </p>
       <div>
         <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">

@@ -5,7 +5,7 @@ import {
   BrainCircuit,
   Settings,
   HeartPulse,
-  PenTool
+  PenTool,
 } from "lucide-react";
 
 const categories = [
@@ -65,8 +65,13 @@ export default function Categories() {
       <div className="w-full max-w-[2380px]">
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 sm:mb-10">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Popular Categories</h2>
-            <p className="text-xs sm:text-sm text-gray-500">Explore the most in-demand fields of study across the United States.</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Popular Categories
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Explore the most in-demand fields of study across the United
+              States.
+            </p>
           </div>
         </div>
 
@@ -80,9 +85,14 @@ export default function Categories() {
                 className={`block p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${cat.bg}`}
               >
                 <div className="mb-3 sm:mb-6">
-                  <Icon className={`${cat.iconColor} w-6 h-6 sm:w-7 sm:h-7`} strokeWidth={1.5} />
+                  <Icon
+                    className={`${cat.iconColor} w-6 h-6 sm:w-7 sm:h-7`}
+                    strokeWidth={1.5}
+                  />
                 </div>
-                <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">{cat.title}</h3>
+                <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">
+                  {cat.title}
+                </h3>
                 <p className="text-[11px] sm:text-sm text-gray-600 leading-normal sm:leading-relaxed">
                   {cat.desc}
                 </p>

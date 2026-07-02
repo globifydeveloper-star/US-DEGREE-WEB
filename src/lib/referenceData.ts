@@ -24,8 +24,7 @@ function normalizeState(raw: unknown): StateOption | null {
   if (raw && typeof raw === "object") {
     const o = raw as Record<string, unknown>;
     const code = (o.code ?? o.state_code ?? o.abbreviation ?? o.value) as
-      | string
-      | undefined;
+      string | undefined;
     // Backend uses `state_title` for the display name (see GET /states).
     const name = (o.name ??
       o.state_title ??

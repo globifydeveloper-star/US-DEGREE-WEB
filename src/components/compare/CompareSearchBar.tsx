@@ -1,7 +1,7 @@
-import React from 'react';
-import { Select, Button, Spin } from 'antd';
-import { Building2 } from 'lucide-react';
-import { UniOption } from './useCompareColleges';
+import React from "react";
+import { Select, Button, Spin } from "antd";
+import { Building2 } from "lucide-react";
+import { UniOption } from "./useCompareColleges";
 
 interface CompareSearchBarProps {
   comparedCount: number;
@@ -45,16 +45,6 @@ export default function CompareSearchBar({
           <span className="text-sm font-black text-slate-500 ml-1">
             Add College:
           </span>
-          {comparedCount > 0 && (
-            <Button
-              type="text"
-              danger
-              className="font-bold flex items-center gap-1.5 sm:hidden p-0 h-auto"
-              onClick={onClearAll}
-            >
-              Clear all
-            </Button>
-          )}
         </div>
 
         <div className="flex flex-1 sm:flex-initial items-center gap-3">
@@ -80,7 +70,10 @@ export default function CompareSearchBar({
             }}
             options={selectOptions.map((c) => ({
               value: c.id,
-              label: c.city && c.state ? `${c.name} (${c.city}, ${c.state})` : c.name,
+              label:
+                c.city && c.state
+                  ? `${c.name} (${c.city}, ${c.state})`
+                  : c.name,
               disabled: comparedIds.includes(c.id),
             }))}
           />
@@ -88,7 +81,7 @@ export default function CompareSearchBar({
             <Button
               type="text"
               danger
-              className="font-bold hidden sm:flex items-center gap-1.5"
+              className="font-bold flex items-center gap-1.5 shrink-0"
               onClick={onClearAll}
             >
               Clear all

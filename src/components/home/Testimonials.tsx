@@ -26,9 +26,12 @@ export default function Testimonials() {
     <section className="pb-20 px-6 sm:px-10 lg:px-[86px] max-w-[2380px] mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {testimonials.map((t, i) => (
-          <div key={i} className={`${t.color} rounded-3xl p-8 text-white shadow-xl shadow-blue-900/10 flex flex-col justify-between min-h-[220px]`}>
+          <div
+            key={i}
+            className={`${t.color} rounded-3xl p-8 text-white shadow-xl shadow-blue-900/10 flex flex-col justify-between min-h-[220px]`}
+          >
             <p className="text-sm md:text-base leading-relaxed font-medium mb-8">
-              "{t.text}"
+              &ldquo;{t.text}&rdquo;
             </p>
             <div className="flex items-center gap-3 mt-auto">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">

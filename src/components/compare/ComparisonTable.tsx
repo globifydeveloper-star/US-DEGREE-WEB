@@ -1,21 +1,26 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
 import {
   MapPin,
   Trash2,
   Sparkles,
   TrendingDown,
   TrendingUp,
-} from 'lucide-react';
-import { Button, Tooltip } from 'antd';
-import { College } from '@/types/university/ComparisonTable';
+} from "lucide-react";
+import { Button, Tooltip } from "antd";
+import { College } from "@/types/university/ComparisonTable";
 
 interface ComparisonTableProps {
   comparedColleges: College[];
   averages: { tuition: number; graduationRate: number; medianSalary: number };
-  highlights: { lowestTuitionId: string; highestGraduationId: string; highestSalaryId: string; bestValueId: string };
+  highlights: {
+    lowestTuitionId: string;
+    highestGraduationId: string;
+    highestSalaryId: string;
+    bestValueId: string;
+  };
   onRemove: (id: string) => void;
   onViewDetails: (id: string) => void;
 }
@@ -44,14 +49,19 @@ export default function ComparisonTable({
                 const isLowestCost = highlights.lowestTuitionId === college.id;
 
                 return (
-                  <th key={college.id} className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky bg-[#FAFBFD] z-20">
+                  <th
+                    key={college.id}
+                    className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky bg-[#FAFBFD] z-20"
+                  >
                     <div className="absolute top-2 right-2 md:top-4 md:right-4 z-40">
                       <Tooltip title="Remove college">
                         <Button
                           type="text"
                           shape="circle"
                           size="small"
-                          icon={<Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />}
+                          icon={
+                            <Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />
+                          }
                           onClick={() => onRemove(college.id)}
                         />
                       </Tooltip>
@@ -72,7 +82,7 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm md:text-lg">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
@@ -90,11 +100,12 @@ export default function ComparisonTable({
                       {/* Badges */}
                       <div className="flex flex-col items-center gap-1 mt-2 md:mt-4">
                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-gray-400 border border-gray-100/80 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md">
-                          {college.isPrivate ? 'Private' : 'Public'}
+                          {college.isPrivate ? "Private" : "Public"}
                         </span>
                         {isBestValue && (
                           <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-[#22C55E] bg-green-50 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md border border-green-100 flex items-center gap-0.5 md:gap-1">
-                            <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3" /> Best ROI
+                            <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3" />{" "}
+                            Best ROI
                           </span>
                         )}
                         {isHighSalary && !isBestValue && (
@@ -121,17 +132,28 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Tuition (In-State)</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Annual tuition & tuition fees</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Tuition (In-State)
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Annual tuition & tuition fees
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => (
-                <td key={college.id} className="p-4 md:p-8 text-center font-mono">
+                <td
+                  key={college.id}
+                  className="p-4 md:p-8 text-center font-mono"
+                >
                   <span className="text-sm md:text-xl font-bold text-slate-900">
-                    {college.tuitionInState !== null ? `$${college.tuitionInState.toLocaleString()}` : 'N/A'}
+                    {college.tuitionInState !== null
+                      ? `$${college.tuitionInState.toLocaleString()}`
+                      : "N/A"}
                   </span>
                   {college.tuitionInState !== null && (
-                    <span className="block text-gray-400 text-[8px] md:text-[10px] font-bold uppercase mt-0.5 md:mt-1">per year</span>
+                    <span className="block text-gray-400 text-[8px] md:text-[10px] font-bold uppercase mt-0.5 md:mt-1">
+                      per year
+                    </span>
                   )}
                 </td>
               ))}
@@ -141,27 +163,39 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/35 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Tuition (Out-of-State)</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">National student baseline rate</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Tuition (Out-of-State)
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    National student baseline rate
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.tuitionOutOfState === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
                 }
 
                 const diffVal = college.tuitionOutOfState - averages.tuition;
-                const percentDiff = averages.tuition > 0 ? Math.round((diffVal / averages.tuition) * 100) : 0;
+                const percentDiff =
+                  averages.tuition > 0
+                    ? Math.round((diffVal / averages.tuition) * 100)
+                    : 0;
                 const isBest = highlights.lowestTuitionId === college.id;
 
                 return (
                   <td key={college.id} className="p-4 md:p-8 text-center">
                     <div className="flex flex-col items-center">
-                      <span className={`text-sm md:text-xl font-black ${isBest ? 'text-green-600 font-bold' : 'text-slate-900'}`}>
+                      <span
+                        className={`text-sm md:text-xl font-black ${isBest ? "text-green-600 font-bold" : "text-slate-900"}`}
+                      >
                         ${college.tuitionOutOfState.toLocaleString()}
                       </span>
 
@@ -178,7 +212,9 @@ export default function ComparisonTable({
                               +{percentDiff}% avg
                             </span>
                           ) : (
-                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">Average</span>
+                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">
+                              Average
+                            </span>
                           )}
                         </div>
                       )}
@@ -192,14 +228,21 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Acceptance Rate</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Selectivity benchmark percentage</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Acceptance Rate
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Selectivity benchmark percentage
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.acceptanceRate === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
@@ -213,9 +256,20 @@ export default function ComparisonTable({
                     <span className="text-sm md:text-xl font-bold text-slate-900">
                       {(college.acceptanceRate * 100).toFixed(1)}%
                     </span>
-                    <span className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
-                      }`}>
-                      {isHighlyCompetitive ? 'Selective' : isCompetitive ? 'Competitive' : 'Match'}
+                    <span
+                      className={`block text-[8px] md:text-[9px] font-black uppercase mt-1 md:mt-1.5 px-1.5 md:px-2 py-0.5 rounded-md mx-auto w-max ${
+                        isHighlyCompetitive
+                          ? "bg-red-50 text-red-600"
+                          : isCompetitive
+                            ? "bg-orange-50 text-orange-600"
+                            : "bg-blue-50 text-blue-600"
+                      }`}
+                    >
+                      {isHighlyCompetitive
+                        ? "Selective"
+                        : isCompetitive
+                          ? "Competitive"
+                          : "Match"}
                     </span>
                   </td>
                 );
@@ -226,26 +280,36 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Graduation Rate</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Percent completing</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Graduation Rate
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Percent completing
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.graduationRate === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
                 }
 
                 const isHero = highlights.highestGraduationId === college.id;
-                const diffRatio = (college.graduationRate - averages.graduationRate) * 100;
+                const diffRatio =
+                  (college.graduationRate - averages.graduationRate) * 100;
 
                 return (
                   <td key={college.id} className="p-4 md:p-8 text-center">
                     <div className="flex flex-col items-center">
-                      <span className={`text-sm md:text-xl font-black ${isHero ? 'text-green-600' : 'text-slate-900'}`}>
+                      <span
+                        className={`text-sm md:text-xl font-black ${isHero ? "text-green-600" : "text-slate-900"}`}
+                      >
                         {(college.graduationRate * 100).toFixed(0)}%
                       </span>
 
@@ -266,7 +330,9 @@ export default function ComparisonTable({
                               {Math.abs(diffRatio).toFixed(0)}% avg
                             </span>
                           ) : (
-                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">Average</span>
+                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">
+                              Average
+                            </span>
                           )}
                         </div>
                       )}
@@ -280,25 +346,37 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">SAT Score Range</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Middle 50th percentile bounds</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    SAT Score Range
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Middle 50th percentile bounds
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.satMin === null || college.satMax === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
                 }
 
                 return (
-                  <td key={college.id} className="p-4 md:p-8 text-center font-mono">
+                  <td
+                    key={college.id}
+                    className="p-4 md:p-8 text-center font-mono"
+                  >
                     <span className="text-xs md:text-lg font-bold text-slate-900">
                       {college.satMin} — {college.satMax}
                     </span>
-                    <span className="block text-gray-400 text-[8px] md:text-[10px] mt-0.5 md:mt-1 font-bold">1600 Max</span>
+                    <span className="block text-gray-400 text-[8px] md:text-[10px] mt-0.5 md:mt-1 font-bold">
+                      1600 Max
+                    </span>
                   </td>
                 );
               })}
@@ -308,26 +386,45 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Median Graduate Salary</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Outcomes after 10 years</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Median Graduate Salary
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Outcomes after 10 years
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.medianSalary === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
                 }
 
                 const isTop = highlights.highestSalaryId === college.id;
-                const diffPerc = averages.medianSalary > 0 ? Math.round(((college.medianSalary - averages.medianSalary) / averages.medianSalary) * 100) : 0;
+                const diffPerc =
+                  averages.medianSalary > 0
+                    ? Math.round(
+                        ((college.medianSalary - averages.medianSalary) /
+                          averages.medianSalary) *
+                          100,
+                      )
+                    : 0;
 
                 return (
-                  <td key={college.id} className="p-4 md:p-8 text-center font-mono">
+                  <td
+                    key={college.id}
+                    className="p-4 md:p-8 text-center font-mono"
+                  >
                     <div className="flex flex-col items-center">
-                      <span className={`text-sm md:text-xl font-black ${isTop ? 'text-[#3F51B5]' : 'text-slate-900'}`}>
+                      <span
+                        className={`text-sm md:text-xl font-black ${isTop ? "text-[#3F51B5]" : "text-slate-900"}`}
+                      >
                         ${college.medianSalary.toLocaleString()}
                       </span>
 
@@ -348,7 +445,9 @@ export default function ComparisonTable({
                               {Math.abs(diffPerc)}% avg
                             </span>
                           ) : (
-                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">Average</span>
+                            <span className="text-[8px] md:text-[10px] font-medium text-gray-400">
+                              Average
+                            </span>
                           )}
                         </div>
                       )}
@@ -362,25 +461,37 @@ export default function ComparisonTable({
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Student Enrollment</p>
-                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">Total size</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Student Enrollment
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Total size
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => {
                 if (college.studentPopulation === null) {
                   return (
-                    <td key={college.id} className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400">
+                    <td
+                      key={college.id}
+                      className="p-4 md:p-8 text-center font-mono text-sm md:text-xl font-bold text-slate-400"
+                    >
                       N/A
                     </td>
                   );
                 }
 
                 return (
-                  <td key={college.id} className="p-4 md:p-8 text-center font-mono">
+                  <td
+                    key={college.id}
+                    className="p-4 md:p-8 text-center font-mono"
+                  >
                     <span className="text-sm md:text-xl font-bold text-slate-900">
                       {college.studentPopulation.toLocaleString()}
                     </span>
-                    <span className="block text-gray-400 text-[8px] md:text-[10px] font-bold uppercase mt-0.5 md:mt-1">students</span>
+                    <span className="block text-gray-400 text-[8px] md:text-[10px] font-bold uppercase mt-0.5 md:mt-1">
+                      students
+                    </span>
                   </td>
                 );
               })}
@@ -390,12 +501,19 @@ export default function ComparisonTable({
             <tr className="bg-[#FAFBFD]/30">
               <td className="p-4 md:p-8 sticky left-0 bg-[#FAFBFD]/90 backdrop-blur font-black text-slate-700 z-10 border-r border-gray-100">
                 <div>
-                  <p className="font-bold text-slate-800 text-xs md:text-sm">Action Details</p>
-                  <p className="text-[8px] md:text-[10px] font-medium text-gray-400 mt-0.5">Deep-dive studies, reviews</p>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Action Details
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-medium text-gray-400 mt-0.5">
+                    Deep-dive studies, reviews
+                  </p>
                 </div>
               </td>
               {comparedColleges.map((college) => (
-                <td key={college.id} className="p-4 md:p-8 text-center bg-slate-50/20">
+                <td
+                  key={college.id}
+                  className="p-4 md:p-8 text-center bg-slate-50/20"
+                >
                   <div className="flex flex-col gap-1.5 max-w-[120px] md:max-w-[160px] mx-auto">
                     <Button
                       type="primary"
@@ -459,7 +577,7 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded-lg bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
@@ -480,7 +598,9 @@ export default function ComparisonTable({
                       type="text"
                       shape="circle"
                       size="small"
-                      icon={<Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />}
+                      icon={
+                        <Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />
+                      }
                       onClick={() => onRemove(college.id)}
                     />
                   </div>
@@ -488,7 +608,7 @@ export default function ComparisonTable({
                   {/* Badges */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     <span className="text-[8px] font-bold uppercase tracking-wider text-gray-400 border border-gray-100 px-2 py-0.5 rounded-md">
-                      {college.isPrivate ? 'Private' : 'Public'}
+                      {college.isPrivate ? "Private" : "Public"}
                     </span>
                     {isBestValue && (
                       <span className="text-[8px] font-black uppercase tracking-wider text-[#22C55E] bg-green-50 px-2 py-0.5 rounded-md border border-green-100 flex items-center gap-0.5">
@@ -544,12 +664,19 @@ export default function ComparisonTable({
           {/* Tuition In-State */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Tuition (In-State)</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Annual tuition & tuition fees</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Tuition (In-State)
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Annual tuition & tuition fees
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => (
-                <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                <div
+                  key={college.id}
+                  className="py-2.5 flex items-center justify-between text-xs"
+                >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                       {college.logo ? (
@@ -564,7 +691,7 @@ export default function ComparisonTable({
                         />
                       ) : (
                         <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                          {college.name ? college.name.charAt(0) : 'U'}
+                          {college.name ? college.name.charAt(0) : "U"}
                         </div>
                       )}
                     </div>
@@ -576,7 +703,9 @@ export default function ComparisonTable({
                     </span>
                   </div>
                   <span className="font-mono font-bold text-slate-900 shrink-0">
-                    {college.tuitionInState !== null ? `$${college.tuitionInState.toLocaleString()}` : 'N/A'}
+                    {college.tuitionInState !== null
+                      ? `$${college.tuitionInState.toLocaleString()}`
+                      : "N/A"}
                   </span>
                 </div>
               ))}
@@ -586,15 +715,22 @@ export default function ComparisonTable({
           {/* Tuition Out-of-State */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Tuition (Out-of-State)</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">National student baseline rate</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Tuition (Out-of-State)
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                National student baseline rate
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => {
                 const val = college.tuitionOutOfState;
                 if (val === null) {
                   return (
-                    <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div
+                      key={college.id}
+                      className="py-2.5 flex items-center justify-between text-xs"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                           {college.logo ? (
@@ -609,28 +745,36 @@ export default function ComparisonTable({
                             />
                           ) : (
                             <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                              {college.name ? college.name.charAt(0) : 'U'}
+                              {college.name ? college.name.charAt(0) : "U"}
                             </div>
                           )}
                         </div>
                         <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                          className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                          onClick={() => onViewDetails(college.id)}
+                        >
+                          {college.shortName}
+                        </span>
                       </div>
-                      <span className="font-mono font-bold text-slate-400 shrink-0">N/A</span>
+                      <span className="font-mono font-bold text-slate-400 shrink-0">
+                        N/A
+                      </span>
                     </div>
                   );
                 }
 
                 const diffVal = val - averages.tuition;
-                const percentDiff = averages.tuition > 0 ? Math.round((diffVal / averages.tuition) * 100) : 0;
+                const percentDiff =
+                  averages.tuition > 0
+                    ? Math.round((diffVal / averages.tuition) * 100)
+                    : 0;
                 const isBest = highlights.lowestTuitionId === college.id;
 
                 return (
-                  <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div
+                    key={college.id}
+                    className="py-2.5 flex items-center justify-between text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                         {college.logo ? (
@@ -645,20 +789,22 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
                       <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                        className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                        onClick={() => onViewDetails(college.id)}
+                      >
+                        {college.shortName}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`font-mono font-bold ${isBest ? 'text-green-600' : 'text-slate-900'}`}>
+                      <span
+                        className={`font-mono font-bold ${isBest ? "text-green-600" : "text-slate-900"}`}
+                      >
                         ${val.toLocaleString()}
                       </span>
                       {comparedColleges.length > 1 && (
@@ -670,11 +816,13 @@ export default function ComparisonTable({
                             </span>
                           ) : diffVal > 0 ? (
                             <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                              <TrendingUp className="w-2.5 h-2.5" />
-                              +{percentDiff}%
+                              <TrendingUp className="w-2.5 h-2.5" />+
+                              {percentDiff}%
                             </span>
                           ) : (
-                            <span className="text-[9px] font-medium text-gray-400">Avg</span>
+                            <span className="text-[9px] font-medium text-gray-400">
+                              Avg
+                            </span>
                           )}
                         </div>
                       )}
@@ -688,15 +836,22 @@ export default function ComparisonTable({
           {/* Acceptance Rate */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Acceptance Rate</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Selectivity benchmark percentage</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Acceptance Rate
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Selectivity benchmark percentage
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => {
                 const val = college.acceptanceRate;
                 if (val === null) {
                   return (
-                    <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div
+                      key={college.id}
+                      className="py-2.5 flex items-center justify-between text-xs"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                           {college.logo ? (
@@ -711,18 +866,20 @@ export default function ComparisonTable({
                             />
                           ) : (
                             <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                              {college.name ? college.name.charAt(0) : 'U'}
+                              {college.name ? college.name.charAt(0) : "U"}
                             </div>
                           )}
                         </div>
                         <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                          className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                          onClick={() => onViewDetails(college.id)}
+                        >
+                          {college.shortName}
+                        </span>
                       </div>
-                      <span className="font-mono font-bold text-slate-400 shrink-0">N/A</span>
+                      <span className="font-mono font-bold text-slate-400 shrink-0">
+                        N/A
+                      </span>
                     </div>
                   );
                 }
@@ -731,7 +888,10 @@ export default function ComparisonTable({
                 const isCompetitive = val < 0.2;
 
                 return (
-                  <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div
+                    key={college.id}
+                    className="py-2.5 flex items-center justify-between text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                         {college.logo ? (
@@ -746,26 +906,36 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
                       <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                        className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                        onClick={() => onViewDetails(college.id)}
+                      >
+                        {college.shortName}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="font-mono font-bold text-slate-900">
                         {(val * 100).toFixed(1)}%
                       </span>
-                      <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
-                        isHighlyCompetitive ? 'bg-red-50 text-red-600' : isCompetitive ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
-                      }`}>
-                        {isHighlyCompetitive ? 'Selective' : isCompetitive ? 'Competitive' : 'Match'}
+                      <span
+                        className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
+                          isHighlyCompetitive
+                            ? "bg-red-50 text-red-600"
+                            : isCompetitive
+                              ? "bg-orange-50 text-orange-600"
+                              : "bg-blue-50 text-blue-600"
+                        }`}
+                      >
+                        {isHighlyCompetitive
+                          ? "Selective"
+                          : isCompetitive
+                            ? "Competitive"
+                            : "Match"}
                       </span>
                     </div>
                   </div>
@@ -777,15 +947,22 @@ export default function ComparisonTable({
           {/* Graduation Rate */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Graduation Rate</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Percent completing</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Graduation Rate
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Percent completing
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => {
                 const val = college.graduationRate;
                 if (val === null) {
                   return (
-                    <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div
+                      key={college.id}
+                      className="py-2.5 flex items-center justify-between text-xs"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                           {college.logo ? (
@@ -800,18 +977,20 @@ export default function ComparisonTable({
                             />
                           ) : (
                             <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                              {college.name ? college.name.charAt(0) : 'U'}
+                              {college.name ? college.name.charAt(0) : "U"}
                             </div>
                           )}
                         </div>
                         <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                          className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                          onClick={() => onViewDetails(college.id)}
+                        >
+                          {college.shortName}
+                        </span>
                       </div>
-                      <span className="font-mono font-bold text-slate-400 shrink-0">N/A</span>
+                      <span className="font-mono font-bold text-slate-400 shrink-0">
+                        N/A
+                      </span>
                     </div>
                   );
                 }
@@ -820,7 +999,10 @@ export default function ComparisonTable({
                 const diffRatio = (val - averages.graduationRate) * 100;
 
                 return (
-                  <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div
+                    key={college.id}
+                    className="py-2.5 flex items-center justify-between text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                         {college.logo ? (
@@ -835,20 +1017,22 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
                       <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                        className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                        onClick={() => onViewDetails(college.id)}
+                      >
+                        {college.shortName}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`font-mono font-bold ${isHero ? 'text-green-600' : 'text-slate-900'}`}>
+                      <span
+                        className={`font-mono font-bold ${isHero ? "text-green-600" : "text-slate-900"}`}
+                      >
                         {(val * 100).toFixed(0)}%
                       </span>
                       {comparedColleges.length > 1 && (
@@ -859,8 +1043,8 @@ export default function ComparisonTable({
                             </span>
                           ) : diffRatio > 0 ? (
                             <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                              <TrendingUp className="w-2.5 h-2.5" />
-                              +{diffRatio.toFixed(0)}%
+                              <TrendingUp className="w-2.5 h-2.5" />+
+                              {diffRatio.toFixed(0)}%
                             </span>
                           ) : diffRatio < 0 ? (
                             <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
@@ -868,7 +1052,9 @@ export default function ComparisonTable({
                               {Math.abs(diffRatio).toFixed(0)}%
                             </span>
                           ) : (
-                            <span className="text-[9px] font-medium text-gray-400">Avg</span>
+                            <span className="text-[9px] font-medium text-gray-400">
+                              Avg
+                            </span>
                           )}
                         </div>
                       )}
@@ -882,8 +1068,12 @@ export default function ComparisonTable({
           {/* SAT Score Range */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">SAT Score Range</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Middle 50th percentile bounds</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                SAT Score Range
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Middle 50th percentile bounds
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => {
@@ -891,7 +1081,10 @@ export default function ComparisonTable({
                 const max = college.satMax;
 
                 return (
-                  <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div
+                    key={college.id}
+                    className="py-2.5 flex items-center justify-between text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                         {college.logo ? (
@@ -906,19 +1099,19 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
                       <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                        className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                        onClick={() => onViewDetails(college.id)}
+                      >
+                        {college.shortName}
+                      </span>
                     </div>
                     <span className="font-mono font-bold text-slate-900 shrink-0">
-                      {min !== null && max !== null ? `${min} — ${max}` : 'N/A'}
+                      {min !== null && max !== null ? `${min} — ${max}` : "N/A"}
                     </span>
                   </div>
                 );
@@ -929,15 +1122,22 @@ export default function ComparisonTable({
           {/* Median Graduate Salary */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Median Graduate Salary</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Outcomes after 10 years</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Median Graduate Salary
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Outcomes after 10 years
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => {
                 const val = college.medianSalary;
                 if (val === null) {
                   return (
-                    <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                    <div
+                      key={college.id}
+                      className="py-2.5 flex items-center justify-between text-xs"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                           {college.logo ? (
@@ -952,27 +1152,39 @@ export default function ComparisonTable({
                             />
                           ) : (
                             <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                              {college.name ? college.name.charAt(0) : 'U'}
+                              {college.name ? college.name.charAt(0) : "U"}
                             </div>
                           )}
                         </div>
                         <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                          className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                          onClick={() => onViewDetails(college.id)}
+                        >
+                          {college.shortName}
+                        </span>
                       </div>
-                      <span className="font-mono font-bold text-slate-400 shrink-0">N/A</span>
+                      <span className="font-mono font-bold text-slate-400 shrink-0">
+                        N/A
+                      </span>
                     </div>
                   );
                 }
 
                 const isTop = highlights.highestSalaryId === college.id;
-                const diffPerc = averages.medianSalary > 0 ? Math.round(((val - averages.medianSalary) / averages.medianSalary) * 100) : 0;
+                const diffPerc =
+                  averages.medianSalary > 0
+                    ? Math.round(
+                        ((val - averages.medianSalary) /
+                          averages.medianSalary) *
+                          100,
+                      )
+                    : 0;
 
                 return (
-                  <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                  <div
+                    key={college.id}
+                    className="py-2.5 flex items-center justify-between text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                         {college.logo ? (
@@ -987,20 +1199,22 @@ export default function ComparisonTable({
                           />
                         ) : (
                           <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                            {college.name ? college.name.charAt(0) : 'U'}
+                            {college.name ? college.name.charAt(0) : "U"}
                           </div>
                         )}
                       </div>
                       <span
-                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
-                      onClick={() => onViewDetails(college.id)}
-                    >
-                      {college.shortName}
-                    </span>
+                        className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                        onClick={() => onViewDetails(college.id)}
+                      >
+                        {college.shortName}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`font-mono font-bold ${isTop ? 'text-[#3F51B5]' : 'text-slate-900'}`}>
+                      <span
+                        className={`font-mono font-bold ${isTop ? "text-[#3F51B5]" : "text-slate-900"}`}
+                      >
                         ${val.toLocaleString()}
                       </span>
                       {comparedColleges.length > 1 && (
@@ -1011,8 +1225,7 @@ export default function ComparisonTable({
                             </span>
                           ) : diffPerc > 0 ? (
                             <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                              <TrendingUp className="w-2.5 h-2.5" />
-                              +{diffPerc}%
+                              <TrendingUp className="w-2.5 h-2.5" />+{diffPerc}%
                             </span>
                           ) : diffPerc < 0 ? (
                             <span className="text-[9px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
@@ -1020,7 +1233,9 @@ export default function ComparisonTable({
                               {Math.abs(diffPerc)}%
                             </span>
                           ) : (
-                            <span className="text-[9px] font-medium text-gray-400">Avg</span>
+                            <span className="text-[9px] font-medium text-gray-400">
+                              Avg
+                            </span>
                           )}
                         </div>
                       )}
@@ -1034,12 +1249,19 @@ export default function ComparisonTable({
           {/* Student Enrollment */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">
-              <h4 className="font-extrabold text-slate-800 text-sm">Student Enrollment</h4>
-              <p className="text-[10px] text-gray-400 font-semibold">Total size</p>
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Student Enrollment
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Total size
+              </p>
             </div>
             <div className="divide-y divide-gray-100">
               {comparedColleges.map((college) => (
-                <div key={college.id} className="py-2.5 flex items-center justify-between text-xs">
+                <div
+                  key={college.id}
+                  className="py-2.5 flex items-center justify-between text-xs"
+                >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
                       {college.logo ? (
@@ -1054,7 +1276,7 @@ export default function ComparisonTable({
                         />
                       ) : (
                         <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-                          {college.name ? college.name.charAt(0) : 'U'}
+                          {college.name ? college.name.charAt(0) : "U"}
                         </div>
                       )}
                     </div>
@@ -1066,7 +1288,9 @@ export default function ComparisonTable({
                     </span>
                   </div>
                   <span className="font-mono font-bold text-slate-900 shrink-0">
-                    {college.studentPopulation !== null ? college.studentPopulation.toLocaleString() : 'N/A'}
+                    {college.studentPopulation !== null
+                      ? college.studentPopulation.toLocaleString()
+                      : "N/A"}
                   </span>
                 </div>
               ))}
