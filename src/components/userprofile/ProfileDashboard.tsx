@@ -101,6 +101,7 @@ function emptyProfile(authUser?: ProfileAuthUser | null): StudentProfile {
     preferredStates: [],
     preferredPrograms: [],
     preferredDegreeLevel: "",
+    preferredCollegeType: "",
   };
 }
 
@@ -121,7 +122,8 @@ function isProfileEmpty(p: StudentProfile): boolean {
     p.actScore == null &&
     p.preferredStates.length === 0 &&
     p.preferredPrograms.length === 0 &&
-    !p.preferredDegreeLevel
+    !p.preferredDegreeLevel &&
+    !p.preferredCollegeType
   );
 }
 
@@ -177,6 +179,10 @@ function mergeProfile(
       data.preferred_degree_level ?? data.preferredDegreeLevel,
       prev.preferredDegreeLevel,
     ),
+    preferredCollegeType: pick(
+      data.preferred_college_type ?? data.preferredCollegeType,
+      prev.preferredCollegeType,
+    ),
   };
 }
 
@@ -226,6 +232,11 @@ function toProfilePatch(
     "preferredDegreeLevel",
     values.preferredDegreeLevel,
     prev.preferredDegreeLevel,
+  );
+  setIfChanged(
+    "preferredCollegeType",
+    values.preferredCollegeType ?? "", // cleared Select yields undefined → ""
+    prev.preferredCollegeType,
   );
 
   const nextStates = (values.preferredStates ?? []).map((s) => s.toUpperCase());

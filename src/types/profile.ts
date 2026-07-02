@@ -55,4 +55,5 @@ export interface StudentProfile {
   preferredStates: string[]; // 2-letter codes e.g. ['CA', 'NY']
   preferredPrograms: string[];
   preferredDegreeLevel: string;
+  preferredCollegeType: string; // "" (no preference) | "Public" | "Private"
 }

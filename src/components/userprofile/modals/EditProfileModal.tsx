@@ -213,7 +213,7 @@ export default function EditProfileModal({
         </Row>
 
         <Row gutter={16}>
-          <Col xs={24}>
+          <Col xs={24} md={12}>
             <Form.Item name="preferredDegreeLevel" label="Target Degree Level">
               {/* Options from GET /degree-levels in backend order; the canonical
                   string is both the value submitted and the label shown. */}
@@ -222,6 +222,24 @@ export default function EditProfileModal({
                 loading={degreeLevelsLoading}
                 placeholder="Select Degree"
                 className="w-full"
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="preferredCollegeType"
+              label="Preferred College Type"
+            >
+              {/* Stored to the backend `preferred_college_type` column. Clearable
+                  so the user can express "no preference" (empty value). */}
+              <Select
+                allowClear
+                placeholder="Public or Private"
+                className="w-full"
+                options={[
+                  { value: "Public", label: "Public" },
+                  { value: "Private", label: "Private" },
+                ]}
               />
             </Form.Item>
           </Col>
