@@ -78,28 +78,18 @@ export default function AcademicInfoCard({
           </h4>
 
           <Row gutter={[16, 16]}>
-            <Col xs={12} sm={8}>
+            <Col xs={24} sm={profile.actScore ? 12 : 24}>
               <div className="bg-neutral-50/70 py-2.5 px-3 rounded-xl border border-neutral-150 text-center h-full flex flex-col justify-center">
                 <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                  SAT Reading
+                  SAT Score
                 </span>
                 <span className="font-extrabold text-neutral-800 text-base">
-                  {profile.satReadingWriting ?? "—"}
-                </span>
-              </div>
-            </Col>
-            <Col xs={12} sm={8}>
-              <div className="bg-neutral-50/70 py-2.5 px-3 rounded-xl border border-neutral-150 text-center h-full flex flex-col justify-center">
-                <span className="text-[10px] text-neutral-400 uppercase font-semibold block">
-                  SAT Mathematics
-                </span>
-                <span className="font-extrabold text-neutral-800 text-base">
-                  {profile.satMath ?? "—"}
+                  {profile.satScore != null ? `${profile.satScore} / 1600` : "—"}
                 </span>
               </div>
             </Col>
             {profile.actScore && (
-              <Col xs={24} sm={8}>
+              <Col xs={24} sm={12}>
                 <div className="bg-amber-50/50 py-2.5 px-3 rounded-xl border border-amber-100 text-center h-full flex flex-col justify-center">
                   <span className="text-[10px] text-amber-600 uppercase font-semibold block">
                     ACT Score

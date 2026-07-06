@@ -148,25 +148,30 @@ export default function EditProfileModal({
           Standard Exam Results
         </h3>
         <Row gutter={16}>
-          <Col xs={12} md={8}>
+          <Col xs={24} md={12}>
             <Form.Item
-              name="satReadingWriting"
-              label="SAT Read/Write Score"
-              rules={[{ required: true, message: "Mandatory" }]}
+              name="satScore"
+              label="SAT Score"
+              rules={[
+                { required: true, message: "Mandatory" },
+                {
+                  type: "number",
+                  min: 400,
+                  max: 1600,
+                  message: "Enter a value between 400 and 1600",
+                },
+              ]}
             >
-              <InputNumber min={200} max={800} step={10} className="w-full" />
+              <InputNumber
+                min={400}
+                max={1600}
+                step={10}
+                placeholder="e.g. 1350"
+                className="w-full"
+              />
             </Form.Item>
           </Col>
-          <Col xs={12} md={8}>
-            <Form.Item
-              name="satMath"
-              label="SAT Math Score"
-              rules={[{ required: true, message: "Mandatory" }]}
-            >
-              <InputNumber min={200} max={800} step={10} className="w-full" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
+          <Col xs={24} md={12}>
             <Form.Item name="actScore" label="ACT Composite (Optional)">
               <InputNumber
                 min={1}

@@ -1,7 +1,14 @@
 import React from "react";
-import { ChevronRight, X, LayoutList, LayoutGrid } from "lucide-react";
+import {
+  ChevronRight,
+  X,
+  LayoutList,
+  LayoutGrid,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Select } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { OPEN_FILTERS_EVENT } from "./SearchSidebar";
 
 type ViewMode = "list" | "grid";
 
@@ -165,6 +172,20 @@ export default function SearchHeader({
 
   const activeFilters = getActiveFilters();
 
+  // Count of active filter groups, mirrors the drawer badge in SearchSidebar
+  // (state, credential, institution type, tuition range).
+  const mobileFilterCount =
+    (stateCodes.length > 0 ? 1 : 0) +
+    (credentialTitles.length > 0 ? 1 : 0) +
+    (searchParams.get("school_type") ? 1 : 0) +
+    (searchParams.get("tuition_min") || searchParams.get("tuition_max")
+      ? 1
+      : 0);
+
+  const openMobileFilters = () => {
+    window.dispatchEvent(new Event(OPEN_FILTERS_EVENT));
+  };
+
   return (
     <div className="w-full mb-8">
       {/* Breadcrumbs */}
@@ -199,8 +220,24 @@ export default function SearchHeader({
           </p>
         </div>
 
-        {/* View Toggle + Sort */}
-        <div className="flex items-center gap-2">
+        {/* View Toggle + Sort (+ mobile Filters) */}
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          {/* Mobile Filters trigger — sits side by side with "Sort by" so it's
+              always reachable at the top (never behind the bottom nav dock). */}
+          <button
+            type="button"
+            onClick={openMobileFilters}
+            className="md:hidden flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm text-sm font-semibold text-gray-700 hover:border-blue-400 hover:text-blue-600 active:scale-95 transition-all"
+          >
+            <SlidersHorizontal size={16} />
+            Filters
+            {mobileFilterCount > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[11px] font-bold">
+                {mobileFilterCount}
+              </span>
+            )}
+          </button>
+
           {/* List / Grid toggle */}
           <div className="hidden md:flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">
             {" "}
@@ -229,7 +266,7 @@ export default function SearchHeader({
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm min-w-[200px]">
+          <div className="flex flex-1 md:flex-none items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm md:min-w-[200px]">
             <span className="text-sm text-gray-500 mr-2 whitespace-nowrap">
               Sort by:
             </span>
