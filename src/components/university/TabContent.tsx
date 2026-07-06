@@ -123,6 +123,7 @@ export default function TabContent({ data }: { data: any }) {
               satReadingWriting={data.satReadingWriting}
               satMath={data.satMath}
               satAverage={data.satAverage}
+              testingRequirements={data.testingRequirements}
             />
           )}
 

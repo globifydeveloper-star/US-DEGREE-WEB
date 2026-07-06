@@ -1,7 +1,27 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { AdmissionsTabContentProps } from "@/types/university/AdmissionsTabContent";
+import { Tooltip } from "antd";
+import { Info } from "lucide-react";
+import {
+  AdmissionsTabContentProps,
+  TestingBadgeColor,
+} from "@/types/university/AdmissionsTabContent";
+
+// Map the backend's badge color token → the app's existing Tailwind pill classes
+// (same bg-50 / border-200 / text-700 idiom used for pills elsewhere). No new
+// hex values are introduced. `amber_outline` uses the outline (no-fill) variant.
+const BADGE_PILL_CLASSES: Record<TestingBadgeColor, string> = {
+  green: "bg-green-50 text-green-700 border-green-200",
+  slate_blue_gray: "bg-slate-50 text-slate-700 border-slate-300",
+  teal: "bg-teal-50 text-teal-700 border-teal-200",
+  amber_outline: "bg-white text-amber-700 border-amber-400",
+  coral: "bg-rose-50 text-rose-700 border-rose-200",
+  gray: "bg-gray-100 text-gray-600 border-gray-300",
+};
+
+const isPresent = (value: string) =>
+  value != null && value.trim() !== "" && value.trim().toUpperCase() !== "N/A";
 
 const parseRange = (
   rangeStr: string,
@@ -22,6 +42,7 @@ export default function AdmissionsTabContent({
   admissionRate,
   satReadingWriting,
   satMath,
+  testingRequirements,
 }: AdmissionsTabContentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -96,6 +117,18 @@ export default function AdmissionsTabContent({
   const satMax = rwRange.max + mathRange.max;
   const hasSatData = satMin > 0 && satMax > 0;
 
+  // Numeric SAT scores take precedence: when the college has a real SAT range
+  // we show it. Only when there's no SAT data do we fall back to the
+  // testing-requirements badge (the two are mutually exclusive per college).
+  // A publishable row has a non-null category; when the badge design requires
+  // the acceptance rate beside it, a missing rate falls back to the default view.
+  const hasAdmissionRate = isPresent(admissionRate);
+  const showTestingBadge =
+    !hasSatData &&
+    !!testingRequirements &&
+    testingRequirements.satDisclosureCategory !== null &&
+    (!testingRequirements.showAdmissionRateRequired || hasAdmissionRate);
+
   // Dynamic SAT bar from actual data
   const dynSatLeft = hasSatData
     ? Math.max(0, Math.min(90, ((satMin - 400) / 1200) * 100))
@@ -124,6 +157,116 @@ export default function AdmissionsTabContent({
     10,
     Math.min(100 - dynActLeft, ((actMax - actMin) / 35) * 100),
   );
+
+  // The SAT view is one of three, mutually exclusive: the testing-requirements
+  // badge, the numeric SAT range, or a "not available" note. Deciding it here
+  // keeps the badge/range exclusivity in a single place.
+  let satScoreView: React.ReactNode;
+  if (showTestingBadge && testingRequirements) {
+    const {
+      badgeLabel,
+      badgeColor,
+      supportingCopy,
+      disclaimerTier,
+      disclaimerText,
+      showAdmissionRateRequired,
+    } = testingRequirements;
+
+    satScoreView = (
+      <div className="flex flex-col gap-3">
+        {/* Paired row: badge on one side, acceptance rate stat on the other —
+            same label-left / value-right pattern as the numeric rows. */}
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-bold uppercase tracking-wider font-poppins ${
+                BADGE_PILL_CLASSES[badgeColor] ?? BADGE_PILL_CLASSES.gray
+              }`}
+            >
+              {badgeLabel}
+            </span>
+
+            {/* Tier 1 → info icon; disclaimerText shows on hover/tap. Skipped
+                when there is no disclaimer text (never errors). */}
+            {disclaimerTier === 1 && disclaimerText && (
+              <Tooltip title={disclaimerText}>
+                <button
+                  type="button"
+                  aria-label="Testing requirement details"
+                  className="text-slate-400 transition-colors hover:text-slate-600"
+                >
+                  <Info size={16} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
+
+          {/* Coupling: when required, the acceptance rate must be seen right
+              next to the badge (its meaning depends on both being visible). */}
+          {showAdmissionRateRequired && (
+            <div className="flex shrink-0 flex-col items-end">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400 font-poppins">
+                Acceptance Rate
+              </span>
+              <span className="text-base font-bold text-slate-900 font-poppins">
+                {admissionRate}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Supporting copy — short body line under the badge. */}
+        <p className="text-sm text-slate-500 font-poppins leading-relaxed">
+          {supportingCopy}
+        </p>
+
+        {/* Tier 2 → always-visible disclaimer line. Skipped when text is null. */}
+        {disclaimerTier === 2 && disclaimerText && (
+          <p className="text-xs italic text-slate-400 font-poppins">
+            {disclaimerText}
+          </p>
+        )}
+      </div>
+    );
+  } else {
+    satScoreView = (
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-between items-center">
+          <span className="text-base font-medium text-slate-600 font-poppins">
+            SAT Score Range
+          </span>
+          {hasSatData ? (
+            <span className="text-base font-bold text-slate-900 font-poppins">
+              {400 + Math.round((satMin - 400) * animProgress)} —{" "}
+              {400 + Math.round((satMax - 400) * animProgress)}
+            </span>
+          ) : (
+            <p className="text-sm text-slate-400 font-poppins italic">
+              SAT data not available for this university.
+            </p>
+          )}
+        </div>
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: 14, background: "#F1F5F9", borderRadius: 9999 }}
+        >
+          <div
+            className="absolute h-full"
+            style={{
+              left: `${dynSatLeft}%`,
+              width: `${dynSatWidth * animProgress}%`,
+              background: "linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)",
+              borderRadius: 9999,
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-slate-400 font-poppins">
+          <span>400</span>
+          <span>1600</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="flex flex-col gap-16 py-4 max-w-4xl">
@@ -212,43 +355,8 @@ export default function AdmissionsTabContent({
         </h2>
 
         <div className="flex flex-col gap-10 max-w-3xl">
-          {/* SAT Score Range */}
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <span className="text-base font-medium text-slate-600 font-poppins">
-                SAT Score Range
-              </span>
-              {hasSatData ? (
-                <span className="text-base font-bold text-slate-900 font-poppins">
-                  {400 + Math.round((satMin - 400) * animProgress)} —{" "}
-                  {400 + Math.round((satMax - 400) * animProgress)}
-                </span>
-              ) : (
-                <p className="text-sm text-slate-400 font-poppins italic">
-                  SAT data not available for this university.
-                </p>
-              )}
-            </div>
-            <div
-              className="relative w-full overflow-hidden"
-              style={{ height: 14, background: "#F1F5F9", borderRadius: 9999 }}
-            >
-              <div
-                className="absolute h-full"
-                style={{
-                  left: `${dynSatLeft}%`,
-                  width: `${dynSatWidth * animProgress}%`,
-                  background:
-                    "linear-gradient(90deg, #60A5FA 0%, #2563EB 100%)",
-                  borderRadius: 9999,
-                }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-slate-400 font-poppins">
-              <span>400</span>
-              <span>1600</span>
-            </div>
-          </div>
+          {/* SAT view — testing-requirements badge OR numeric range (exclusive) */}
+          {satScoreView}
 
           {/* ACT Composite Range */}
           <div className="flex flex-col gap-3">

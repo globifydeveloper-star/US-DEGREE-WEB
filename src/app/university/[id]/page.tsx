@@ -6,6 +6,8 @@ import ScrollToTop from "@/components/university/ScrollToTop";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { TuitionData } from "@/types/university/TuitionData";
+import { getTestingRequirementsForCategory } from "@/data/testingRequirements";
+import { TestingRequirementsDisclosure } from "@/types/university/AdmissionsTabContent";
 
 // Minimal shapes for the backend JSON this page consumes. Every field is
 // optional because the endpoints may omit data; we only declare what is read.
@@ -32,6 +34,15 @@ interface ApiOverview {
     sat_rw_max?: number | null;
     sat_math_min?: number | null;
     sat_math_max?: number | null;
+    // Testing-requirements disclosure (publishable rows only; the backend
+    // suppresses Tier 3). Absent/null category ⇒ show the numeric SAT range.
+    satDisclosureCategory?: string | null;
+    badgeLabel?: string | null;
+    badgeColor?: string | null;
+    supportingCopy?: string | null;
+    disclaimerTier?: number | null;
+    disclaimerText?: string | null;
+    showAdmissionRateRequired?: boolean | null;
   };
   completion?: { completion_rate?: number | null };
   earnings?: {
@@ -126,6 +137,7 @@ export default async function UniversityPage({
       });
       if (res.ok) {
         apiData = await res.json();
+        console.log("API Data:", apiData);
       }
     } catch (err) {
       console.error("Error fetching overview details:", err);
@@ -137,6 +149,7 @@ export default async function UniversityPage({
       });
       if (res.ok) {
         apiData = await res.json();
+        console.log("API Data:", apiData);
       }
     } catch (err) {
       console.error("Error fetching overview details with default cip:", err);
@@ -366,6 +379,36 @@ export default async function UniversityPage({
     ? String(apiData.students.fafsa_applications)
     : "N/A";
 
+  // Testing-requirements disclosure. The overview endpoint returns a per-college
+  // category code (`sat_disclosure_category`); the badge DISPLAY metadata comes
+  // from the `admission_disclosure_categories` lookup table. Only build the
+  // object when the college carries a category; otherwise leave it null so the
+  // Admissions tab shows the numeric SAT range exactly as before.
+  //
+  // When the overview response already inlines the display fields, prefer those;
+  // otherwise resolve them from the categories table by the category code.
+  const admissionsRaw = apiData?.admissions;
+  const disclosureCategory = admissionsRaw?.satDisclosureCategory ?? null;
+
+  let testingRequirementsFinal: TestingRequirementsDisclosure | null = null;
+  if (disclosureCategory != null) {
+    testingRequirementsFinal = admissionsRaw?.badgeLabel
+      ? {
+          satDisclosureCategory: disclosureCategory,
+          badgeLabel: admissionsRaw.badgeLabel,
+          badgeColor: (admissionsRaw.badgeColor ??
+            "gray") as TestingRequirementsDisclosure["badgeColor"],
+          supportingCopy: admissionsRaw.supportingCopy ?? "",
+          disclaimerTier: ((Number(admissionsRaw.disclaimerTier) ||
+            1) as TestingRequirementsDisclosure["disclaimerTier"]),
+          disclaimerText: admissionsRaw.disclaimerText ?? null,
+          showAdmissionRateRequired: Boolean(
+            admissionsRaw.showAdmissionRateRequired,
+          ),
+        }
+      : await getTestingRequirementsForCategory(disclosureCategory);
+  }
+
   // Outcomes & Careers statistics
   const salaryYear1 =
     sanitizeSalary(outcomesData?.earnings?.year_1) ||
@@ -439,6 +482,7 @@ export default async function UniversityPage({
     satReadingWriting,
     satMath,
     satAverage,
+    testingRequirements: testingRequirementsFinal,
 
     // Dynamic Stats for StatsGrid
     totalStudents,
