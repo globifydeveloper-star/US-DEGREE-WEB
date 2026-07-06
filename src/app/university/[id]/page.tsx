@@ -399,8 +399,8 @@ export default async function UniversityPage({
           badgeColor: (admissionsRaw.badgeColor ??
             "gray") as TestingRequirementsDisclosure["badgeColor"],
           supportingCopy: admissionsRaw.supportingCopy ?? "",
-          disclaimerTier: ((Number(admissionsRaw.disclaimerTier) ||
-            1) as TestingRequirementsDisclosure["disclaimerTier"]),
+          disclaimerTier: (Number(admissionsRaw.disclaimerTier) ||
+            1) as TestingRequirementsDisclosure["disclaimerTier"],
           disclaimerText: admissionsRaw.disclaimerText ?? null,
           showAdmissionRateRequired: Boolean(
             admissionsRaw.showAdmissionRateRequired,
