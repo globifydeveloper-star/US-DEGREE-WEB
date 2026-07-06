@@ -1,10 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Filter, X, SlidersHorizontal } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 import { Slider } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SidebarSkeleton } from "./SearchSkeletons";
+
+/**
+ * Broadcast by the (top-of-page) Filters button in SearchHeader to open the
+ * mobile filter drawer that lives here. Keeps the trigger next to "Sort by"
+ * while the drawer stays co-located with the filter state.
+ */
+export const OPEN_FILTERS_EVENT = "open-filter-sidebar";
 
 const MOCK_STATES = [
   { state_code: "CA", state_title: "California" },
@@ -76,6 +83,13 @@ export default function SearchSidebar() {
       router.push(`${pathname}?${params.toString()}`);
     }
   };
+
+  // Open the mobile drawer when the top-of-page Filters button asks us to.
+  useEffect(() => {
+    const open = () => setIsSidebarOpen(true);
+    window.addEventListener(OPEN_FILTERS_EVENT, open);
+    return () => window.removeEventListener(OPEN_FILTERS_EVENT, open);
+  }, []);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -305,20 +319,8 @@ export default function SearchSidebar() {
 
   return (
     <>
-      {/* ── Mobile: Floating filter button (visible below md) ── */}
-      <button
-        id="sidebar-filter-toggle"
-        onClick={() => setIsSidebarOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-white text-sm font-semibold shadow-lg shadow-blue-600/30 hover:bg-blue-700 active:scale-95 transition-all duration-200"
-      >
-        <SlidersHorizontal size={16} />
-        Filters
-        {activeFilterCount > 0 && (
-          <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-blue-600 text-[11px] font-bold">
-            {activeFilterCount}
-          </span>
-        )}
-      </button>
+      {/* Mobile: the Filters trigger now lives at the top next to "Sort by"
+          (see SearchHeader) so it can't hide behind the bottom nav dock. */}
 
       {/* ── Mobile: Backdrop overlay ── */}
       <div

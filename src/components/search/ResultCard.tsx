@@ -11,6 +11,15 @@ import {
   useCompareSelectedItem,
   MAX_COMPARE,
 } from "./useCompareSelected";
+import {
+  FIT_GPA_KEY,
+  FIT_SAT_KEY,
+  FIT_SCORE_EVENT,
+  FIT_LOGIN_INTENT_KEY,
+  writeFitStats,
+} from "@/lib/fitScoreSync";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export interface ResultCardProps {
   id?: number | string;
@@ -170,6 +179,31 @@ export default function ResultCard({
   // Selected-for-comparison state from the single shared store.
   const isCompared = useCompareSelectedItem(compareId);
 
+  const { user } = useAuth();
+  const router = useRouter();
+
+  // Open the Calculate Your Fit Score popup — but only for a signed-in user.
+  // A signed-out user is sent to the login page; we remember which card they
+  // clicked so it re-opens automatically once they return authenticated.
+  const handleOpenFit = () => {
+    if (!user) {
+      try {
+        localStorage.setItem(
+          FIT_LOGIN_INTENT_KEY,
+          JSON.stringify({
+            url: window.location.pathname + window.location.search,
+            cardId: compareId,
+          }),
+        );
+      } catch {
+        // localStorage unavailable — proceed to login without the return hint.
+      }
+      router.push("/?login=1");
+      return;
+    }
+    setShowModal(true);
+  };
+
   // Saved-college state (shared store; loads once across all visible cards).
   const isSavedCollege = useSavedCollege(unitid);
   const [isSaving, setIsSaving] = useState(false);
@@ -225,8 +259,8 @@ export default function ResultCard({
 
   useEffect(() => {
     // Load from localStorage if present
-    const savedGpa = localStorage.getItem("fit_score_gpa");
-    const savedSat = localStorage.getItem("fit_score_sat");
+    const savedGpa = localStorage.getItem(FIT_GPA_KEY);
+    const savedSat = localStorage.getItem(FIT_SAT_KEY);
     if (savedGpa) {
       const gpaNum = parseFloat(savedGpa);
       const satNum = parseInt(savedSat || "0") || 0;
@@ -247,8 +281,8 @@ export default function ResultCard({
     }
 
     const handleUpdate = () => {
-      const gpa = localStorage.getItem("fit_score_gpa");
-      const sat = localStorage.getItem("fit_score_sat");
+      const gpa = localStorage.getItem(FIT_GPA_KEY);
+      const sat = localStorage.getItem(FIT_SAT_KEY);
       if (gpa) {
         const gpaNum = parseFloat(gpa);
         const satNum = parseInt(sat || "0") || 0;
@@ -272,11 +306,31 @@ export default function ResultCard({
       }
     };
 
-    window.addEventListener("fit-score-updated", handleUpdate);
+    window.addEventListener(FIT_SCORE_EVENT, handleUpdate);
+    window.addEventListener("storage", handleUpdate); // cross-tab / profile sync
     return () => {
-      window.removeEventListener("fit-score-updated", handleUpdate);
+      window.removeEventListener(FIT_SCORE_EVENT, handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
     };
   }, [admissionRate, satAct, matchScore]);
+
+  // After a signed-out user logs in and is returned to this page, re-open the
+  // fit-score popup on the exact card they originally clicked.
+  useEffect(() => {
+    if (!user) return;
+    let intent: { cardId?: string } | null = null;
+    try {
+      const raw = localStorage.getItem(FIT_LOGIN_INTENT_KEY);
+      intent = raw ? JSON.parse(raw) : null;
+    } catch {
+      intent = null;
+    }
+    if (intent?.cardId && String(intent.cardId) === compareId) {
+      localStorage.removeItem(FIT_LOGIN_INTENT_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowModal(true);
+    }
+  }, [user, compareId]);
 
   const handleCalculate = () => {
     const gpaNum = parseFloat(tempGpa);
@@ -294,20 +348,17 @@ export default function ResultCard({
       }
     }
 
-    localStorage.setItem("fit_score_gpa", tempGpa);
-    localStorage.setItem("fit_score_sat", tempSat || "");
+    // Persist + broadcast so every other result card and the profile update.
+    writeFitStats(gpaNum, tempSat ? satNum : null);
 
     const computed = calculateFitScore(gpaNum, satNum, admissionRate, satAct);
     setCurrentScore(computed);
     setIsCalculated(true);
     setShowModal(false);
-
-    window.dispatchEvent(new Event("fit-score-updated"));
   };
 
   const handleClear = () => {
-    localStorage.removeItem("fit_score_gpa");
-    localStorage.removeItem("fit_score_sat");
+    writeFitStats(null, null); // clears both keys + broadcasts
     setIsCalculated(false);
     setCurrentScore(matchScore);
     setTempGpa("");
@@ -315,7 +366,6 @@ export default function ResultCard({
     setSatError("");
     setGpaError("");
     setShowModal(false);
-    window.dispatchEvent(new Event("fit-score-updated"));
   };
 
   const universityHref = {
@@ -392,7 +442,7 @@ export default function ResultCard({
         {/* Match Badge (Absolute on Desktop) */}
         <div className="absolute top-5 right-5 flex flex-col items-center bg-blue-50/50 border border-blue-100 rounded-xl p-2 w-28 transition-all duration-300 hover:border-blue-200">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenFit}
             className="w-full text-[9px] bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-1 px-1 rounded-lg mb-1.5 text-center transition-all duration-200 shadow-sm leading-tight hover:scale-105 active:scale-95 whitespace-nowrap"
           >
             {shouldShowFit ? "Update Fit" : "Find your fit score"}
@@ -611,41 +661,67 @@ export default function ResultCard({
             </div>
           </div>
 
-          {/* Fit Score Button */}
+          {/* Fit Score Button — compact but high-visibility card */}
           <button
             type="button"
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1 shrink-0 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-lg px-1.5 py-1 transition-all cursor-pointer shadow-2xs active:scale-95 self-center"
+            onClick={handleOpenFit}
+            aria-label={shouldShowFit ? "Update your fit score" : "Find your fit score"}
+            className={`flex items-center gap-2 shrink-0 rounded-xl pl-2.5 pr-1.5 py-1.5 transition-all cursor-pointer active:scale-95 self-center shadow-sm border ${
+              shouldShowFit
+                ? "bg-gradient-to-br from-blue-600 to-indigo-600 border-blue-700 text-white"
+                : "bg-white border-blue-200 text-blue-700 hover:border-blue-400 hover:bg-blue-50"
+            }`}
           >
-            <div className="flex flex-col items-end">
-              <span className="text-[8px] font-extrabold text-blue-700 uppercase leading-none">
-                {shouldShowFit ? "Fit Score" : "Calculate"}
+            <div className="flex flex-col items-start leading-none">
+              <span
+                className={`text-[9px] font-extrabold uppercase tracking-wide ${
+                  shouldShowFit ? "text-white" : "text-blue-700"
+                }`}
+              >
+                {shouldShowFit ? "Your Fit" : "Fit Score"}
               </span>
-              <span className="text-[7.5px] font-semibold text-blue-600/80 leading-tight mt-0.5 whitespace-nowrap">
-                {shouldShowFit ? "Update" : "Find Fit"}
+              <span
+                className={`text-[8px] font-semibold mt-0.5 whitespace-nowrap ${
+                  shouldShowFit ? "text-blue-100" : "text-blue-500/80"
+                }`}
+              >
+                {shouldShowFit ? "Tap to update" : "Tap to find"}
               </span>
             </div>
-            <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
+            <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
               <svg
                 className="w-full h-full transform -rotate-90"
                 viewBox="0 0 36 36"
               >
                 <path
-                  className="text-blue-200/60 stroke-current"
+                  className={
+                    shouldShowFit
+                      ? "text-white/25 stroke-current"
+                      : "text-blue-100 stroke-current"
+                  }
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
-                  strokeWidth="3.5"
+                  strokeWidth="4"
                 />
                 <path
-                  className="text-blue-600 stroke-current"
+                  className={
+                    shouldShowFit
+                      ? "text-white stroke-current"
+                      : "text-blue-600 stroke-current"
+                  }
                   strokeDasharray={`${shouldShowFit ? currentScore : matchScore}, 100`}
+                  strokeLinecap="round"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
-                  strokeWidth="3.5"
+                  strokeWidth="4"
                 />
               </svg>
-              <span className="absolute text-[8px] font-black text-blue-950">
-                {shouldShowFit ? currentScore : matchScore}%
+              <span
+                className={`absolute text-[9px] font-black ${
+                  shouldShowFit ? "text-white" : "text-blue-950"
+                }`}
+              >
+                {shouldShowFit ? currentScore : matchScore}
               </span>
             </div>
           </button>

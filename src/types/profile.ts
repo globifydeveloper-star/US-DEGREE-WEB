@@ -48,8 +48,8 @@ export interface StudentProfile {
   graduationYear: number | null;
   gpa: number | null;
 
-  satReadingWriting: number | null;
-  satMath: number | null;
+  /** Single total SAT score (400–1600). Replaces the old split R/W + Math. */
+  satScore: number | null;
   actScore?: number | null;
 
   preferredStates: string[]; // 2-letter codes e.g. ['CA', 'NY']

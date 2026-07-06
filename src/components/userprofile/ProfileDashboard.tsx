@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Result, Row, Col, Alert, Button, message, notification } from "antd";
 import { CheckCircleOutlined, EditOutlined } from "@ant-design/icons";
 import {
@@ -23,6 +23,12 @@ import {
   type DeactivationPayload,
 } from "../../lib/auth/api";
 import { clearAppJwt } from "../../lib/auth/tokenStore";
+import {
+  FIT_SCORE_EVENT,
+  readFitStats,
+  writeFitStats,
+  hasFitStats,
+} from "../../lib/fitScoreSync";
 import { StudentProfile } from "../../types/profile";
 import { useCollegeMatches } from "./matchEngine";
 
@@ -72,6 +78,15 @@ function pick<T>(value: unknown, fallback: T): T {
   return value === undefined || value === null ? fallback : (value as T);
 }
 
+// Legacy transition: older profiles stored SAT as two columns (R/W + Math).
+// Sum them into a single total only when both are present; otherwise null.
+function legacySatTotal(data: Record<string, unknown>): number | null {
+  const rw = Number(data.sat_reading_writing ?? data.satReadingWriting);
+  const math = Number(data.sat_math ?? data.satMath);
+  if (Number.isFinite(rw) && Number.isFinite(math)) return rw + math;
+  return null;
+}
+
 interface ProfileAuthUser {
   displayName: string | null;
   email: string | null;
@@ -95,8 +110,7 @@ function emptyProfile(authUser?: ProfileAuthUser | null): StudentProfile {
     highSchoolName: "",
     graduationYear: null,
     gpa: null,
-    satReadingWriting: null,
-    satMath: null,
+    satScore: null,
     actScore: null,
     preferredStates: [],
     preferredPrograms: [],
@@ -117,8 +131,7 @@ function isProfileEmpty(p: StudentProfile): boolean {
     !p.highSchoolName &&
     p.graduationYear == null &&
     p.gpa == null &&
-    p.satReadingWriting == null &&
-    p.satMath == null &&
+    p.satScore == null &&
     p.actScore == null &&
     p.preferredStates.length === 0 &&
     p.preferredPrograms.length === 0 &&
@@ -161,11 +174,10 @@ function mergeProfile(
       prev.graduationYear,
     ),
     gpa: pick(data.gpa, prev.gpa),
-    satReadingWriting: pick(
-      data.sat_reading_writing ?? data.satReadingWriting,
-      prev.satReadingWriting,
-    ),
-    satMath: pick(data.sat_math ?? data.satMath, prev.satMath),
+    // Prefer the new single total column; fall back to summing the legacy
+    // split R/W + Math fields so profiles saved before the backend migration
+    // still show a total. Never fabricate — only sum when both parts exist.
+    satScore: pick(data.sat_score ?? data.satScore, null) ?? legacySatTotal(data) ?? prev.satScore,
     actScore: pick(data.act_score ?? data.actScore, prev.actScore),
     preferredStates: pick(
       data.preferred_states ?? data.preferredStates,
@@ -199,7 +211,7 @@ function sameStringSet(a: string[], b: string[]): boolean {
  * Build the PATCH /profile body from the edit form. The API allowlists
  * *camelCase* keys and silently drops anything else — including the snake_case
  * names GET /profile returns — so the keys here must match its contract
- * exactly (`satMath`, `highSchoolName`, `preferredStates`…). We only include
+ * exactly (`satScore`, `highSchoolName`, `preferredStates`…). We only include
  * fields the user actually changed (vs. `prev`); omitting a key means "not
  * provided". Email is never sent (Firebase-managed). `preferredStates` is
  * normalized to uppercase 2-letter codes, and the full intended array is sent
@@ -221,12 +233,7 @@ function toProfilePatch(
   setIfChanged("highSchoolName", values.highSchoolName, prev.highSchoolName);
   setIfChanged("graduationYear", values.graduationYear, prev.graduationYear);
   setIfChanged("gpa", values.gpa, prev.gpa);
-  setIfChanged(
-    "satReadingWriting",
-    values.satReadingWriting,
-    prev.satReadingWriting,
-  );
-  setIfChanged("satMath", values.satMath, prev.satMath);
+  setIfChanged("satScore", values.satScore, prev.satScore);
   setIfChanged("actScore", values.actScore, prev.actScore);
   setIfChanged(
     "preferredDegreeLevel",
@@ -277,6 +284,15 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
     emptyProfile(authUser),
   );
 
+  // Latest profile, readable from event handlers without re-subscribing.
+  const profileRef = useRef(profile);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
+
+  // Guards the fit-score bridge against reacting to our own writes (see below).
+  const suppressFitSync = useRef(false);
+
   // Load the real profile from the backend (GET /profile, via the authed-fetch
   // wrapper). Missing fields keep their seeded defaults so the UI still renders
   // if the backend is unavailable.
@@ -285,13 +301,83 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
     (async () => {
       try {
         const data = await fetchProfile<Record<string, unknown>>();
-        if (active && data) setProfile((prev) => mergeProfile(prev, data));
+        if (!active || !data) return;
+        const merged = mergeProfile(profileRef.current, data);
+
+        // Reconcile with the shared "fit score" store (localStorage), which the
+        // search page's result cards also read/write:
+        //  • If the user already entered fit stats on a card, those win — show
+        //    them here and persist to the backend so both sides agree.
+        //  • Otherwise seed the store from the profile so the GPA/SAT pre-fill
+        //    the "Find your fit score" boxes on search.
+        if (hasFitStats()) {
+          const { gpa, sat } = readFitStats();
+          const reconciled = {
+            ...merged,
+            gpa: gpa != null ? gpa : merged.gpa,
+            satScore: sat != null ? sat : merged.satScore,
+          };
+          setProfile(reconciled);
+
+          const patch: Record<string, unknown> = {};
+          if (reconciled.gpa !== merged.gpa) patch.gpa = reconciled.gpa;
+          if (reconciled.satScore !== merged.satScore)
+            patch.satScore = reconciled.satScore;
+          if (Object.keys(patch).length > 0) {
+            patchProfile<Record<string, unknown>>(patch).catch((err) =>
+              console.error("Failed to sync fit score to profile:", err),
+            );
+          }
+        } else {
+          setProfile(merged);
+          if (merged.gpa != null) {
+            suppressFitSync.current = true;
+            writeFitStats(merged.gpa, merged.satScore);
+            suppressFitSync.current = false;
+          }
+        }
       } catch (err) {
         console.error("Failed to load profile:", err);
       }
     })();
     return () => {
       active = false;
+    };
+  }, []);
+
+  // Two-way sync with the search page's "Find your fit score" boxes. When a
+  // result card updates the GPA/SAT (broadcasting `fit-score-updated`), mirror
+  // the new SAT/GPA into the profile here — both the on-screen card and, best
+  // effort, the backend so it survives a reload. `suppressFitSync` stops this
+  // from firing on the profile's own writes.
+  useEffect(() => {
+    const applyFromStore = () => {
+      if (suppressFitSync.current) return;
+      const { gpa, sat } = readFitStats();
+      const prev = profileRef.current;
+      const nextGpa = gpa != null ? gpa : prev.gpa;
+      const nextSat = sat != null ? sat : prev.satScore;
+      if (nextGpa === prev.gpa && nextSat === prev.satScore) return;
+
+      setProfile({ ...prev, gpa: nextGpa, satScore: nextSat });
+
+      // Persist the card-entered values so they outlast the session (silent —
+      // the card already surfaced its own confirmation).
+      const patch: Record<string, unknown> = {};
+      if (nextGpa !== prev.gpa) patch.gpa = nextGpa;
+      if (nextSat !== prev.satScore) patch.satScore = nextSat;
+      if (Object.keys(patch).length > 0) {
+        patchProfile<Record<string, unknown>>(patch).catch((err) =>
+          console.error("Failed to sync fit score to profile:", err),
+        );
+      }
+    };
+
+    window.addEventListener(FIT_SCORE_EVENT, applyFromStore);
+    window.addEventListener("storage", applyFromStore); // cross-tab
+    return () => {
+      window.removeEventListener(FIT_SCORE_EVENT, applyFromStore);
+      window.removeEventListener("storage", applyFromStore);
     };
   }, []);
 
@@ -331,8 +417,18 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
     try {
       const updated = await patchProfile<Record<string, unknown>>(patch);
-      setProfile((prev) => mergeProfile(prev, updated ?? patch));
+      const merged = mergeProfile(profile, updated ?? patch);
+      setProfile(merged);
       setIsEditProfileOpen(false);
+
+      // Push the GPA/SAT into the shared fit-score store so open result cards
+      // update live. Suppressed so our own listener doesn't echo it back.
+      if ("gpa" in patch || "satScore" in patch) {
+        suppressFitSync.current = true;
+        writeFitStats(merged.gpa, merged.satScore);
+        suppressFitSync.current = false;
+      }
+
       message.success("Academic profile and preferences updated successfully!");
     } catch (err) {
       console.error("Profile save failed:", err);
