@@ -110,7 +110,17 @@ export async function authedFetch(
 
 async function parseJson<T>(res: Response, action: string): Promise<T> {
   if (!res.ok) {
-    throw new Error(`${action} failed (${res.status})`);
+    // Surface the backend's error body (forwarded verbatim by the proxy) so a
+    // 500 isn't opaque — it usually carries the real cause (e.g. a DB error).
+    let detail = "";
+    try {
+      detail = (await res.text()).slice(0, 500);
+    } catch {
+      // ignore — body may be unreadable
+    }
+    throw new Error(
+      `${action} failed (${res.status})${detail ? `: ${detail}` : ""}`,
+    );
   }
   return (await res.json()) as T;
 }
