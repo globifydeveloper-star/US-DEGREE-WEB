@@ -47,7 +47,11 @@ function formatTuition(
 function formatRate(value: SelectedCompareCollege["acceptanceRate"]): string {
   if (value === null || value === undefined || value === "") return "N/A";
   const n = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(n) ? String(value) : `${n}%`;
+  if (Number.isNaN(n)) return String(value);
+  // Backend admission rates arrive as a 0–1 fraction (e.g. 0.7582); scale those
+  // up to render "75.8%". Values already on a 0–100 scale are left as-is.
+  const pct = n <= 1 ? n * 100 : n;
+  return `${pct.toFixed(1)}%`;
 }
 
 const BADGE_CLASS =
@@ -99,6 +103,8 @@ export default function CompareListSection() {
         setItems((prev) =>
           prev.filter((c) => String(c.unitid) !== String(detail.unitid)),
         );
+      } else if (detail?.action === "cleared") {
+        setItems([]);
       } else {
         load();
       }

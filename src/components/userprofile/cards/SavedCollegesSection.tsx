@@ -24,6 +24,7 @@ import {
 import {
   fetchSavedColleges,
   unsaveCollege,
+  authedFetch,
   SavedCollege,
 } from "../../../lib/auth/api";
 import {
@@ -37,7 +38,7 @@ interface SavedCollegesSectionProps {
   onViewChange: (view: "Grid" | "List") => void;
 }
 
-// The enriched fields come straight from GET /saved-colleges — never hardcoded.
+// Formats the Average Annual Cost of Attendance shown on each saved card.
 function formatTuition(value: SavedCollege["tuitionFee"]): string {
   if (value === null || value === undefined || value === "") return "N/A";
   const n = typeof value === "number" ? value : Number(value);
@@ -46,10 +47,51 @@ function formatTuition(value: SavedCollege["tuitionFee"]): string {
     : `$${Math.round(n).toLocaleString()}/yr`;
 }
 
+/**
+ * Replace each saved card's cost figure with the Average Annual Cost of
+ * Attendance (sticker_price_by_api) from GET /tuition/:unitid — the same value
+ * the College Matches section and the Tuition & Costs tab show. Falls back to
+ * whatever the saved record already carried when the lookup has no sticker
+ * price. Stored back on `tuitionFee` since that's the card's cost field.
+ */
+async function enrichWithAnnualCost(
+  list: SavedCollege[],
+): Promise<SavedCollege[]> {
+  if (list.length === 0) return list;
+
+  const fills = new Map<string, number>();
+  await Promise.all(
+    list.map(async (c) => {
+      try {
+        const res = await authedFetch(`/tuition/${c.unitid}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const sticker = data?.tuition?.sticker_price_by_api;
+        const n = sticker == null ? NaN : Number(sticker);
+        if (!Number.isNaN(n)) fills.set(String(c.unitid), n);
+      } catch {
+        // Best-effort — keep the record's existing cost if the lookup fails.
+      }
+    }),
+  );
+
+  if (fills.size === 0) return list;
+  return list.map((c) =>
+    fills.has(String(c.unitid))
+      ? { ...c, tuitionFee: fills.get(String(c.unitid))! }
+      : c,
+  );
+}
+
 function formatRate(value: SavedCollege["acceptanceRate"]): string {
   if (value === null || value === undefined || value === "") return "N/A";
   const n = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(n) ? String(value) : `${n}%`;
+  if (Number.isNaN(n)) return String(value);
+  // The backend returns admission rates as a 0–1 fraction (e.g. 0.7582); scale
+  // those up so we render "75.8%" instead of "0.7582%". Values already on a
+  // 0–100 scale are left as-is.
+  const pct = n <= 1 ? n * 100 : n;
+  return `${pct.toFixed(1)}%`;
 }
 
 // Normalize the school URL to an absolute https link, or null if missing/empty
@@ -71,7 +113,9 @@ export default function SavedCollegesSection({
   const load = useCallback(async () => {
     try {
       const list = await fetchSavedColleges();
-      setColleges(list);
+      setColleges(list); // paint immediately
+      const enriched = await enrichWithAnnualCost(list);
+      if (enriched !== list) setColleges(enriched);
     } catch (err) {
       console.error("Failed to load saved colleges:", err);
     } finally {
@@ -85,6 +129,8 @@ export default function SavedCollegesSection({
       try {
         const list = await fetchSavedColleges();
         if (active) setColleges(list);
+        const enriched = await enrichWithAnnualCost(list);
+        if (active && enriched !== list) setColleges(enriched);
       } catch (err) {
         console.error("Failed to load saved colleges:", err);
       } finally {
@@ -206,7 +252,9 @@ export default function SavedCollegesSection({
 
                     <div className="bg-neutral-50 rounded-xl p-2.5 mt-3 space-y-1.5 text-xs text-neutral-600">
                       <div className="flex justify-between">
-                        <span className="text-neutral-400">Tuition Fee:</span>
+                        <span className="text-neutral-400">
+                          Avg. Annual Cost:
+                        </span>
                         <span className="font-semibold text-neutral-700">
                           {formatTuition(uni.tuitionFee)}
                         </span>
@@ -305,7 +353,7 @@ export default function SavedCollegesSection({
                       </span>
                       <span>•</span>
                       <span>
-                        Tuition Fee:{" "}
+                        Avg. Annual Cost:{" "}
                         <b className="text-neutral-700">
                           {formatTuition(uni.tuitionFee)}
                         </b>
