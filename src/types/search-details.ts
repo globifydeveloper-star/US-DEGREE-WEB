@@ -25,3 +25,5 @@ export interface SearchQueryParams {
   state?: string;
   title?: string;
 }
+
+export type ViewMode = "list" | "grid";
