@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
-import { useCompareCount } from "@/hooks/useCompareCount";
+import { useCompareCount } from "@/components/search/useCompareSelected";
 import { useEmailVerification } from "@/hooks/useEmailVerification";
 import { useLoginModal } from "@/hooks/useLoginModal";
 import { useFitLoginRedirect } from "@/hooks/useFitLoginRedirect";

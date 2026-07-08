@@ -3,13 +3,19 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Bookmark, MapPin, ExternalLink } from "lucide-react";
 import { UniversityHeroProps } from "@/types/university/UniversityHero";
-import { Button } from "antd";
+import { Button, message } from "antd";
 import CompareIconAnimation from "../search/CompareIconAnimation";
 import {
   toggleCompare as toggleCompareStore,
   useCompareSelectedItem,
   MAX_COMPARE,
 } from "../search/useCompareSelected";
+import {
+  toggleSaved,
+  useSavedCollege,
+  reloadSaved,
+} from "../search/useSavedColleges";
+import type { SavedCollege } from "@/lib/auth/api";
 
 export default function UniversityHero({
   id,
@@ -58,6 +64,45 @@ export default function UniversityHero({
       ? schoolUrl.trim()
       : `https://${schoolUrl.trim()}`
     : "";
+
+  // Saved-college state (shared store; same source as the profile grid).
+  const isSaved = useSavedCollege(compareId);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleToggleSave = async () => {
+    if (!compareId) {
+      message.error("This college can't be saved (missing identifier).");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      // Enriched optimistic record so the Saved Colleges grid shows the card
+      // instantly with a working "Visit website" link and formatted metrics.
+      const admissionNum = parseFloat(admissionRate.replace(/[^0-9.]/g, ""));
+      const record: SavedCollege = {
+        unitid: compareId,
+        name,
+        location,
+        tuitionFee: tuitionData?.tuition?.tuition_in_state ?? null,
+        acceptanceRate: Number.isNaN(admissionNum) ? null : admissionNum,
+        createdAt: new Date().toISOString(),
+        schoolUrl: formattedSchoolUrl || schoolUrl || null,
+      };
+      const nowSaved = await toggleSaved(compareId, record);
+      if (nowSaved) {
+        message.success(`Saved ${name} to your colleges.`);
+        // Reconcile with the backend-enriched record once persisted.
+        void reloadSaved();
+      } else {
+        message.info(`Removed ${name} from saved colleges.`);
+      }
+    } catch (err) {
+      console.error("Failed to update saved colleges:", err);
+      message.error("Could not update saved colleges. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Fallbacks if database has nulls or if tuitionData is absent
   const tuitionInState = tuitionData?.tuition?.tuition_in_state ?? 12714;
@@ -181,9 +226,20 @@ export default function UniversityHero({
               )}
 
               <div className="grid grid-cols-2 gap-3 w-full md:flex md:w-auto md:items-center">
-                <button className="flex items-center justify-center gap-1.5 h-10 px-4 rounded-full border border-gray-300 text-sm text-gray-600 hover:text-blue-600 hover:border-blue-600 transition w-full md:w-auto">
-                  <Bookmark size={16} />
-                  Save
+                <button
+                  onClick={handleToggleSave}
+                  disabled={isSaving}
+                  className={`flex items-center justify-center gap-1.5 h-10 px-4 rounded-full border text-sm font-medium transition w-full md:w-auto disabled:opacity-60 ${
+                    isSaved
+                      ? "bg-rose-400 border-rose-400 text-white hover:bg-rose-500 hover:border-rose-500"
+                      : "border-gray-300 text-gray-600 hover:text-rose-400 hover:border-rose-400"
+                  }`}
+                >
+                  <Bookmark
+                    size={16}
+                    className={isSaved ? "fill-current" : ""}
+                  />
+                  {isSaved ? "Saved" : "Save"}
                 </button>
 
                 <Button

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Scale, Search, Heart, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useCompareCount } from "@/hooks/useCompareCount";
+import { useCompareCount } from "@/components/search/useCompareSelected";
 import { SAVED_EVENT } from "@/components/search/useSavedColleges";
 
 interface MobileNavDockProps {

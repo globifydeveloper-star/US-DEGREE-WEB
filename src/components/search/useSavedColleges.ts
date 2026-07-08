@@ -14,6 +14,7 @@ import {
   fetchSavedColleges,
   saveCollege,
   unsaveCollege,
+  hasAuthenticatedUser,
   type SavedCollege,
 } from "@/lib/auth/api";
 
@@ -49,6 +50,9 @@ export async function ensureSavedLoaded(): Promise<void> {
   if (inflight) return inflight;
   inflight = (async () => {
     try {
+      // No signed-in user → nothing to load. Leave `loaded` false so a later
+      // call (after login) retries.
+      if (!(await hasAuthenticatedUser())) return;
       const list = await fetchSavedColleges();
       savedSet = new Set(list.map((c) => String(c.unitid)));
       loaded = true;

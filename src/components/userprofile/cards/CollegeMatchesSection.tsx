@@ -28,7 +28,11 @@ import {
   useCompareIds,
   MAX_COMPARE,
 } from "../../search/useCompareSelected";
-import { toggleSaved, useSavedIds } from "../../search/useSavedColleges";
+import {
+  toggleSaved,
+  useSavedIds,
+  reloadSaved,
+} from "../../search/useSavedColleges";
 import type { SavedCollege } from "../../../lib/auth/api";
 
 interface CollegeMatchesSectionProps {
@@ -107,15 +111,19 @@ export default function CollegeMatchesSection({
         match.city && match.state
           ? `${match.city}, ${match.state}`
           : match.city || match.state || "",
-      tuitionFee: match.tuition,
+      tuitionFee: match.tuition ?? match.costOfAttendance,
       acceptanceRate: match.acceptanceRate,
       createdAt: new Date().toISOString(),
-      schoolUrl: null,
+      schoolUrl: match.schoolUrl,
     };
     try {
       const nowSaved = await toggleSaved(match.unitid, record);
       if (nowSaved) {
         message.success(`Saved ${match.name} to your colleges.`);
+        // The save is now persisted — reconcile the Saved Colleges grid with the
+        // backend-enriched record (school URL, acceptance rate) so "Visit
+        // website" works immediately instead of only after a manual refresh.
+        void reloadSaved();
       } else {
         message.info(`Removed ${match.name} from saved colleges.`);
       }
@@ -247,15 +255,29 @@ export default function CollegeMatchesSection({
 
                       {/* Stats: tuition, acceptance, graduation, employment, 1-yr salary */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-emerald-50 rounded-lg px-2.5 py-2">
-                          <span className="text-[10px] text-emerald-600/80 font-semibold block">
-                            Tuition
-                          </span>
-                          <span className="font-bold text-emerald-700">
-                            {fmtMoney(match.tuition)}
-                            {match.tuition !== null && "/yr"}
-                          </span>
-                        </div>
+                        {(() => {
+                          // Prefer listed tuition; when a program has none, fall
+                          // back to the sticker price (Average Annual Cost of
+                          // Attendance) so the tile isn't left as "N/A".
+                          const hasTuition = match.tuition !== null;
+                          const costValue = hasTuition
+                            ? match.tuition
+                            : match.costOfAttendance;
+                          const costLabel = hasTuition
+                            ? "Tuition"
+                            : "Avg. Annual Cost";
+                          return (
+                            <div className="bg-emerald-50 rounded-lg px-2.5 py-2">
+                              <span className="text-[10px] text-emerald-600/80 font-semibold block">
+                                {costLabel}
+                              </span>
+                              <span className="font-bold text-emerald-700">
+                                {fmtMoney(costValue)}
+                                {costValue !== null && "/yr"}
+                              </span>
+                            </div>
+                          );
+                        })()}
                         <div className="bg-blue-50 rounded-lg px-2.5 py-2">
                           <span className="text-[10px] text-blue-600/80 font-semibold block">
                             Acceptance Rate

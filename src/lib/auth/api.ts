@@ -33,6 +33,11 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
 
   const doExchange = async (): Promise<string> => {
     try {
+      // Wait for Firebase to finish restoring any persisted session before
+      // deciding there's no user. On a hard page refresh `auth.currentUser` is
+      // momentarily null until persistence rehydrates, which otherwise made
+      // early authed calls throw "no authenticated Firebase user".
+      await auth.authStateReady().catch(() => {});
       const current = auth.currentUser;
       if (!current) {
         clearAppJwt();
@@ -69,6 +74,20 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
 
   pendingExchangePromise = doExchange();
   return pendingExchangePromise;
+}
+
+/**
+ * Resolve once Firebase has restored any persisted session, returning whether a
+ * user is signed in. Client stores use this to avoid firing protected calls
+ * (and logging spurious token-exchange errors) when nobody is logged in.
+ */
+export async function hasAuthenticatedUser(): Promise<boolean> {
+  try {
+    await auth.authStateReady();
+  } catch {
+    // Older SDKs without authStateReady — fall through to a direct read.
+  }
+  return !!auth.currentUser;
 }
 
 /**
