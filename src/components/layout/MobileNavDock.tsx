@@ -1,29 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useSyncExternalStore } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Scale, Search, Heart, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useCompareCount } from "@/hooks/useCompareCount";
 import { SAVED_EVENT } from "@/components/search/useSavedColleges";
-
-const subscribeCompareCount = (onChange: () => void) => {
-  window.addEventListener("compared-colleges-updated", onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener("compared-colleges-updated", onChange);
-    window.removeEventListener("storage", onChange);
-  };
-};
-
-const getCompareCountSnapshot = () => {
-  try {
-    return JSON.parse(localStorage.getItem("compared_colleges") || "[]").length;
-  } catch {
-    return 0;
-  }
-};
-const getCompareCountServerSnapshot = () => 0;
 
 interface MobileNavDockProps {
   onOpenAuthModal?: (mode: "login" | "signup") => void;
@@ -34,11 +17,7 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const compareCount = useSyncExternalStore(
-    subscribeCompareCount,
-    getCompareCountSnapshot,
-    getCompareCountServerSnapshot,
-  );
+  const compareCount = useCompareCount();
 
   const [savedCount, setSavedCount] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);

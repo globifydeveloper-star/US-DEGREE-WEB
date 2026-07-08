@@ -13,26 +13,6 @@ import { SidebarSkeleton } from "./SearchSkeletons";
  */
 export const OPEN_FILTERS_EVENT = "open-filter-sidebar";
 
-const MOCK_STATES = [
-  { state_code: "CA", state_title: "California" },
-  { state_code: "NY", state_title: "New York" },
-  { state_code: "TX", state_title: "Texas" },
-  { state_code: "MA", state_title: "Massachusetts" },
-  { state_code: "WA", state_title: "Washington" },
-  { state_code: "IL", state_title: "Illinois" },
-  { state_code: "PA", state_title: "Pennsylvania" },
-  { state_code: "FL", state_title: "Florida" },
-  { state_code: "NC", state_title: "North Carolina" },
-  { state_code: "GA", state_title: "Georgia" },
-];
-
-const MOCK_CREDENTIALS = [
-  { id: 1, name: "Associate's Degree" },
-  { id: 2, name: "Bachelor's Degree" },
-  { id: 3, name: "Master's Degree" },
-  { id: 4, name: "Doctoral Degree" },
-  { id: 5, name: "Post-Baccalaureate Certificate" },
-];
 
 export default function SearchSidebar() {
   const router = useRouter();
@@ -41,9 +21,9 @@ export default function SearchSidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [states, setStates] =
-    useState<{ state_code: string; state_title: string }[]>(MOCK_STATES);
+    useState<{ state_code: string; state_title: string }[]>([]);
   const [credentials, setCredentials] =
-    useState<{ id: number; name: string }[]>(MOCK_CREDENTIALS);
+    useState<{ id: number; name: string }[]>([]);
   const [searchState, setSearchState] = useState("");
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
