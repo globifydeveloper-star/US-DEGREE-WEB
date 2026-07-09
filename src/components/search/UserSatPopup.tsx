@@ -1,4 +1,7 @@
+"use client";
+
 import { X } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface UserSatPopupProps {
   setShowModal: (show: boolean) => void;
@@ -37,6 +40,10 @@ export default function UserSatPopup({
   handleClear,
   handleCalculate,
 }: UserSatPopupProps) {
+  // Only ever mounted while open (parent renders it conditionally), so the
+  // lock is unconditional here — matches the drawer/details-modal convention.
+  useBodyScrollLock(true);
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden transform transition-all scale-100">

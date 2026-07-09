@@ -9,7 +9,10 @@ export default function Footer({
 }) {
   return (
     <footer
-      className={`bg-[#295af6] text-white pt-16 pb-8 px-6 sm:px-10 lg:px-[86px] flex justify-center ${className}`}
+      // Reserve space for the mobile bottom nav dock below `lg` (where it
+      // renders) so the last content above the footer is never hidden behind
+      // it; reverts to the original pb-8 at `lg`+ where the dock is hidden.
+      className={`bg-[#295af6] text-white pt-16 pb-[calc(var(--mobile-nav-height)+24px)] lg:pb-8 px-6 sm:px-10 lg:px-[86px] flex justify-center ${className}`}
     >
       <div className="w-full max-w-[2380px]">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">

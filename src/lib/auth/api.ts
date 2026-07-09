@@ -272,3 +272,60 @@ export async function removeCompareSelected(unitid: string): Promise<void> {
   );
   if (!res.ok) throw new Error(`Deselect comparison failed (${res.status})`);
 }
+
+// ---- Generated reports ------------------------------------------------------
+
+/** A college entry as returned inside a report's `colleges` array. */
+export interface ReportCollege {
+  unitid: number;
+  name: string;
+}
+
+/** A single report as returned by GET /report/:reportId (and the /report/generate response). */
+export interface ReportDetail {
+  reportId: string;
+  createdAt: string;
+  colleges: ReportCollege[];
+  downloadUrl: string;
+  expiresAt: string;
+}
+
+/** One row of the paginated GET /report list. */
+export interface ReportSummary {
+  reportId: string;
+  createdAt: string;
+  colleges: ReportCollege[];
+}
+
+export interface PaginatedReports {
+  reports: ReportSummary[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
+/** GET /report?page=&limit= — the current user's report history (router mounted at /report, singular). */
+export async function fetchReports(
+  page = 1,
+  limit = 10,
+): Promise<PaginatedReports> {
+  const res = await authedFetch(`/report?page=${page}&limit=${limit}`);
+  return parseJson<PaginatedReports>(res, "Load reports");
+}
+
+/** GET /report/:reportId — a single report's metadata and a fresh signed download URL. */
+export async function fetchReport(reportId: string): Promise<ReportDetail> {
+  const res = await authedFetch(`/report/${encodeURIComponent(reportId)}`);
+  if (res.status === 404) {
+    throw new ReportNotFoundError(reportId);
+  }
+  return parseJson<ReportDetail>(res, "Load report");
+}
+
+export class ReportNotFoundError extends Error {
+  constructor(reportId: string) {
+    super(`Report ${reportId} not found`);
+    this.name = "ReportNotFoundError";
+  }
+}

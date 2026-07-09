@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+:root {
+  /* Space the mobile bottom nav dock actually occupies from the viewport's
+     bottom edge (including its own offset), measured at runtime by
+     MobileNavDock via ResizeObserver. This default is only used for the very
+     first paint before that measurement runs. Pages add this (plus their own
+     margin) as bottom padding so content is never hidden behind the dock —
+     see Footer.tsx — instead of guessing a pixel value per page. */
+  --mobile-nav-height: 84px;
+}
+
 body {
   @apply bg-white text-gray-900 antialiased;
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Scale, Search, Heart, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCompareCount } from "@/components/search/useCompareSelected";
 import { SAVED_EVENT } from "@/components/search/useSavedColleges";
+import { useScrollAwareVisibility } from "@/hooks/useScrollAwareVisibility";
+import { useAnyOverlayOpen } from "@/hooks/useAnyOverlayOpen";
 
 interface MobileNavDockProps {
   onOpenAuthModal?: (mode: "login" | "signup") => void;
@@ -21,6 +23,44 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
 
   const [savedCount, setSavedCount] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Visibility: hidden on scroll-down (shown again on scroll-up), hidden
+  // while any modal/drawer/bottom-sheet is open, and hidden on /search while
+  // the Compare Deck occupies the same bottom-of-screen space.
+  const scrollVisible = useScrollAwareVisibility();
+  const overlayOpen = useAnyOverlayOpen();
+  const hiddenForCompareDeck = pathname === "/search" && compareCount > 0;
+  const visible = scrollVisible && !overlayOpen && !hiddenForCompareDeck;
+
+  // Measure the dock's own footprint (height + its offset from the viewport
+  // bottom) and publish it as `--mobile-nav-height` so pages can reserve
+  // exactly enough bottom padding (see Footer.tsx) instead of guessing a
+  // pixel value. Only updates while visible, so a temporary scroll-hide never
+  // shrinks the published value.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const space = window.innerHeight - el.getBoundingClientRect().top;
+      if (space > 0) {
+        document.documentElement.style.setProperty(
+          "--mobile-nav-height",
+          `${Math.round(space)}px`,
+        );
+      }
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   // Track page scroll progress for top slender indicator bar
   useEffect(() => {
@@ -116,7 +156,15 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[90] w-[92%] max-w-[420px] lg:hidden select-none animate-fade-in pointer-events-auto">
+    <div
+      ref={wrapperRef}
+      aria-hidden={!visible}
+      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[90] w-[92%] max-w-[420px] lg:hidden select-none animate-fade-in transition-transform duration-300 ease-out ${
+        visible
+          ? "translate-y-0 pointer-events-auto"
+          : "translate-y-[150%] pointer-events-none"
+      }`}
+    >
       {/* Top Slim Scroll Progress Bar */}
       <div className="w-full h-[3px] bg-slate-200/60 rounded-full mb-2 overflow-hidden backdrop-blur-md shadow-sm">
         <div

@@ -50,6 +50,9 @@ export default function MobileNavMenu({
           <Link href="/profile" onClick={onClose}>
             My Profile
           </Link>
+          <Link href="/profile#reports_section" onClick={onClose}>
+            My Reports
+          </Link>
           <button
             onClick={onSignOut}
             className="text-left text-[#f43f5e] font-semibold cursor-pointer"
