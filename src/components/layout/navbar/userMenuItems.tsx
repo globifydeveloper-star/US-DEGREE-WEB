@@ -6,6 +6,7 @@ import {
   SyncOutlined,
   SettingOutlined,
   LogoutOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 
 type AppRouter = ReturnType<typeof useRouter>;
@@ -33,6 +34,12 @@ export function buildUserMenuItems(
       icon: <SyncOutlined />,
       label: "Compare List",
       onClick: () => router.push("/compare"),
+    },
+    {
+      key: "reports",
+      icon: <FileTextOutlined />,
+      label: "My Reports",
+      onClick: () => router.push("/profile#reports_section"),
     },
     {
       key: "settings",
