@@ -31,10 +31,12 @@ export interface CollegeMatch {
   degreeLevel: string; // credential level for that program (e.g. "Bachelor's Degree")
   isPrivate: boolean;
   tuition: number | null; // in-state tuition, $/yr
+  costOfAttendance: number | null; // sticker_price_by_api — avg annual cost, $/yr
   acceptanceRate: number | null; // %
   graduationRate: number | null; // %
   employmentRate: number | null; // %
   medianSalary1yr: number | null; // 1-year median salary, $
+  schoolUrl: string | null; // official website (for the Saved Colleges "Visit website")
 }
 
 // How many match tiles to show (and therefore enrich).
@@ -241,10 +243,12 @@ export function useCollegeMatches(profile: StudentProfile): {
             .toLowerCase()
             .includes("private"),
           tuition: toNum(r.tuition_in_state),
+          costOfAttendance: null, // filled in by the enrichment pass below
           acceptanceRate: toPercent(r.admission_rate),
           employmentRate: toPercent(r.emp_factor),
           graduationRate: null, // filled in by the enrichment pass below
           medianSalary1yr: null,
+          schoolUrl: r.school_url ?? null,
         }));
 
         // Show the base tiles immediately; grad rate + 1-yr salary stream in.
@@ -255,13 +259,15 @@ export function useCollegeMatches(profile: StudentProfile): {
         const enriched = await Promise.all(
           base.map(async (m) => {
             try {
-              const [ovRes, outRes] = await Promise.all([
+              const [ovRes, outRes, tuitionRes] = await Promise.all([
                 authedFetch(`/overview/${m.id}/${m.cipCode}`),
                 authedFetch(`/outcomes/${m.id}/${m.cipCode}`),
+                authedFetch(`/tuition/${m.id}`),
               ]);
 
               let graduationRate: number | null = null;
               let medianSalary1yr: number | null = null;
+              let costOfAttendance: number | null = null;
 
               if (ovRes.ok) {
                 const ov = await ovRes.json();
@@ -273,8 +279,15 @@ export function useCollegeMatches(profile: StudentProfile): {
                 medianSalary1yr =
                   sanitizeSalary(out?.earnings?.year_1) ?? medianSalary1yr;
               }
+              if (tuitionRes.ok) {
+                const tui = await tuitionRes.json();
+                // Same value the Tuition & Costs tab shows as "Average Annual
+                // Cost of Attendance" — used as the fallback when a program has
+                // no listed tuition.
+                costOfAttendance = toNum(tui?.tuition?.sticker_price_by_api);
+              }
 
-              return { ...m, graduationRate, medianSalary1yr };
+              return { ...m, graduationRate, medianSalary1yr, costOfAttendance };
             } catch {
               return m;
             }

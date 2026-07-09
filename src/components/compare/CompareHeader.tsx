@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button, message, Modal } from "antd";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FileText, MapPin, Sparkles, X } from "lucide-react";
 import { authedFetch } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
@@ -18,6 +19,7 @@ export default function CompareHeader({
 }: CompareHeaderProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const router = useRouter();
 
   // Open the confirmation modal listing the selected colleges. The actual
   // generation is deferred to handleGenerateReport (the modal's "Generate").
@@ -65,7 +67,10 @@ export default function CompareHeader({
         throw new Error(`Report generation failed: ${res.status}`);
       }
 
-      const result = (await res.json()) as { pdfUrl: string };
+      const result = (await res.json()) as {
+        reportId?: string;
+        pdfUrl: string;
+      };
 
       message.open({
         key,
@@ -74,8 +79,12 @@ export default function CompareHeader({
         duration: 2,
       });
 
-      // Open PDF in a new tab
-      if (result.pdfUrl) {
+      // Send the user to the "My Reports" section of their profile, where the
+      // new report now shows up with a download button, instead of only
+      // handing them a one-time link.
+      if (result.reportId) {
+        router.push("/profile#reports_section");
+      } else if (result.pdfUrl) {
         window.open(result.pdfUrl, "_blank");
       }
     } catch (err) {

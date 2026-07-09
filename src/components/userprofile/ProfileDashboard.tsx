@@ -38,6 +38,7 @@ import PreferencesCard from "./cards/PreferencesCard";
 import CollegeMatchesSection from "./cards/CollegeMatchesSection";
 import SavedCollegesSection from "./cards/SavedCollegesSection";
 import CompareListSection from "./cards/CompareListSection";
+import MyReportsSection from "./cards/MyReportsSection";
 import DangerZoneCard from "./cards/DangerZoneCard";
 import EditProfileModal from "./modals/EditProfileModal";
 import ChangePasswordModal from "./modals/ChangePasswordModal";
@@ -605,6 +606,9 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
       {/* Compare List — self-fetches from GET /compare/selected */}
       <CompareListSection />
+
+      {/* My Reports — self-fetches from GET /reports */}
+      <MyReportsSection />
 
       {/* Danger Zone */}
       <DangerZoneCard onDeactivate={() => setIsDeactivateOpen(true)} />

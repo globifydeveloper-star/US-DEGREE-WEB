@@ -23,6 +23,7 @@ import {
   fetchCompareSelected,
   addCompareSelected,
   removeCompareSelected,
+  hasAuthenticatedUser,
   type SelectedCompareCollege,
 } from "@/lib/auth/api";
 
@@ -56,7 +57,8 @@ export interface CompareDetail {
  */
 export type CompareChangeDetail =
   | { action: "added"; record: SelectedCompareCollege }
-  | { action: "removed"; unitid: string };
+  | { action: "removed"; unitid: string }
+  | { action: "cleared" };
 
 let selectedSet = new Set<string>();
 let loaded = false;
@@ -128,6 +130,9 @@ export async function ensureCompareLoaded(): Promise<void> {
   if (inflight) return inflight;
   inflight = (async () => {
     try {
+      // No signed-in user (e.g. navbar badge on a public page) → nothing to
+      // load. Leave `loaded` false so it retries after login.
+      if (!(await hasAuthenticatedUser())) return;
       const list = await fetchCompareSelected();
       const ids = list.map((c) => String(c.unitid));
       selectedSet = new Set(ids);
@@ -259,15 +264,27 @@ export async function clearCompare(): Promise<void> {
   const ids = new Set<string>([...selectedSet, ...readBucket()]);
   selectedSet = new Set();
   writeBucket([], []);
-  dispatch();
-  try {
-    await Promise.all(Array.from(ids).map((id) => removeCompareSelected(id)));
-    // Reconcile listeners once the backend set is actually empty.
-    dispatch();
-  } catch (err) {
-    console.error("Failed to clear comparison set on backend:", err);
-    throw err;
+  // Broadcast an explicit "cleared" so listeners empty their view immediately
+  // WITHOUT refetching. A plain reload dispatch here would race the backend
+  // deletes below and could momentarily repopulate from the still-full set.
+  dispatch({ action: "cleared" });
+  // Delete every id independently. allSettled (not all) so one failed/duplicate
+  // delete can't abort the rest or throw — the bucket must end up empty even if
+  // a single backend call rejects.
+  const results = await Promise.allSettled(
+    Array.from(ids).map((id) => removeCompareSelected(id)),
+  );
+  const failed = results.filter((r) => r.status === "rejected");
+  if (failed.length > 0) {
+    console.error(
+      `Failed to clear ${failed.length} comparison entr${
+        failed.length === 1 ? "y" : "ies"
+      } on backend:`,
+      failed,
+    );
   }
+  // Reconcile listeners once the backend deletes have all been attempted.
+  dispatch();
 }
 
 /**
@@ -320,16 +337,31 @@ export function useCompareIds(): string[] {
   return ids;
 }
 
-/** Reactive count of selected colleges (used by the Navbar badge). */
+/**
+ * Reactive count of selected colleges (used by the Navbar + mobile dock badge).
+ * Backed by the authoritative `/compare/selected` set, so the badge always
+ * matches the profile's "Colleges Selected for Comparison" section. Starts at 0
+ * for SSR-safe hydration, then syncs (and triggers the one-time backend load)
+ * on mount.
+ */
 export function useCompareCount(): number {
-  const [count, setCount] = useState<number>(getCompareCount());
+  const [count, setCount] = useState<number>(0);
 
   useEffect(() => {
     ensureCompareLoaded();
     const handler = () => setCount(getCompareCount());
     handler();
+    // A logged-out load bails early; reload once the user signs in/out so the
+    // badge reflects their backend comparison set.
+    const onAuthChange = () => reloadCompareSelected();
     window.addEventListener(COMPARE_SELECTED_EVENT, handler);
-    return () => window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
+    window.addEventListener(COMPARE_BUCKET_EVENT, handler);
+    window.addEventListener("auth-state-changed", onAuthChange);
+    return () => {
+      window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
+      window.removeEventListener(COMPARE_BUCKET_EVENT, handler);
+      window.removeEventListener("auth-state-changed", onAuthChange);
+    };
   }, []);
 
   return count;

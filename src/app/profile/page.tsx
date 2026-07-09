@@ -6,11 +6,16 @@ import { Spin } from "antd";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProfileDashboard from "@/components/userprofile/ProfileDashboard";
+import BackToTopButton from "@/components/search/BackToTopButton";
 import { useAuth } from "@/context/AuthContext";
+import { useScrollPastThreshold } from "@/hooks/useScrollPastThreshold";
+
+const BACK_TO_TOP_THRESHOLD = 400;
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const showBackToTop = useScrollPastThreshold(BACK_TO_TOP_THRESHOLD);
 
   // Protected route: bounce unauthenticated visitors back home (login is a
   // modal triggered from the navbar, so there is no dedicated /login route).
@@ -45,6 +50,7 @@ export default function ProfilePage() {
           }}
         />
       </div>
+      {showBackToTop && <BackToTopButton />}
       <Footer />
     </main>
   );
