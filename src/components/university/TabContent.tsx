@@ -170,7 +170,16 @@ export default function TabContent({ data }: { data: any }) {
       </div>
 
       {(activeTab === "Overview" || activeTab === "Programs & Academics") && (
-        <ProgramSearchBand />
+        <ProgramSearchBand
+          universityId={data.id}
+          universityName={data.name}
+          location={data.location}
+          schoolType={data.type}
+          admissionRate={data.admissionRate}
+          tuitionFee={data.tuitionFee}
+          avgSalary={data.avgSalary}
+          netRoi20Yr={data.netRoi20Yr}
+        />
       )}
     </>
   );
