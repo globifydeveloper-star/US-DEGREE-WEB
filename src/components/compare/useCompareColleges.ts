@@ -365,6 +365,25 @@ export function useCompareColleges() {
           if (outcomesRes.ok) outcomesData = await outcomesRes.json();
           if (collegeRes.ok) collegeData = await collegeRes.json();
 
+          // A specific program (non-"default" CIP) often has no outcomes row
+          // of its own — fall back to the school-wide default earnings so the
+          // salary metric isn't lost just because that program+school pairing
+          // lacks its own record. Program Details still shows the real program.
+          const hasCipOutcomes =
+            sanitizeSalary(outcomesData?.earnings?.year_10) !== null;
+          if (cipCode !== "default" && !hasCipOutcomes) {
+            try {
+              const fallbackRes = await authedFetch(
+                `/outcomes/${id}/default`,
+              );
+              if (fallbackRes.ok) {
+                outcomesData = await fallbackRes.json();
+              }
+            } catch (e) {
+              console.error("Failed to load fallback outcomes:", e);
+            }
+          }
+
           const matchedUni =
             allUniversitiesRef.current.get(String(id)) ||
             selectOptions.find((uni) => String(uni.id) === String(id));

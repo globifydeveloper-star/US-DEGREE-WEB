@@ -155,12 +155,39 @@ export default function CompareListSection() {
     if (ids.length < 2) return;
     try {
       localStorage.setItem("compared_colleges", JSON.stringify(ids));
-      const details = items.map((c) => ({
-        id: String(c.unitid),
-        name: c.name,
-        location: c.location,
-        cipCode: "default",
-      }));
+
+      // Preserve any cipCode/programName already captured locally (e.g. set
+      // when the college was added from Intelligent Matches or a search
+      // card) instead of stomping every entry with a bare "default" — that
+      // was wiping out the program info right before landing on /compare.
+      let existingDetails: Array<{
+        id: string;
+        cipCode?: string;
+        programName?: string;
+      }> = [];
+      try {
+        const stored = localStorage.getItem("compared_colleges_details");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) existingDetails = parsed;
+        }
+      } catch (e) {
+        console.error("Error reading stored comparison details:", e);
+      }
+      const existingById = new Map(
+        existingDetails.map((d) => [String(d.id), d]),
+      );
+
+      const details = items.map((c) => {
+        const existing = existingById.get(String(c.unitid));
+        return {
+          id: String(c.unitid),
+          name: c.name,
+          location: c.location,
+          cipCode: existing?.cipCode || "default",
+          programName: existing?.programName,
+        };
+      });
       localStorage.setItem(
         "compared_colleges_details",
         JSON.stringify(details),
