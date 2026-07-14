@@ -46,6 +46,7 @@ export interface CompareDetail {
   state?: string;
   schoolType?: string;
   cipCode?: string;
+  programName?: string;
   schoolUrl?: string;
   logoColor?: string;
 }
