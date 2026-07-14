@@ -80,6 +80,7 @@ export default function CollegeMatchesSection({
           name: match.name,
           location,
           cipCode: match.cipCode || "default",
+          programName: match.programTitle || undefined,
         },
         // Enriched record so the profile's comparison grid shows it instantly.
         {

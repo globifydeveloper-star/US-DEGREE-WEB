@@ -29,6 +29,8 @@ export default function UniversityHero({
   tuitionType = "in_state",
   schoolUrl,
   accreditor,
+  cipCode,
+  degree,
 }: UniversityHeroProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -38,12 +40,14 @@ export default function UniversityHero({
 
   const toggleCompare = async () => {
     if (!compareId) return;
+    const hasCip = !!cipCode && cipCode !== "N/A" && cipCode !== "default";
     try {
       const result = await toggleCompareStore({
         id: compareId,
         name,
         location,
-        cipCode: "default",
+        cipCode: hasCip ? (cipCode as string) : "default",
+        programName: hasCip ? degree || undefined : undefined,
         schoolUrl: schoolUrl || "",
         logoColor: logoColor || "bg-blue-600",
       });

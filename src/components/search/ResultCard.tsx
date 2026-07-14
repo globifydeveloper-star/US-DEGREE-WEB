@@ -243,6 +243,7 @@ export default function ResultCard({
         name: university,
         location,
         cipCode: cipCode || "default",
+        programName: cipCode ? degree : undefined,
         schoolUrl: formattedSchoolUrl || "",
         logoColor: logoColor || "bg-blue-600",
       });

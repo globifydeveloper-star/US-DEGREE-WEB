@@ -57,6 +57,7 @@ export default function TileCard({
         logoColor: logoColor || "bg-blue-600",
         location: location,
         cipCode: cipCode || "default",
+        programName: cipCode ? degree : undefined,
         schoolUrl: formattedSchoolUrl,
       });
       if (result === "full") {

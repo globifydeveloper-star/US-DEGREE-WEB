@@ -50,6 +50,8 @@ export default function TabContent({ data }: { data: any }) {
         tuitionType={tuitionType}
         schoolUrl={data.schoolUrl}
         accreditor={data.accreditor}
+        cipCode={data.cipCode}
+        degree={data.degree}
       />
       <TrustBanner />
 
