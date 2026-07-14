@@ -128,6 +128,45 @@ export default function ComparisonTable({
 
           {/* Table Body */}
           <tbody className="divide-y divide-gray-100">
+            {/* Program Details */}
+            <tr className="hover:bg-slate-50/30 transition-colors">
+              <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
+                <div>
+                  <p className="font-bold text-slate-800 text-xs md:text-sm">
+                    Program Details
+                  </p>
+                  <p className="text-[8px] md:text-[10px] font-semibold text-gray-400 mt-0.5">
+                    Compared program & CIP code
+                  </p>
+                </div>
+              </td>
+              {comparedColleges.map((college) => (
+                <td
+                  key={college.id}
+                  className="p-4 md:p-8 text-center font-mono"
+                >
+                  {college.programName ? (
+                    <Tooltip title={college.programName}>
+                      <div className="flex flex-col items-center max-w-[120px] md:max-w-[160px] mx-auto">
+                        <span className="text-xs md:text-sm font-black text-slate-900 line-clamp-2 leading-snug">
+                          {college.programName}
+                        </span>
+                        {college.cipCode && college.cipCode !== "default" && (
+                          <span className="mt-1 md:mt-1.5 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#3F51B5] bg-blue-50 px-1.5 md:px-2 py-0.5 rounded-md border border-blue-100">
+                            CIP: {college.cipCode}
+                          </span>
+                        )}
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    <span className="text-sm md:text-xl font-bold text-slate-400">
+                      N/A
+                    </span>
+                  )}
+                </td>
+              ))}
+            </tr>
+
             {/* Tuition In-State */}
             <tr className="hover:bg-slate-50/30 transition-colors">
               <td className="p-4 md:p-8 sticky left-0 bg-white font-black text-slate-700 z-10 border-r border-gray-100">
@@ -661,6 +700,69 @@ export default function ComparisonTable({
 
         {/* Comparison Cards (Leaderboards) */}
         <div className="space-y-4">
+          {/* Program Details */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <div className="mb-3">
+              <h4 className="font-extrabold text-slate-800 text-sm">
+                Program Details
+              </h4>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Compared program & CIP code
+              </p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {comparedColleges.map((college) => (
+                <div
+                  key={college.id}
+                  className="py-2.5 flex items-center justify-between gap-2 text-xs"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0">
+                      {college.logo ? (
+                        <Image
+                          src={college.logo}
+                          alt={college.name}
+                          width={20}
+                          height={20}
+                          className="object-contain"
+                          referrerPolicy="no-referrer"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
+                          {college.name ? college.name.charAt(0) : "U"}
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
+                      onClick={() => onViewDetails(college.id)}
+                    >
+                      {college.shortName}
+                    </span>
+                  </div>
+
+                  {college.programName ? (
+                    <div className="flex flex-col items-end shrink-0 max-w-[140px]">
+                      <span className="font-bold text-slate-900 text-right truncate max-w-full">
+                        {college.programName}
+                      </span>
+                      {college.cipCode && college.cipCode !== "default" && (
+                        <span className="text-[9px] font-black uppercase text-[#3F51B5] bg-blue-50 px-1.5 py-0.5 rounded mt-0.5">
+                          CIP {college.cipCode}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="font-mono font-bold text-slate-400 shrink-0">
+                      N/A
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Tuition In-State */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <div className="mb-3">

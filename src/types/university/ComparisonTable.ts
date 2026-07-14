@@ -17,6 +17,7 @@ export interface College {
   studentPopulation: number | null;
   image: string;
   cipCode?: string;
+  programName?: string;
 }
 
 // Resolved, display-ready detail shown in the CollegeDetailsModal and cached on the compare page.

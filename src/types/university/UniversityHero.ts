@@ -13,4 +13,6 @@ export interface UniversityHeroProps {
   tuitionType?: "in_state" | "out_state";
   schoolUrl?: string | null;
   accreditor?: string | null;
+  cipCode?: string | null;
+  degree?: string | null;
 }

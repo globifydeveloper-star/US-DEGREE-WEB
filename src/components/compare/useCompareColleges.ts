@@ -89,6 +89,7 @@ interface StoredDetail {
   schoolType?: string;
   location?: string;
   cipCode?: string;
+  programName?: string;
   schoolUrl?: string;
   logo?: string;
   logoColor?: string;
@@ -333,6 +334,8 @@ export function useCompareColleges() {
             (d) => String(d.id) === String(id),
           );
           const cipCode = matchedStored?.cipCode || "default";
+          const programName =
+            cipCode !== "default" ? matchedStored?.programName || "" : "";
 
           const [overviewRes, tuitionRes, outcomesRes, collegeRes] =
             await Promise.all([
@@ -488,6 +491,7 @@ export function useCompareColleges() {
             website,
             schoolUrl: website || undefined,
             cipCode,
+            programName: programName || undefined,
           } as College;
         });
 
@@ -510,6 +514,7 @@ export function useCompareColleges() {
           state: c.state,
           schoolType: c.isPrivate ? "Private" : "Public",
           cipCode: c.cipCode || "default",
+          programName: c.programName || "",
           schoolUrl: c.schoolUrl || "",
         }));
         localStorage.setItem(
