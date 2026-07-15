@@ -76,6 +76,49 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
   return pendingExchangePromise;
 }
 
+/** Shape returned by POST /auth/apple — app JWT plus the found/created user. */
+export interface AppleAuthResult {
+  token: string;
+  user: {
+    id?: number;
+    display_name?: string | null;
+    email?: string | null;
+    profile_image?: string | null;
+    role?: string;
+    email_verified?: boolean;
+  };
+}
+
+/**
+ * Send Apple's id_token straight to the backend, which verifies it against
+ * Apple's public keys, finds/creates the user, and returns the app JWT plus
+ * the user record. Unlike exchangeIdToken, no Firebase session backs this —
+ * Apple's token is verified entirely server-side.
+ */
+export async function exchangeAppleIdToken(
+  idToken: string,
+): Promise<AppleAuthResult> {
+  const res = await fetch(`${PROXY_BASE}/auth/apple`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+
+  if (!res.ok) {
+    clearAppJwt();
+    throw new Error(`Apple sign-in failed (${res.status})`);
+  }
+
+  const data = (await res.json()) as AppleAuthResult;
+  if (!data.token) {
+    clearAppJwt();
+    throw new Error("Apple sign-in returned no app JWT");
+  }
+
+  setAppJwt(data.token);
+  return data;
+}
+
 /**
  * Resolve once Firebase has restored any persisted session, returning whether a
  * user is signed in. Client stores use this to avoid firing protected calls

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card, Avatar, Descriptions, Button, Tag } from "antd";
+import { Card, Avatar, Descriptions, Button, Tag, Progress } from "antd";
 import {
   UserOutlined,
   MailOutlined,
@@ -11,7 +11,7 @@ import {
   LockOutlined,
   BookOutlined,
   SettingOutlined,
-  SecurityScanOutlined,
+  // SecurityScanOutlined,
 } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 
@@ -31,6 +31,36 @@ export default function ProfileInfoCard({
   onChangePassword,
   onChangeEmail,
 }: ProfileInfoCardProps) {
+  // Overall completion = average of the three profile dashboard sections'
+  // own completion rates (Profile Info, Academics, Match Preferences).
+  const profileInfoFields = [
+    profile.fullName,
+    profile.email,
+    profile.phone,
+    profile.address,
+  ];
+  const academicFields = [
+    profile.highSchoolName,
+    profile.graduationYear,
+    profile.gpa,
+    profile.satScore,
+  ];
+  const preferenceFields = [
+    profile.preferredStates.length > 0,
+    profile.preferredPrograms.length > 0,
+    profile.preferredDegreeLevel,
+    profile.preferredCollegeType,
+  ];
+  const sectionCompletion = (fields: unknown[]) =>
+    fields.filter(Boolean).length / fields.length;
+  const profileCompletion = Math.round(
+    ((sectionCompletion(profileInfoFields) +
+      sectionCompletion(academicFields) +
+      sectionCompletion(preferenceFields)) /
+      3) *
+      100,
+  );
+
   return (
     <Card
       id="profile_info_card"
@@ -66,10 +96,15 @@ export default function ProfileInfoCard({
           )}`}
           className="bg-blue-100 border-2 border-blue-500 shadow-sm"
         />
-        <div className="text-center sm:text-left space-y-1">
+        <div className="text-center sm:text-left space-y-1 w-full">
           <h2 className="text-xl font-bold text-neutral-900">
             {profile.fullName || "Not provided"}
           </h2>
+          <Progress
+            percent={profileCompletion}
+            format={(percent) => `${percent}%`}
+            style={{ marginTop: 10 }}
+          />
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
             {profile.preferredDegreeLevel && (
               <Tag
@@ -81,13 +116,13 @@ export default function ProfileInfoCard({
                 {profile.preferredDegreeLevel} Preference
               </Tag>
             )}
-            <Tag
+            {/* <Tag
               color="blue"
               style={{ borderRadius: "6px" }}
               icon={<SecurityScanOutlined />}
             >
               Verified Student ID
-            </Tag>
+            </Tag> */}
           </div>
         </div>
       </div>

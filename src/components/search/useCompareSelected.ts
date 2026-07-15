@@ -135,7 +135,16 @@ export async function ensureCompareLoaded(): Promise<void> {
       // load. Leave `loaded` false so it retries after login.
       if (!(await hasAuthenticatedUser())) return;
       const list = await fetchCompareSelected();
-      const ids = list.map((c) => String(c.unitid));
+      const backendIds = list.map((c) => String(c.unitid));
+
+      // Union with whatever is already in the in-memory set, not just the
+      // backend response. This load can be in flight when the user adds a
+      // college from a search card (each card's mount kicks it off); if that
+      // optimistic add lands before this stale response resolves, using the
+      // backend list alone would silently drop the new selection — id AND
+      // its cipCode/programName in the localStorage mirror — right after it
+      // was added.
+      const ids = Array.from(new Set([...backendIds, ...selectedSet]));
       selectedSet = new Set(ids);
 
       // Keep existing local details for known ids; synthesise minimal details

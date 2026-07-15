@@ -98,24 +98,46 @@ export default function PreferencesCard({
           </div>
         </div>
 
-        <div className="border-t border-neutral-100 pt-3">
-          <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block mb-2">
-            Preferred College Type
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {profile.preferredCollegeType ? (
-              <Tag
-                color="purple"
-                style={{ borderRadius: "6px" }}
-                className="font-medium px-2.5 py-0.5"
-              >
-                {profile.preferredCollegeType}
-              </Tag>
-            ) : (
-              <span className="text-xs text-neutral-400 italic">
-                No preference (Public & Private).
-              </span>
-            )}
+        <div className="border-t border-neutral-100 pt-3 grid grid-cols-2 gap-4">
+          <div>
+            <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block mb-2">
+              Preferred College Type
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.preferredCollegeType ? (
+                <Tag
+                  color="purple"
+                  style={{ borderRadius: "6px" }}
+                  className="font-medium px-2.5 py-0.5"
+                >
+                  {profile.preferredCollegeType}
+                </Tag>
+              ) : (
+                <span className="text-xs text-neutral-400 italic">
+                  No preference (Public & Private).
+                </span>
+              )}
+            </div>
+          </div>
+          <div>
+            <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block mb-2">
+              Target Degree Level
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.preferredDegreeLevel ? (
+                <Tag
+                  color="cyan"
+                  style={{ borderRadius: "6px" }}
+                  className="font-medium px-2.5 py-0.5"
+                >
+                  {profile.preferredDegreeLevel}
+                </Tag>
+              ) : (
+                <span className="text-xs text-neutral-400 italic">
+                  Not selected.
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

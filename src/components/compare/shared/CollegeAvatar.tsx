@@ -1,0 +1,56 @@
+"use client";
+
+import Image from "next/image";
+
+interface CollegeAvatarProps {
+  name: string;
+  logo?: string;
+  /** "lg" is used in the desktop table header, "md" in the mobile top card. */
+  size?: "lg" | "md";
+}
+
+const SIZE_CLASSES = {
+  lg: "w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-2xl p-2 md:p-3 mb-2 md:mb-4",
+  md: "w-12 h-12 rounded-xl p-2",
+};
+
+const IMAGE_SIZE = {
+  lg: 56,
+  md: 40,
+};
+
+const FALLBACK_TEXT_SIZE = {
+  lg: "text-sm md:text-lg",
+  md: "text-sm",
+};
+
+/**
+ * The larger college logo shown in the desktop table header and the
+ * mobile "school directory" cards. Falls back to a colored initial
+ * when the college has no logo image.
+ */
+export default function CollegeAvatar({ name, logo, size = "lg" }: CollegeAvatarProps) {
+  return (
+    <div
+      className={`bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${SIZE_CLASSES[size]}`}
+    >
+      {logo ? (
+        <Image
+          src={logo}
+          alt={name}
+          width={IMAGE_SIZE[size]}
+          height={IMAGE_SIZE[size]}
+          className="object-contain max-h-full max-w-full"
+          referrerPolicy="no-referrer"
+          unoptimized
+        />
+      ) : (
+        <div
+          className={`w-full h-full rounded-lg bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] ${FALLBACK_TEXT_SIZE[size]}`}
+        >
+          {name ? name.charAt(0) : "U"}
+        </div>
+      )}
+    </div>
+  );
+}
