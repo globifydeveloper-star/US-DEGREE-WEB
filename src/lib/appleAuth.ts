@@ -56,14 +56,20 @@ function initAppleAuth(): void {
   initialized = true;
 }
 
+export interface AppleSignInResult {
+  idToken: string;
+  /** Only present on the user's first-ever authorization for this client. */
+  fullName?: string;
+}
+
 /**
  * Opens Apple's popup sign-in flow and resolves with the id_token to send to
- * the backend for verification. Apple only returns `user` (name/email) on the
- * first authorization for a given Apple ID, so this deliberately relies only
- * on the id_token, which the backend can verify and re-derive identity from
- * on every sign-in.
+ * the backend for verification, plus the user's name if Apple included it.
+ * Apple only returns `user` (name/email) on the first authorization for a
+ * given Apple ID — the backend must capture it then, since it will never be
+ * sent again on subsequent sign-ins.
  */
-export async function signInWithApple(): Promise<string> {
+export async function signInWithApple(): Promise<AppleSignInResult> {
   await loadAppleSdk();
   initAppleAuth();
 
@@ -72,5 +78,11 @@ export async function signInWithApple(): Promise<string> {
   if (!idToken) {
     throw new Error("Apple Sign In did not return an id_token");
   }
-  return idToken;
+
+  const name = response.user?.name;
+  const fullName = name
+    ? [name.firstName, name.lastName].filter(Boolean).join(" ").trim()
+    : undefined;
+
+  return { idToken, fullName: fullName || undefined };
 }

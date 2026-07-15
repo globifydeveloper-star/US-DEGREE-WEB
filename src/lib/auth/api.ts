@@ -94,14 +94,19 @@ export interface AppleAuthResult {
  * Apple's public keys, finds/creates the user, and returns the app JWT plus
  * the user record. Unlike exchangeIdToken, no Firebase session backs this —
  * Apple's token is verified entirely server-side.
+ *
+ * `fullName` is only ever present on the user's first-ever authorization
+ * (Apple never sends it again) — the backend should use it solely when
+ * creating a new user, not to overwrite an existing one.
  */
 export async function exchangeAppleIdToken(
   idToken: string,
+  fullName?: string,
 ): Promise<AppleAuthResult> {
   const res = await fetch(`${PROXY_BASE}/auth/apple`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_token: idToken }),
+    body: JSON.stringify({ id_token: idToken, full_name: fullName }),
   });
 
   if (!res.ok) {

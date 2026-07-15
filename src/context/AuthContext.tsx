@@ -277,8 +277,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authActionInProgress.current = true;
     try {
       clearAppJwt();
-      const idToken = await signInWithApple();
-      const { user: dbUser } = await exchangeAppleIdToken(idToken);
+      const { idToken, fullName } = await signInWithApple();
+      const { user: dbUser } = await exchangeAppleIdToken(idToken, fullName);
 
       const mappedUser: AuthUser = {
         id: dbUser.id,
