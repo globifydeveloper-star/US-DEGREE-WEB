@@ -45,6 +45,7 @@ export function useAuthForm({
     login,
     signup,
     loginWithGoogle,
+    loginWithApple,
     resendVerificationForUnverifiedUser,
     checkVerificationStatus,
     sendPasswordReset,
@@ -202,6 +203,20 @@ export function useAuthForm({
     }
   };
 
+  const handleAppleSignIn = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const appleUser = await loginWithApple();
+      onSuccess(appleUser.email ?? "");
+      onClose();
+    } catch (err) {
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleResendVerification = async () => {
     setIsResending(true);
     setResendStatus("");
@@ -248,6 +263,7 @@ export function useAuthForm({
     handleOverlayClick,
     handleAuthSubmit,
     handleGoogleSignIn,
+    handleAppleSignIn,
     handleResendVerification,
   };
 }

@@ -11,7 +11,7 @@ import {
   LockOutlined,
   BookOutlined,
   SettingOutlined,
-  SecurityScanOutlined,
+  // SecurityScanOutlined,
 } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 

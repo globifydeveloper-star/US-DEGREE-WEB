@@ -17,6 +17,8 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { clearAppJwt } from "@/lib/auth/tokenStore";
+import { signInWithApple } from "@/lib/appleAuth";
+import { exchangeAppleIdToken } from "@/lib/auth/api";
 
 export interface AuthUser {
   id?: number;
@@ -24,7 +26,7 @@ export interface AuthUser {
   email: string | null;
   photoURL?: string | null;
   role?: string;
-  authProvider: "credentials" | "firebase";
+  authProvider: "credentials" | "firebase" | "apple";
   emailVerified: boolean;
   createdAt?: string | null;
   lastLogin?: string | null;
@@ -45,6 +47,7 @@ interface AuthContextType {
     role?: string,
   ) => Promise<AuthUser>;
   loginWithGoogle: () => Promise<FirebaseUser>;
+  loginWithApple: () => Promise<AuthUser>;
   logout: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   checkVerificationStatus: () => Promise<boolean>;
@@ -65,6 +68,9 @@ const AuthContext = createContext<AuthContextType>({
     throw new Error("AuthContext not initialized");
   },
   loginWithGoogle: async () => {
+    throw new Error("AuthContext not initialized");
+  },
+  loginWithApple: async () => {
     throw new Error("AuthContext not initialized");
   },
   logout: async () => {},
@@ -265,6 +271,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       broadcastAuthChange("LOGIN");
     }
     return result.user;
+  };
+
+  const loginWithApple = async (): Promise<AuthUser> => {
+    authActionInProgress.current = true;
+    try {
+      clearAppJwt();
+      const idToken = await signInWithApple();
+      const { user: dbUser } = await exchangeAppleIdToken(idToken);
+
+      const mappedUser: AuthUser = {
+        id: dbUser.id,
+        displayName: dbUser.display_name ?? null,
+        email: dbUser.email ?? null,
+        photoURL: dbUser.profile_image ?? null,
+        role: dbUser.role,
+        authProvider: "apple",
+        emailVerified: dbUser.email_verified ?? true,
+      };
+      setUser(mappedUser);
+      broadcastAuthChange("LOGIN");
+      window.dispatchEvent(new Event("auth-state-changed"));
+      return mappedUser;
+    } finally {
+      authActionInProgress.current = false;
+    }
   };
 
   const logout = async (): Promise<void> => {
@@ -478,6 +509,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         loginWithGoogle,
+        loginWithApple,
         logout,
         resendVerificationEmail,
         checkVerificationStatus,
