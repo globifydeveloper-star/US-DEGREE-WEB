@@ -55,7 +55,10 @@ export default function LoginModal({
       )}
 
       {!isForgotPassword && (
-        <SocialAuthButtons onGoogleSignIn={form.handleGoogleSignIn} />
+        <SocialAuthButtons
+          onGoogleSignIn={form.handleGoogleSignIn}
+          onAppleSignIn={form.handleAppleSignIn}
+        />
       )}
 
       <form onSubmit={form.handleAuthSubmit} className="space-y-4">

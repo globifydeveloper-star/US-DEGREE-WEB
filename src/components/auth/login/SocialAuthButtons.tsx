@@ -1,9 +1,11 @@
 interface SocialAuthButtonsProps {
   onGoogleSignIn: () => void;
+  onAppleSignIn: () => void;
 }
 
 export default function SocialAuthButtons({
   onGoogleSignIn,
+  onAppleSignIn,
 }: SocialAuthButtonsProps) {
   return (
     <>
@@ -35,6 +37,7 @@ export default function SocialAuthButtons({
         </button>
         <button
           type="button"
+          onClick={onAppleSignIn}
           className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 active:scale-98 transition-all text-xs font-bold text-slate-600 cursor-pointer"
         >
           <svg
