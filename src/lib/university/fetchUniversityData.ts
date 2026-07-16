@@ -1,4 +1,5 @@
 import { TuitionData } from "@/types/university/TuitionData";
+import { AthleticsData } from "@/types/university/AthleticsData";
 import {
   ApiCampus,
   ApiCollege,
@@ -38,6 +39,7 @@ export interface UniversityApiBundle {
   programsData: unknown;
   fetchedAccreditor: string | null;
   resolvedCip: string | undefined;
+  athleticsData: AthleticsData | null;
 }
 
 export async function fetchUniversityData(
@@ -106,6 +108,12 @@ export async function fetchUniversityData(
     : null;
   const fetchedAccreditor = matchedUni?.accreditor || null;
 
+  // 2g. Fetch athletics disclosure details
+  const athleticsData = await fetchJson<AthleticsData>(
+    `${apiUrl}/colleges/${id}/athletics`,
+    "Error fetching athletics details:",
+  );
+
   return {
     apiData,
     outcomesData,
@@ -115,5 +123,6 @@ export async function fetchUniversityData(
     programsData,
     fetchedAccreditor,
     resolvedCip,
+    athleticsData,
   };
 }

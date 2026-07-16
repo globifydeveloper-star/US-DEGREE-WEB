@@ -38,6 +38,7 @@ export async function buildUniversityViewData(
     programsData,
     fetchedAccreditor,
     resolvedCip,
+    athleticsData,
   } = bundle;
 
   // 3. Build the final data object, prioritizing sParams first, then apiData / collegeData
@@ -278,6 +279,9 @@ export async function buildUniversityViewData(
 
     // Programs Data
     programsData,
+
+    // Athletics Disclosure Data
+    athleticsData,
 
     // School URL
     schoolUrl: collegeData?.school_url || null,

@@ -14,6 +14,7 @@ import CampusStudentsTab from "./CampusStudentsTab";
 import TuitionCostsSection from "./TuitionCostsSection";
 import UniversityHero from "./UniversityHero";
 import TrustBanner from "./TrustBanner";
+import AthleticsTab from "@/components/college-profile/athletics/AthleticsTab";
 
 const tabs = [
   "Overview",
@@ -22,6 +23,7 @@ const tabs = [
   "Outcomes & Careers",
   "Tuition & Costs",
   "Campus & Students",
+  "Athletics",
 ];
 
 // `data` is a heterogeneous bag assembled in the server page and fanned out to
@@ -157,6 +159,10 @@ export default function TabContent({ data }: { data: any }) {
               tuitionType={tuitionType}
               setTuitionType={setTuitionType}
             />
+          )}
+
+          {activeTab === "Athletics" && (
+            <AthleticsTab data={data.athleticsData} />
           )}
         </div>
 
