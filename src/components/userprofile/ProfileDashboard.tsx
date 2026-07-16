@@ -100,7 +100,7 @@ interface ProfileAuthUser {
  * user (real backend data), everything else is empty — there is NO mock/sample
  * data. GET /profile then overlays whatever the user has actually entered.
  */
-function emptyProfile(authUser?: ProfileAuthUser | null): StudentProfile {
+export function emptyProfile(authUser?: ProfileAuthUser | null): StudentProfile {
   return {
     fullName: authUser?.displayName ?? "",
     email: authUser?.email ?? "",
@@ -147,7 +147,7 @@ function isProfileEmpty(p: StudentProfile): boolean {
  * snake_case first and fall back to camelCase. Anything the response omits or
  * returns null keeps the current (empty) value — never a fabricated default.
  */
-function mergeProfile(
+export function mergeProfile(
   prev: StudentProfile,
   data: Record<string, unknown>,
 ): StudentProfile {
