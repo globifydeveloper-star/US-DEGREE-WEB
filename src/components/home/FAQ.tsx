@@ -23,7 +23,7 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const handleToggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -48,10 +48,10 @@ export default function FAQ() {
             return (
               <div
                 key={index}
-                className={`overflow-hidden rounded-2xl border transition-all duration-300 ease-in-out ${
+                className={`overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 ease-in-out ${
                   isOpen
                     ? "border-gray-200 bg-white shadow-lg"
-                    : "border-gray-100 bg-gray-50"
+                    : "border-gray-100 bg-white"
                 }`}
               >
                 <button
