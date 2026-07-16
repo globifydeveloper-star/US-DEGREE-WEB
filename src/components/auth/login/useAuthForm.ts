@@ -10,6 +10,35 @@ import type { AuthMode, AuthModalMode } from "@/types/auth";
 
 const EMAIL_REGEX = /\S+@\S+\.\S+/;
 const VERIFICATION_POLL_INTERVAL_MS = 3000;
+const REMEMBER_ME_KEY = "auth_remembered_credentials";
+
+interface RememberedCredentials {
+  email: string;
+  password: string;
+}
+
+function loadRememberedCredentials(): RememberedCredentials | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(REMEMBER_ME_KEY);
+    return raw ? (JSON.parse(raw) as RememberedCredentials) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRememberedCredentials(email: string, password: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    REMEMBER_ME_KEY,
+    JSON.stringify({ email, password }),
+  );
+}
+
+function clearRememberedCredentials() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(REMEMBER_ME_KEY);
+}
 
 interface UseAuthFormParams {
   isOpen: boolean;
@@ -61,8 +90,11 @@ export function useAuthForm({
       setMode(initialMode);
       setError("");
       setName("");
-      setEmail("");
-      setPassword("");
+      const remembered =
+        initialMode === "login" ? loadRememberedCredentials() : null;
+      setEmail(remembered?.email ?? "");
+      setPassword(remembered?.password ?? "");
+      setRememberMe(!!remembered);
       setConfirmPassword("");
       setIsParent(false);
       setIsVerificationSent(false);
@@ -167,6 +199,11 @@ export function useAuthForm({
     try {
       if (mode === "login") {
         await login(cleanEmail, password, rememberMe);
+        if (rememberMe) {
+          saveRememberedCredentials(cleanEmail, password);
+        } else {
+          clearRememberedCredentials();
+        }
         onSuccess(cleanEmail);
         onClose();
       } else {
