@@ -38,5 +38,17 @@ export function useLoginModal(user: AuthUser | null) {
     }
   }, [user]);
 
+  // Allow other components (e.g. the homepage CTA) to open this modal
+  // without needing direct access to the Navbar's local state.
+  useEffect(() => {
+    const handleOpenAuthModal = (e: Event) => {
+      const detail = (e as CustomEvent<{ mode?: AuthMode }>).detail;
+      open(detail?.mode ?? "login");
+    };
+    window.addEventListener("open-auth-modal", handleOpenAuthModal);
+    return () =>
+      window.removeEventListener("open-auth-modal", handleOpenAuthModal);
+  }, []);
+
   return { isOpen, mode, open, close };
 }
