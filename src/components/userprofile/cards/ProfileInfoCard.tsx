@@ -14,6 +14,7 @@ import {
   // SecurityScanOutlined,
 } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
+import { calculateProfileCompletion } from "../../../lib/profileCompletion";
 
 interface ProfileInfoCardProps {
   profile: StudentProfile;
@@ -31,35 +32,7 @@ export default function ProfileInfoCard({
   onChangePassword,
   onChangeEmail,
 }: ProfileInfoCardProps) {
-  // Overall completion = average of the three profile dashboard sections'
-  // own completion rates (Profile Info, Academics, Match Preferences).
-  const profileInfoFields = [
-    profile.fullName,
-    profile.email,
-    profile.phone,
-    profile.address,
-  ];
-  const academicFields = [
-    profile.highSchoolName,
-    profile.graduationYear,
-    profile.gpa,
-    profile.satScore,
-  ];
-  const preferenceFields = [
-    profile.preferredStates.length > 0,
-    profile.preferredPrograms.length > 0,
-    profile.preferredDegreeLevel,
-    profile.preferredCollegeType,
-  ];
-  const sectionCompletion = (fields: unknown[]) =>
-    fields.filter(Boolean).length / fields.length;
-  const profileCompletion = Math.round(
-    ((sectionCompletion(profileInfoFields) +
-      sectionCompletion(academicFields) +
-      sectionCompletion(preferenceFields)) /
-      3) *
-      100,
-  );
+  const profileCompletion = calculateProfileCompletion(profile);
 
   return (
     <Card

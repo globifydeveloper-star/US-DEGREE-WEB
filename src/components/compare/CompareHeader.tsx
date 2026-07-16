@@ -5,8 +5,15 @@ import { Button, message, Modal } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FileText, MapPin, Sparkles, X } from "lucide-react";
-import { authedFetch } from "@/lib/auth/api";
+import { authedFetch, fetchProfile } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
+import { useAuth } from "@/context/AuthContext";
+import { emptyProfile, mergeProfile } from "@/components/userprofile/ProfileDashboard";
+import { calculateProfileCompletion } from "@/lib/profileCompletion";
+
+// Below this, we ask the user to finish their profile before generating a
+// report so the AI has enough signal (academics + preferences) to personalize it.
+const MIN_PROFILE_COMPLETION_FOR_REPORT = 90;
 
 interface CompareHeaderProps {
   comparedIds: string[];
@@ -19,17 +26,38 @@ export default function CompareHeader({
 }: CompareHeaderProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
+  const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
 
-  // Open the confirmation modal listing the selected colleges. The actual
-  // generation is deferred to handleGenerateReport (the modal's "Generate").
-  const handleOpenConfirm = () => {
+  // Gate report generation on profile completeness, then open the
+  // confirmation modal listing the selected colleges. The actual generation
+  // is deferred to handleGenerateReport (the modal's "Generate").
+  const handleOpenConfirm = async () => {
     if (!comparedIds || comparedIds.length === 0) {
       message.warning(
         "Please select at least two college to compare before generating a report.",
       );
       return;
     }
+
+    setIsCheckingProfile(true);
+    try {
+      const data = await fetchProfile<Record<string, unknown>>();
+      const profile = mergeProfile(emptyProfile(user), data);
+      const completion = calculateProfileCompletion(profile);
+      if (completion < MIN_PROFILE_COMPLETION_FOR_REPORT) {
+        setIsProfileWarningOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to check profile completion:", err);
+      // Fail open — don't block report generation on a profile-check hiccup.
+    } finally {
+      setIsCheckingProfile(false);
+    }
+
     setIsConfirmOpen(true);
   };
 
@@ -120,12 +148,16 @@ export default function CompareHeader({
         <Button
           type="primary"
           icon={<FileText className="w-4 h-4" />}
-          loading={isGenerating}
+          loading={isGenerating || isCheckingProfile}
           disabled={comparedIds.length === 0}
           onClick={handleOpenConfirm}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer"
         >
-          {isGenerating ? "Generating Report..." : "Generate AI Report"}
+          {isGenerating
+            ? "Generating Report..."
+            : isCheckingProfile
+              ? "Checking Profile..."
+              : "Generate AI Report"}
         </Button>
       </div>
 
@@ -223,6 +255,68 @@ export default function CompareHeader({
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-10 px-5 shadow-md flex items-center gap-2"
           >
             Generate
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Incomplete-profile gate: shown instead of the confirm modal when the
+          profile is below the completion threshold. */}
+      <Modal
+        open={isProfileWarningOpen}
+        onCancel={() => setIsProfileWarningOpen(false)}
+        footer={null}
+        closeIcon={null}
+        centered
+        width={440}
+        styles={{
+          body: { padding: 0 },
+          container: { padding: 0, borderRadius: 20, overflow: "hidden" },
+        }}
+        className="font-sans"
+      >
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-left relative">
+          <button
+            aria-label="Close"
+            onClick={() => setIsProfileWarningOpen(false)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-white" />
+            <h3 className="text-lg font-black text-white tracking-tight">
+             Complete Your Profile for Better Insights
+            </h3>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 bg-white">
+          <p className="text-sm text-slate-600 leading-relaxed">
+           Your report will be generated based on the colleges in your Compare list. By completing your profile, 
+           we can personalize the analysis to match your academic background, 
+           interests, and career goals helping you make a more informed decision.
+          </p>
+        </div>
+
+        <div className="px-6 py-4 bg-white border-t border-gray-100 flex items-center justify-end gap-3">
+          <Button
+            onClick={() => {
+              setIsProfileWarningOpen(false);
+              setIsConfirmOpen(true);
+            }}
+            className="font-bold rounded-xl h-10 px-5"
+          >
+            Not Now
+          </Button>
+          <Button
+            type="primary"
+            onClick={() => {
+              setIsProfileWarningOpen(false);
+              router.push("/profile#profile_info_card");
+            }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-10 px-5 shadow-md"
+          >
+            Complete Profile
           </Button>
         </div>
       </Modal>

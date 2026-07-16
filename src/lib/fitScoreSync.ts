@@ -12,6 +12,7 @@
 export const FIT_GPA_KEY = "fit_score_gpa";
 export const FIT_SAT_KEY = "fit_score_sat";
 export const FIT_SCORE_EVENT = "fit-score-updated";
+const FIT_OWNER_KEY = "fit_score_owner";
 
 /**
  * Records that a signed-out user tried to open a result card's "Find your fit
@@ -69,4 +70,25 @@ export function writeFitStats(
 export function hasFitStats(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(FIT_GPA_KEY) != null;
+}
+
+/**
+ * Tag the fit-score cache with the currently signed-in user's id, and drop
+ * it whenever that id changes (login as a different account, logout, or a
+ * fresh account re-registered under the same email after the old one was
+ * deleted). Without this, GPA/SAT — being browser-scoped, not
+ * account-scoped — would leak from one account into the next signed-in
+ * account on the same browser, and ProfileDashboard's reconcile-on-load
+ * would even patch the stale values into the new account's backend record.
+ */
+export function syncFitStatsOwner(ownerId: string | number | null): void {
+  if (typeof window === "undefined") return;
+  const key = ownerId != null ? String(ownerId) : "";
+  const stored = localStorage.getItem(FIT_OWNER_KEY);
+  if (stored === key) return;
+
+  localStorage.removeItem(FIT_GPA_KEY);
+  localStorage.removeItem(FIT_SAT_KEY);
+  localStorage.setItem(FIT_OWNER_KEY, key);
+  window.dispatchEvent(new Event(FIT_SCORE_EVENT));
 }
