@@ -45,6 +45,7 @@ interface AuthContextType {
     password: string,
     displayName: string,
     role?: string,
+    ageConsent?: boolean,
   ) => Promise<AuthUser>;
   loginWithGoogle: () => Promise<FirebaseUser>;
   loginWithApple: () => Promise<AuthUser>;
@@ -217,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     displayName: string,
     role?: string,
+    ageConsent?: boolean,
   ): Promise<AuthUser> => {
     authActionInProgress.current = true;
     try {
@@ -250,6 +252,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: role || "student",
               email_verified: false,
               provider_user_id: credential.user.uid,
+              age_consent: !!ageConsent,
             }),
           });
         } catch (err) {

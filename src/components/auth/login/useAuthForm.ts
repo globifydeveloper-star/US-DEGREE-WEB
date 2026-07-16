@@ -64,6 +64,7 @@ export function useAuthForm({
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isParent, setIsParent] = useState(false);
+  const [ageConsent, setAgeConsent] = useState(false);
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
@@ -97,6 +98,7 @@ export function useAuthForm({
       setRememberMe(!!remembered);
       setConfirmPassword("");
       setIsParent(false);
+      setAgeConsent(false);
       setIsVerificationSent(false);
       setVerificationEmail("");
       setIsResending(false);
@@ -193,6 +195,10 @@ export function useAuthForm({
       setError("Passwords do not match");
       return;
     }
+    if (mode === "signup" && !ageConsent) {
+      setError("You must confirm you are 18 or older to continue");
+      return;
+    }
 
     setIsLoading(true);
 
@@ -212,6 +218,7 @@ export function useAuthForm({
           password,
           cleanName,
           isParent ? "parent" : "student",
+          ageConsent,
         );
       }
     } catch (err) {
@@ -289,6 +296,8 @@ export function useAuthForm({
     setRememberMe,
     isParent,
     setIsParent,
+    ageConsent,
+    setAgeConsent,
     isVerificationSent,
     setIsVerificationSent,
     verificationEmail,
