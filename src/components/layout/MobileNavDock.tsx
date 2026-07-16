@@ -109,7 +109,7 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
       label: "Compare",
       href: "/compare",
       icon: Scale,
-      badge: compareCount,
+      badge: user ? compareCount : 0,
     },
     { id: "search", label: "Search", href: "/search", icon: Search },
     {
