@@ -19,6 +19,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { clearAppJwt } from "@/lib/auth/tokenStore";
 import { signInWithApple } from "@/lib/appleAuth";
 import { exchangeAppleIdToken } from "@/lib/auth/api";
+import { syncCompareOwner } from "@/components/search/useCompareSelected";
 
 export interface AuthUser {
   id?: number;
@@ -396,6 +397,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sendPasswordReset = async (email: string): Promise<void> => {
     await sendPasswordResetEmail(auth, email.trim());
   };
+
+  // Keep the compare-selection localStorage mirror scoped to whichever
+  // account is actually signed in, so logging out, switching accounts, or
+  // re-registering under an old account's email never inherits a previous
+  // account's compare selections on this browser.
+  useEffect(() => {
+    syncCompareOwner(user?.id ?? null);
+  }, [user?.id]);
 
   // Cross-tab auth synchronization listener
   useEffect(() => {

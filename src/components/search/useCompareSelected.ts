@@ -36,6 +36,7 @@ export const MAX_COMPARE = 5;
 
 const BUCKET_KEY = "compared_colleges";
 const DETAILS_KEY = "compared_colleges_details";
+const OWNER_KEY = "compared_colleges_owner";
 
 /** Display info for one selected college (kept in the localStorage mirror). */
 export interface CompareDetail {
@@ -106,6 +107,30 @@ function initFromBucket() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
   selectedSet = new Set(readBucket());
+}
+
+/**
+ * Tag the local mirror with the currently signed-in user's id, and drop it
+ * whenever that id changes (login as a different account, logout, or a
+ * fresh account re-registered under the same email after the old one was
+ * deleted). Without this, the mirror — being browser-scoped, not
+ * account-scoped — would let one account's compare selections leak into
+ * whichever account is next signed in on the same browser, since
+ * `ensureCompareLoaded` unions the backend response with whatever is
+ * already in the mirror instead of replacing it (see its comment).
+ */
+export function syncCompareOwner(ownerId: string | number | null): void {
+  if (typeof window === "undefined") return;
+  const key = ownerId != null ? String(ownerId) : "";
+  const stored = localStorage.getItem(OWNER_KEY);
+  if (stored === key) return;
+
+  initialized = true;
+  selectedSet = new Set();
+  loaded = false;
+  writeBucket([], []);
+  localStorage.setItem(OWNER_KEY, key);
+  dispatch();
 }
 
 // ---- Synchronous getters ----
