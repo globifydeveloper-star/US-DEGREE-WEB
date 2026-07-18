@@ -4,7 +4,6 @@ import {
   UserOutlined,
   HeartFilled,
   SyncOutlined,
-  SettingOutlined,
   LogoutOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
@@ -40,12 +39,6 @@ export function buildUserMenuItems(
       icon: <FileTextOutlined />,
       label: "My Reports",
       onClick: () => router.push("/profile#reports_section"),
-    },
-    {
-      key: "settings",
-      icon: <SettingOutlined />,
-      label: "Account Settings",
-      onClick: () => router.push("/profile"),
     },
     { type: "divider" },
     {

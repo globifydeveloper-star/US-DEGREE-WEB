@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState, useId } from "react";
 import { OutcomesSectionProps } from "@/types/university/OutcomesSection";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 export default function OutcomesSection({
   salaryYear1,
@@ -237,8 +239,9 @@ export default function OutcomesSection({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
           {/* 1 Year */}
           <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+            <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               1 Year
+              <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
               {s1 != null ? (
@@ -251,8 +254,9 @@ export default function OutcomesSection({
 
           {/* 5 Year */}
           <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+            <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               5 Year
+              <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
               {s5 != null ? (
@@ -265,8 +269,9 @@ export default function OutcomesSection({
 
           {/* 10 Year */}
           <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
-            <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
+            <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               10 Year
+              <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
             </p>
             <p className="text-xl sm:text-2xl md:text-3xl font-black text-[#16A34A] tracking-tight">
               {s10 != null ? (
@@ -284,8 +289,11 @@ export default function OutcomesSection({
         {/* Employment Rate */}
         <div className="bg-[#F0FDF4] border border-[#DCFCE7]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[9px] sm:text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-1 sm:mb-2">
+            <p className="flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-[#16A34A] uppercase tracking-[0.1em] mb-1 sm:mb-2">
               EMPLOYMENT RATE
+              <DisclaimerTooltip
+                text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+              />
             </p>
             <p className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-2 sm:mb-4">
               {formatPercent(parsedEmp)}
@@ -304,8 +312,11 @@ export default function OutcomesSection({
         {/* 20-Year ROI */}
         <div className="bg-[#FDF4FF] border border-[#F5D0FE]/60 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm flex flex-col justify-between min-h-[130px] sm:min-h-[160px] relative overflow-hidden">
           <div>
-            <p className="text-[9px] sm:text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-1 sm:mb-2">
+            <p className="flex items-center gap-1 text-[9px] sm:text-[10px] font-black text-[#C084FC] uppercase tracking-[0.1em] mb-1 sm:mb-2">
               20-YEAR NET ROI
+              <DisclaimerTooltip
+                text={DATA_SOURCE_DISCLAIMERS.lehdCalculated}
+              />
             </p>
             <p className="text-2xl sm:text-4xl md:text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
               {formatRoi(netRoi20Yr || null)}

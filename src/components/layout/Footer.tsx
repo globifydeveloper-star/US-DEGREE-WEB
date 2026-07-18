@@ -12,87 +12,28 @@ export default function Footer({
       // Reserve space for the mobile bottom nav dock below `lg` (where it
       // renders) so the last content above the footer is never hidden behind
       // it; reverts to the original pb-8 at `lg`+ where the dock is hidden.
-      className={`bg-[#295af6] text-white pt-16 pb-[calc(var(--mobile-nav-height)+24px)] lg:pb-8 px-6 sm:px-10 lg:px-[86px] flex justify-center ${className}`}
+      className={`bg-[#295af6] text-white pt-10 pb-[calc(var(--mobile-nav-height)+24px)] lg:pb-8 px-6 sm:px-10 lg:px-[86px] flex justify-center ${className}`}
     >
       <div className="w-full max-w-[2380px]">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
-          {/* Brand & Description */}
-          <div className="md:col-span-5">
-            <Link href="/" className="inline-block bg-white p-2 rounded mb-6">
-              <Image
-                src="/images/logo2.png"
-                alt="US Degrees"
-                width={185}
-                height={70}
-                className="h-8 w-auto object-contain"
-              />
-            </Link>
-            <p className="text-blue-100 text-sm max-w-sm mb-6 leading-relaxed">
-              Empowering global learners to reach their full potential in U.S.
-              higher education.
-            </p>
-            {/* <div className="flex items-center gap-4 text-blue-100">
-              <a href="#" className="hover:text-white transition-colors">
-                <Globe size={18} />
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                <Share2 size={18} />
-              </a>
-            </div> */}
-          </div>
-
-          {/* Links Columns */}
-          <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
-            {/* Resources */}
-            <div>
-              <h3 className="font-semibold text-white mb-6">Resources</h3>
-              <ul className="space-y-4 text-sm text-blue-100">
-                <li>
-                  <Link
-                    href="/blog"
-                    className="hover:text-white transition-colors"
-                  >
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/faq"
-                    className="hover:text-white transition-colors"
-                  >
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/support"
-                    className="hover:text-white transition-colors"
-                  >
-                    Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h3 className="font-semibold text-white mb-6">Company</h3>
-              <ul className="space-y-4 text-sm text-blue-100">
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors"
-                  >
-                    About Us
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
+        {/* Brand & Description */}
+        <div className="mb-8">
+          <Link href="/" className="inline-block bg-white p-2 rounded mb-4">
+            <Image
+              src="/images/logo2.png"
+              alt="US Degrees"
+              width={185}
+              height={70}
+              className="h-8 w-auto object-contain"
+            />
+          </Link>
+          <p className="text-blue-100 text-sm max-w-sm leading-relaxed">
+            Empowering global learners to reach their full potential in U.S.
+            higher education.
+          </p>
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/10 text-xs text-blue-200">
+        <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-white/10 text-xs text-blue-200">
           <p>Copyright @2021-2026. USDegrees.com. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link

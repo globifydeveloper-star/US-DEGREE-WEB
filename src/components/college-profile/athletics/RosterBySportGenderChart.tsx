@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { AthleticsRosterRow } from "@/types/university/AthleticsData";
 import { MEN_COLOR, WOMEN_COLOR } from "./athleticsColors";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 interface RosterBySportGenderChartProps {
   roster: AthleticsRosterRow[];
@@ -35,8 +37,9 @@ export default function RosterBySportGenderChart({
   return (
     <div>
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
-        <h2 className="text-2xl font-bold text-black font-poppins">
+        <h2 className="flex items-center gap-1.5 text-2xl font-bold text-black font-poppins">
           Roster size by sport and gender
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.eada} />
         </h2>
         <button
           type="button"
@@ -146,9 +149,7 @@ export default function RosterBySportGenderChart({
                 className="w-2.5 h-2.5 rounded-sm inline-block"
                 style={{ background: WOMEN_COLOR }}
               />
-              <span className="text-xs text-slate-600 font-poppins">
-                Women
-              </span>
+              <span className="text-xs text-slate-600 font-poppins">Women</span>
             </div>
           </div>
         </div>
