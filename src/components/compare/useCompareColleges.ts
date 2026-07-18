@@ -7,10 +7,125 @@ import {
   removeFromCompare,
   clearCompare,
 } from "@/components/search/useCompareSelected";
+import {
+  MATRIX_ENTRIES_KEY,
+  MATRIX_UPDATED_EVENT,
+  ENTRY_PROGRAMS_KEY,
+} from "@/hooks/useCompareCount";
 
 const INITIAL_LIST_SIZE = 20;
 const MIN_SEARCH_CHARS = 4;
 const SEARCH_DEBOUNCE_MS = 300;
+
+// Since we now compare programs (not just colleges), the same college can
+// appear more than once — once per (course, credential level) pair. A bare
+// unitid entry stays backward compatible with every other page that still
+// writes plain unitids into the `ids` URL param (CompareDeck,
+// CompareListSection, university page links); a program-specific entry gets
+// a `~cipCode~credentialLevel` suffix. Keying on cipCode ALONE isn't enough —
+// the same course (cip_code) can be offered at more than one credential
+// level (e.g. Bachelor's vs Master's), and those must be addable as separate
+// entries, while re-adding the exact same course + level must still be
+// blocked.
+const ENTRY_SEP = "~";
+
+interface EntryProgramInfo {
+  programName: string;
+  credentialTitle: string;
+}
+
+function makeEntryId(
+  unitid: string,
+  cipCode: string,
+  credentialLevel?: number | string,
+): string {
+  if (!cipCode || cipCode === "default") return unitid;
+  const level =
+    credentialLevel === undefined || credentialLevel === null || credentialLevel === ""
+      ? "0"
+      : String(credentialLevel);
+  return `${unitid}${ENTRY_SEP}${cipCode}${ENTRY_SEP}${level}`;
+}
+
+export function parseEntryId(entryId: string): {
+  unitid: string;
+  cipCode: string;
+  credentialLevel: string;
+} {
+  const parts = entryId.split(ENTRY_SEP);
+  if (parts.length < 3) {
+    return { unitid: parts[0], cipCode: "default", credentialLevel: "" };
+  }
+  const [unitid, cipCode, credentialLevel] = parts;
+  return { unitid, cipCode: cipCode || "default", credentialLevel };
+}
+
+function readEntryPrograms(): Record<string, EntryProgramInfo> {
+  if (typeof window === "undefined") return {};
+  try {
+    const v = JSON.parse(localStorage.getItem(ENTRY_PROGRAMS_KEY) || "{}");
+    return v && typeof v === "object" ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeEntryPrograms(map: Record<string, EntryProgramInfo>) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ENTRY_PROGRAMS_KEY, JSON.stringify(map));
+}
+
+// The nav badge counts matrix entries (programs), not distinct colleges — see
+// hooks/useCompareCount.ts. This is the sole writer of that key.
+function writeMatrixEntries(ids: string[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(MATRIX_ENTRIES_KEY, JSON.stringify(ids));
+  window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
+}
+
+/**
+ * Entries to show for "whatever's queued to compare right now", merging the
+ * shared college-level bucket (search cards, Intelligent Matches, university
+ * page — anything outside the /compare page) with this page's own richer
+ * per-program matrix: a college with one or more program-specific entries in
+ * the matrix renders one id per program; a college only ever added elsewhere
+ * renders as a single bare (no-program) id. Shared with CompareDeck so both
+ * surfaces agree on what's queued.
+ */
+export function mergeCompareEntryIds(): string[] {
+  if (typeof window === "undefined") return [];
+  let bucket: string[] = [];
+  let matrix: string[] = [];
+  try {
+    bucket = JSON.parse(localStorage.getItem("compared_colleges") || "[]");
+  } catch {
+    bucket = [];
+  }
+  try {
+    matrix = JSON.parse(localStorage.getItem(MATRIX_ENTRIES_KEY) || "[]");
+  } catch {
+    matrix = [];
+  }
+
+  const matrixByUnitid = new Map<string, string[]>();
+  matrix.forEach((entryId) => {
+    const { unitid } = parseEntryId(entryId);
+    const list = matrixByUnitid.get(unitid) || [];
+    list.push(entryId);
+    matrixByUnitid.set(unitid, list);
+  });
+
+  const result: string[] = [];
+  bucket.forEach((unitid) => {
+    const entries = matrixByUnitid.get(String(unitid));
+    if (entries && entries.length > 0) {
+      result.push(...entries);
+    } else {
+      result.push(String(unitid));
+    }
+  });
+  return result;
+}
 
 // ---- Types ----
 export type UniOption = {
@@ -171,25 +286,28 @@ export function useCompareColleges() {
     hydratedRef.current = true;
 
     if (idsParam) {
-      localStorage.setItem(
-        "compared_colleges",
-        JSON.stringify(idsParam.split(",").filter(Boolean)),
-      );
+      // Keep the badge's entry-level mirror in sync with whatever the URL
+      // says on load. Deliberately NOT written to the shared "compared_colleges"
+      // key — that one is college-level (bare unitids) and is exclusively
+      // maintained by the addToCompare/removeFromCompare calls in
+      // handleAddCollege/handleRemoveCollege below; writing composite entry
+      // ids into it would break other consumers (e.g. CompareDeck) that match
+      // on bare unitid.
+      writeMatrixEntries(idsParam.split(",").filter(Boolean));
       return;
     }
 
-    const stored = localStorage.getItem("compared_colleges");
-    if (stored) {
-      try {
-        const ids = JSON.parse(stored);
-        if (Array.isArray(ids) && ids.length > 0) {
-          const params = new URLSearchParams();
-          params.set("ids", ids.join(","));
-          router.replace(`/compare?${params.toString()}`);
-        }
-      } catch (e) {
-        console.error(e);
+    // No ids in the URL (e.g. the plain "/compare" nav link) — restore the
+    // same merged view CompareDeck shows, so the two never disagree.
+    try {
+      const ids = mergeCompareEntryIds();
+      if (ids.length > 0) {
+        const params = new URLSearchParams();
+        params.set("ids", ids.join(","));
+        router.replace(`/compare?${params.toString()}`);
       }
+    } catch (e) {
+      console.error(e);
     }
   }, [idsParam, router]);
 
@@ -270,7 +388,8 @@ export function useCompareColleges() {
     [initialUniversities, cacheUniversity, handle401],
   );
 
-  // 3. Keep URL query param synchronised with active compared IDs.
+  // 3. Keep URL query param synchronised with active compared IDs, and mirror
+  // the entry-level list into the nav badge's local key.
   const syncUrlParams = useCallback(
     (ids: string[]) => {
       const params = new URLSearchParams();
@@ -278,6 +397,7 @@ export function useCompareColleges() {
         params.set("ids", ids.join(","));
       }
       router.push(`/compare?${params.toString()}`);
+      writeMatrixEntries(ids);
     },
     [router],
   );
@@ -328,21 +448,40 @@ export function useCompareColleges() {
         console.error("Error reading stored details:", e);
       }
 
+      const entryProgramsMap = readEntryPrograms();
+
       try {
-        const fetchPromises = comparedIds.map(async (id) => {
+        const fetchPromises = comparedIds.map(async (entryId) => {
+          const { unitid, cipCode: entryCipCode } = parseEntryId(entryId);
+          // Bare entries (no `~cipCode` suffix) stay resolved the historical
+          // way — via the shared cross-app details mirror — so links from
+          // other pages (Intelligent Matches, university page, CompareDeck)
+          // keep working unchanged. Suffixed entries carry their own
+          // cipCode; programName for those comes from the compare-page-local
+          // map, since the shared mirror only holds one program per unitid.
+          const isBareEntry = entryId === unitid;
           const matchedStored = storedDetails.find(
-            (d) => String(d.id) === String(id),
+            (d) => String(d.id) === String(unitid),
           );
-          const cipCode = matchedStored?.cipCode || "default";
+          const cipCode = isBareEntry
+            ? matchedStored?.cipCode || "default"
+            : entryCipCode;
+          const programInfo = entryProgramsMap[entryId];
           const programName =
-            cipCode !== "default" ? matchedStored?.programName || "" : "";
+            cipCode === "default"
+              ? ""
+              : isBareEntry
+                ? matchedStored?.programName || ""
+                : programInfo?.programName || "";
+          const credentialTitle =
+            cipCode === "default" ? "" : isBareEntry ? "" : programInfo?.credentialTitle || "";
 
           const [overviewRes, tuitionRes, outcomesRes, collegeRes] =
             await Promise.all([
-              authedFetch(`/overview/${id}/${cipCode}`),
-              authedFetch(`/tuition/${id}`),
-              authedFetch(`/outcomes/${id}/${cipCode}`),
-              authedFetch(`/colleges/${id}`),
+              authedFetch(`/overview/${unitid}/${cipCode}`),
+              authedFetch(`/tuition/${unitid}`),
+              authedFetch(`/outcomes/${unitid}/${cipCode}`),
+              authedFetch(`/colleges/${unitid}`),
             ]);
 
           // Session expired mid-use → bail out to login.
@@ -374,7 +513,7 @@ export function useCompareColleges() {
           if (cipCode !== "default" && !hasCipOutcomes) {
             try {
               const fallbackRes = await authedFetch(
-                `/outcomes/${id}/default`,
+                `/outcomes/${unitid}/default`,
               );
               if (fallbackRes.ok) {
                 outcomesData = await fallbackRes.json();
@@ -385,8 +524,8 @@ export function useCompareColleges() {
           }
 
           const matchedUni =
-            allUniversitiesRef.current.get(String(id)) ||
-            selectOptions.find((uni) => String(uni.id) === String(id));
+            allUniversitiesRef.current.get(String(unitid)) ||
+            selectOptions.find((uni) => String(uni.id) === String(unitid));
 
           const name =
             matchedUni?.name ||
@@ -478,7 +617,7 @@ export function useCompareColleges() {
           const studentPopulation = toNum(overviewData?.students?.size);
 
           cacheUniversity({
-            unitid: id,
+            unitid,
             school_name: name,
             city,
             state,
@@ -486,7 +625,8 @@ export function useCompareColleges() {
           });
 
           return {
-            id,
+            id: entryId,
+            unitid,
             name,
             shortName: name
               .replace("University", "")
@@ -511,6 +651,7 @@ export function useCompareColleges() {
             schoolUrl: website || undefined,
             cipCode,
             programName: programName || undefined,
+            credentialTitle: credentialTitle || undefined,
           } as College;
         });
 
@@ -520,22 +661,32 @@ export function useCompareColleges() {
         const filteredColleges = resolvedColleges.filter(Boolean) as College[];
         setComparedColleges(filteredColleges);
 
-        const detailsList: StoredDetail[] = filteredColleges.map((c) => ({
-          id: String(c.id),
-          name: c.name,
-          logo: c.logo,
-          logoColor: "bg-blue-600",
-          location: c.location,
-          city:
-            c.location && c.location.includes(",")
-              ? c.location.split(",")[0].trim()
-              : "",
-          state: c.state,
-          schoolType: c.isPrivate ? "Private" : "Public",
-          cipCode: c.cipCode || "default",
-          programName: c.programName || "",
-          schoolUrl: c.schoolUrl || "",
-        }));
+        // The shared cross-app mirror (read by CompareDeck, search cards, the
+        // profile section) only ever holds one row per unitid — dedupe here
+        // so a college compared under two programs doesn't write two rows
+        // with the same id into it.
+        const seenUnitids = new Set<string>();
+        const detailsList: StoredDetail[] = [];
+        for (const c of filteredColleges) {
+          if (seenUnitids.has(c.unitid)) continue;
+          seenUnitids.add(c.unitid);
+          detailsList.push({
+            id: c.unitid,
+            name: c.name,
+            logo: c.logo,
+            logoColor: "bg-blue-600",
+            location: c.location,
+            city:
+              c.location && c.location.includes(",")
+                ? c.location.split(",")[0].trim()
+                : "",
+            state: c.state,
+            schoolType: c.isPrivate ? "Private" : "Public",
+            cipCode: c.cipCode || "default",
+            programName: c.programName || "",
+            schoolUrl: c.schoolUrl || "",
+          });
+        }
         localStorage.setItem(
           "compared_colleges_details",
           JSON.stringify(detailsList),
@@ -677,11 +828,35 @@ export function useCompareColleges() {
     };
   }, [comparedColleges]);
 
-  const handleAddCollege = (id: string) => {
-    if (comparedIds.includes(id)) return;
+  const handleAddCollege = (
+    id: string,
+    program?: {
+      cipCode: string;
+      programName: string;
+      credentialTitle?: string;
+      credentialLevel?: number | string;
+    },
+  ) => {
     if (comparedIds.length >= 5) {
       setIsLimitModalOpen(true);
       return;
+    }
+
+    const cipCode = program?.cipCode || "default";
+    // Same college + same course + same credential level → same entryId, so
+    // this naturally blocks an exact duplicate. Same course under a
+    // different credential level (e.g. Bachelor's vs Master's) gets a
+    // distinct entryId and is allowed.
+    const entryId = makeEntryId(id, cipCode, program?.credentialLevel);
+    if (comparedIds.includes(entryId)) return;
+
+    if (program?.programName) {
+      const map = readEntryPrograms();
+      map[entryId] = {
+        programName: program.programName,
+        credentialTitle: program.credentialTitle || "",
+      };
+      writeEntryPrograms(map);
     }
 
     const opt =
@@ -689,9 +864,12 @@ export function useCompareColleges() {
       selectOptions.find((u) => u.id === id) ||
       initialUniversities.find((u) => u.id === id);
 
-    // Update the matrix view (URL) and delegate the selection to the shared
-    // store, which owns the backend set + localStorage mirror + the 5-max.
-    syncUrlParams([...comparedIds, id]);
+    // Update the matrix view (URL) and delegate the college-level selection
+    // to the shared store, which owns the backend set + localStorage mirror.
+    // The shared store is keyed by unitid alone (one row per college) — it's
+    // a no-op ("exists") when this college is already tracked there, e.g.
+    // because we're adding a second program for it.
+    syncUrlParams([...comparedIds, entryId]);
     addToCompare({
       id: String(id),
       name: opt?.name,
@@ -702,7 +880,8 @@ export function useCompareColleges() {
         opt?.city && opt?.state
           ? `${opt.city}, ${opt.state}`
           : opt?.city || opt?.state || "",
-      cipCode: "default",
+      cipCode,
+      programName: program?.programName || undefined,
     })
       .then((res) => {
         if (res === "full") setIsLimitModalOpen(true);
@@ -712,15 +891,33 @@ export function useCompareColleges() {
       );
   };
 
-  const handleRemoveCollege = (id: string) => {
-    syncUrlParams(comparedIds.filter((cid) => cid !== id));
-    removeFromCompare(String(id)).catch((err) =>
-      console.error("Failed to sync comparison selection:", err),
+  const handleRemoveCollege = (entryId: string) => {
+    const remaining = comparedIds.filter((cid) => cid !== entryId);
+    syncUrlParams(remaining);
+
+    const map = readEntryPrograms();
+    if (entryId in map) {
+      delete map[entryId];
+      writeEntryPrograms(map);
+    }
+
+    // Only drop the college from the shared cross-app store once every entry
+    // for it has been removed from this matrix — another program for the
+    // same college may still be compared.
+    const { unitid } = parseEntryId(entryId);
+    const stillPresent = remaining.some(
+      (cid) => parseEntryId(cid).unitid === unitid,
     );
+    if (!stillPresent) {
+      removeFromCompare(unitid).catch((err) =>
+        console.error("Failed to sync comparison selection:", err),
+      );
+    }
   };
 
   const handleClearAll = () => {
     syncUrlParams([]);
+    writeEntryPrograms({});
     clearCompare().catch((err) =>
       console.error("Failed to sync comparison selection:", err),
     );

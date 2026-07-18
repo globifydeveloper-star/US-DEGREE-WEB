@@ -1,6 +1,13 @@
 export interface College {
   schoolUrl: string | undefined;
+  /** Unique per row in the comparison matrix — may be `unitid` alone, or
+   * `unitid~cipCode~credentialLevel` when the same college is compared under
+   * more than one program. Use `unitid` (below) for any backend lookup. */
   id: string;
+  /** The actual college identifier, for API calls — never unique alone
+   * across `comparedColleges`, since the same college can appear more than
+   * once under different programs. */
+  unitid: string;
   name: string;
   shortName: string;
   logo: string;
@@ -18,6 +25,7 @@ export interface College {
   image: string;
   cipCode?: string;
   programName?: string;
+  credentialTitle?: string;
 }
 
 // Resolved, display-ready detail shown in the CollegeDetailsModal and cached on the compare page.

@@ -147,7 +147,7 @@ export default function CompareHeader({
       <div className="shrink-0">
         <Button
           type="primary"
-          icon={<FileText className="w-4 h-4" />}
+          icon={<Sparkles className="w-4 h-4" />}
           loading={isGenerating || isCheckingProfile}
           disabled={comparedIds.length === 0}
           onClick={handleOpenConfirm}
@@ -191,7 +191,7 @@ export default function CompareHeader({
             </h3>
           </div>
           <p className="text-blue-100 text-xs font-medium">
-            We&apos;ll analyze the {comparedColleges.length} college
+            We&apos;ll analyze the {comparedColleges.length} program
             {comparedColleges.length === 1 ? "" : "s"} below and build your
             premium PDF report.
           </p>

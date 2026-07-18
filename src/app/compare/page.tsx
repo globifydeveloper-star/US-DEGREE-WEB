@@ -37,7 +37,7 @@ function CompareContent() {
   } = useCompareColleges();
 
   return (
-    <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-20 font-sans">
+    <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-6 lg:pb-20 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 1. Header */}
         <CompareHeader
@@ -103,8 +103,9 @@ function CompareContent() {
           className="font-sans"
         >
           <p className="text-gray-600">
-            You can compare a maximum of 5 colleges simultaneously to ensure
-            complete readability.
+            You can compare a maximum of 5 entries simultaneously (the same
+            college can be added more than once for different programs) to
+            ensure complete readability.
           </p>
         </Modal>
       </div>

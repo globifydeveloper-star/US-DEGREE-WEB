@@ -6,8 +6,14 @@
  * Canonical state is the backend `/compare/selected` set. This module also
  * maintains a localStorage mirror — `compared_colleges` (unitids) and
  * `compared_colleges_details` (display info: name/location/cipCode/…) — for:
- *   - instant, SSR-safe reads (the Navbar badge),
+ *   - instant, SSR-safe reads (search cards, the profile "selected for
+ *     comparison" grid),
  *   - the /compare matrix page + CompareDeck, which render the detail info.
+ *
+ * This store is COLLEGE-level (one row per unitid) — it is NOT what the
+ * Navbar/mobile dock badge counts. That badge counts /compare matrix entries
+ * (one per program; the same college can appear more than once), tracked
+ * separately in hooks/useCompareCount.ts.
  *
  * Every selection mutation (add/remove/clear) goes through this module, which
  * updates BOTH the in-memory set and the localStorage mirror, persists to the
@@ -26,6 +32,11 @@ import {
   hasAuthenticatedUser,
   type SelectedCompareCollege,
 } from "@/lib/auth/api";
+import {
+  MATRIX_ENTRIES_KEY,
+  MATRIX_UPDATED_EVENT,
+  ENTRY_PROGRAMS_KEY,
+} from "@/hooks/useCompareCount";
 
 // Fired for store subscribers (cards, Navbar, profile section).
 export const COMPARE_SELECTED_EVENT = "compare-selected-updated";
@@ -130,6 +141,11 @@ export function syncCompareOwner(ownerId: string | number | null): void {
   loaded = false;
   writeBucket([], []);
   localStorage.setItem(OWNER_KEY, key);
+  // Also drop the /compare matrix's own entry-level mirror (nav badge count +
+  // per-entry program info) — same account-leak risk as the bucket above.
+  localStorage.setItem(MATRIX_ENTRIES_KEY, "[]");
+  localStorage.removeItem(ENTRY_PROGRAMS_KEY);
+  window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
   dispatch();
 }
 
@@ -372,32 +388,8 @@ export function useCompareIds(): string[] {
   return ids;
 }
 
-/**
- * Reactive count of selected colleges (used by the Navbar + mobile dock badge).
- * Backed by the authoritative `/compare/selected` set, so the badge always
- * matches the profile's "Colleges Selected for Comparison" section. Starts at 0
- * for SSR-safe hydration, then syncs (and triggers the one-time backend load)
- * on mount.
- */
-export function useCompareCount(): number {
-  const [count, setCount] = useState<number>(0);
-
-  useEffect(() => {
-    ensureCompareLoaded();
-    const handler = () => setCount(getCompareCount());
-    handler();
-    // A logged-out load bails early; reload once the user signs in/out so the
-    // badge reflects their backend comparison set.
-    const onAuthChange = () => reloadCompareSelected();
-    window.addEventListener(COMPARE_SELECTED_EVENT, handler);
-    window.addEventListener(COMPARE_BUCKET_EVENT, handler);
-    window.addEventListener("auth-state-changed", onAuthChange);
-    return () => {
-      window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
-      window.removeEventListener(COMPARE_BUCKET_EVENT, handler);
-      window.removeEventListener("auth-state-changed", onAuthChange);
-    };
-  }, []);
-
-  return count;
-}
+// Note: the Navbar/mobile dock badge count now lives in
+// hooks/useCompareCount.ts — it counts /compare matrix entries (one per
+// program), not distinct colleges, since the same college can be compared
+// under more than one program. `getCompareCount` above (distinct colleges)
+// is still the source of truth for the MAX_COMPARE cap enforced in this module.

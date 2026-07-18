@@ -19,6 +19,15 @@ import {
   clearCompare,
   type CompareChangeDetail,
 } from "../../search/useCompareSelected";
+import {
+  parseEntryId,
+  mergeCompareEntryIds,
+} from "../../compare/useCompareColleges";
+import {
+  MATRIX_ENTRIES_KEY,
+  MATRIX_UPDATED_EVENT,
+  ENTRY_PROGRAMS_KEY,
+} from "@/hooks/useCompareCount";
 
 // Date ONLY, app locale (en-US), e.g. "Jun 19, 2026". Returns null for
 // missing/invalid values so the line can be omitted (never "Invalid Date").
@@ -57,12 +66,77 @@ function formatRate(value: SelectedCompareCollege["acceptanceRate"]): string {
 const BADGE_CLASS =
   "inline-flex items-center gap-1 rounded-md bg-neutral-100 text-neutral-600 text-[10px] font-semibold px-2 py-0.5 whitespace-nowrap max-w-full";
 
+const PROGRAM_BADGE_CLASS =
+  "inline-flex items-center gap-1 rounded-md bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 whitespace-nowrap max-w-full";
+
+interface LocalProgramInfo {
+  programName: string;
+  credentialTitle: string;
+  cipCode: string;
+}
+
+function readJsonArray(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readEntryPrograms(): Record<
+  string,
+  { programName: string; credentialTitle: string }
+> {
+  if (typeof window === "undefined") return {};
+  try {
+    const v = JSON.parse(localStorage.getItem(ENTRY_PROGRAMS_KEY) || "{}");
+    return v && typeof v === "object" ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * A college shown here can have more than one program attached — the
+ * /compare page's own matrix lets the same college be compared under
+ * several programs. That matrix is local-only (the backend's
+ * /compare/selected is college-level), so we read it directly and group by
+ * unitid, keyed off the same `compare_matrix_entries` / `compare_entry_programs`
+ * localStorage the compare page and CompareDeck already maintain.
+ */
+function readLocalProgramsByUnitid(): Record<string, LocalProgramInfo[]> {
+  const matrix = readJsonArray(MATRIX_ENTRIES_KEY);
+  const programsMap = readEntryPrograms();
+  const grouped: Record<string, LocalProgramInfo[]> = {};
+
+  matrix.forEach((entryId) => {
+    const { unitid, cipCode } = parseEntryId(entryId);
+    if (entryId === unitid) return; // bare entry — no program attached
+    const info = programsMap[entryId];
+    if (!info) return;
+    const list = grouped[unitid] || [];
+    list.push({
+      programName: info.programName,
+      credentialTitle: info.credentialTitle,
+      cipCode,
+    });
+    grouped[unitid] = list;
+  });
+
+  return grouped;
+}
+
 export default function CompareListSection() {
   const router = useRouter();
   const [items, setItems] = useState<SelectedCompareCollege[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [programsByUnitid, setProgramsByUnitid] = useState<
+    Record<string, LocalProgramInfo[]>
+  >({});
 
   const load = useCallback(async () => {
     try {
@@ -73,6 +147,10 @@ export default function CompareListSection() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const refreshLocalPrograms = useCallback(() => {
+    setProgramsByUnitid(readLocalProgramsByUnitid());
   }, []);
 
   useEffect(() => {
@@ -87,6 +165,9 @@ export default function CompareListSection() {
         if (active) setLoading(false);
       }
     })();
+    // Deferred (not called synchronously in the effect body) so its setState
+    // isn't flagged as a same-tick cascading render.
+    queueMicrotask(() => refreshLocalPrograms());
     // Reflect selections toggled from elsewhere (e.g. a ResultCard or the
     // college-matches grid) this session. A detail payload lets us update in
     // place for an instant, delay-free result; otherwise we reload.
@@ -110,11 +191,13 @@ export default function CompareListSection() {
       }
     };
     window.addEventListener(COMPARE_SELECTED_EVENT, handler);
+    window.addEventListener(MATRIX_UPDATED_EVENT, refreshLocalPrograms);
     return () => {
       active = false;
       window.removeEventListener(COMPARE_SELECTED_EVENT, handler);
+      window.removeEventListener(MATRIX_UPDATED_EVENT, refreshLocalPrograms);
     };
-  }, [load]);
+  }, [load, refreshLocalPrograms]);
 
   const handleRemove = async (unitid: string, name: string) => {
     setBusyId(unitid);
@@ -122,6 +205,30 @@ export default function CompareListSection() {
       // Single source of truth: the store updates the backend + localStorage
       // mirror and notifies the Navbar badge / matrix page / search cards.
       await removeFromCompare(unitid);
+
+      // A college can carry more than one /compare-page matrix entry (one
+      // per program) — drop all of them too, so the nav badge and the
+      // compare page's own matrix don't retain orphans for a college that
+      // was just fully removed here.
+      const matrix = readJsonArray(MATRIX_ENTRIES_KEY);
+      const remainingMatrix = matrix.filter(
+        (entryId) => parseEntryId(entryId).unitid !== unitid,
+      );
+      if (remainingMatrix.length !== matrix.length) {
+        localStorage.setItem(
+          MATRIX_ENTRIES_KEY,
+          JSON.stringify(remainingMatrix),
+        );
+        const programsMap = readEntryPrograms();
+        matrix.forEach((entryId) => {
+          if (parseEntryId(entryId).unitid === unitid) {
+            delete programsMap[entryId];
+          }
+        });
+        localStorage.setItem(ENTRY_PROGRAMS_KEY, JSON.stringify(programsMap));
+        window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
+      }
+
       setItems((prev) =>
         prev.filter((c) => String(c.unitid) !== String(unitid)),
       );
@@ -137,6 +244,15 @@ export default function CompareListSection() {
   const handleClearAll = async () => {
     setClearing(true);
     try {
+      // Clear the /compare page's own matrix (per-program entries + the nav
+      // badge's count source) alongside the shared college-level store below
+      // — otherwise this "clear everything" action would leave orphaned
+      // program entries behind, and the nav badge / compare page would still
+      // show a nonzero count.
+      localStorage.setItem(MATRIX_ENTRIES_KEY, "[]");
+      localStorage.removeItem(ENTRY_PROGRAMS_KEY);
+      window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
+
       await clearCompare();
       setItems([]);
       message.info("Comparison bucket cleared successfully.");
@@ -148,54 +264,12 @@ export default function CompareListSection() {
     }
   };
 
-  // Hand the selected unitids to the live /compare page (same localStorage + URL
-  // contract used by useCompareColleges).
+  // Hand the queued entries to the live /compare page (same URL contract
+  // CompareDeck uses) — mergeCompareEntryIds() carries over every
+  // program-specific entry a college has, not just one id per college.
   const handleCompareNow = () => {
-    const ids = items.map((c) => String(c.unitid)).filter(Boolean);
+    const ids = mergeCompareEntryIds();
     if (ids.length < 2) return;
-    try {
-      localStorage.setItem("compared_colleges", JSON.stringify(ids));
-
-      // Preserve any cipCode/programName already captured locally (e.g. set
-      // when the college was added from Intelligent Matches or a search
-      // card) instead of stomping every entry with a bare "default" — that
-      // was wiping out the program info right before landing on /compare.
-      let existingDetails: Array<{
-        id: string;
-        cipCode?: string;
-        programName?: string;
-      }> = [];
-      try {
-        const stored = localStorage.getItem("compared_colleges_details");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) existingDetails = parsed;
-        }
-      } catch (e) {
-        console.error("Error reading stored comparison details:", e);
-      }
-      const existingById = new Map(
-        existingDetails.map((d) => [String(d.id), d]),
-      );
-
-      const details = items.map((c) => {
-        const existing = existingById.get(String(c.unitid));
-        return {
-          id: String(c.unitid),
-          name: c.name,
-          location: c.location,
-          cipCode: existing?.cipCode || "default",
-          programName: existing?.programName,
-        };
-      });
-      localStorage.setItem(
-        "compared_colleges_details",
-        JSON.stringify(details),
-      );
-      window.dispatchEvent(new Event("compared-colleges-updated"));
-    } catch (e) {
-      console.error("Failed to seed compare selection:", e);
-    }
     router.push(`/compare?ids=${ids.join(",")}`);
   };
 
@@ -277,6 +351,17 @@ export default function CompareListSection() {
                           <PercentageOutlined />
                           Acceptance: {formatRate(c.acceptanceRate)}
                         </span>
+                        {(programsByUnitid[String(c.unitid)] || []).map(
+                          (p, i) => (
+                            <span key={i} className={PROGRAM_BADGE_CLASS}>
+                              {p.programName}
+                              {p.credentialTitle ? ` • ${p.credentialTitle}` : ""}
+                              {p.cipCode && p.cipCode !== "default"
+                                ? ` (CIP ${p.cipCode})`
+                                : ""}
+                            </span>
+                          ),
+                        )}
                       </div>
 
                       {addedAtText && (

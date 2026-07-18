@@ -92,13 +92,22 @@ export default function CollegeDetailsModal({
       };
 
       try {
+        // `collegeId` is the matrix entry id (unitid, or `unitid~cipCode` when
+        // this college is compared under more than one program) — resolve the
+        // real unitid up front so every backend call below targets the actual
+        // college, not the composite entry id.
+        const matchedCollege = comparedColleges?.find(
+          (c) => String(c.id) === String(collegeId),
+        );
+        const actualId = matchedCollege?.unitid || collegeId;
+
         // Stage 1: Fetch overview, tuition, campus, and colleges details in parallel
         const [overviewRes, tuitionRes, campusRes, collegeRes] =
           await Promise.all([
-            fetch(`${apiUrl}/overview/${collegeId}/default`),
-            fetch(`${apiUrl}/tuition/${collegeId}`),
-            fetch(`${apiUrl}/campus/${collegeId}`),
-            fetch(`${apiUrl}/colleges/${collegeId}`),
+            fetch(`${apiUrl}/overview/${actualId}/default`),
+            fetch(`${apiUrl}/tuition/${actualId}`),
+            fetch(`${apiUrl}/campus/${actualId}`),
+            fetch(`${apiUrl}/colleges/${actualId}`),
           ]);
 
         let overviewData: OverviewResponse = {};
@@ -111,10 +120,6 @@ export default function CollegeDetailsModal({
         if (campusRes.ok) campusData = await campusRes.json();
         if (collegeRes.ok) collegeData = await collegeRes.json();
 
-        const matchedCollege = comparedColleges?.find(
-          (c) => String(c.id) === String(collegeId),
-        );
-
         // Stage 2: Fetch outcomes details with resolved program cip_code
         const universityCipFallbacks: Record<string, string> = {
           "1": "11.0701",
@@ -123,12 +128,12 @@ export default function CollegeDetailsModal({
         const cipCode =
           matchedCollege?.cipCode ||
           overviewData?.program?.cip_code ||
-          (collegeId ? universityCipFallbacks[collegeId] : null) ||
+          (actualId ? universityCipFallbacks[actualId] : null) ||
           "default";
         let outcomesData: OutcomesResponse = {};
         try {
           const outcomesRes = await fetch(
-            `${apiUrl}/outcomes/${collegeId}/${cipCode}`,
+            `${apiUrl}/outcomes/${actualId}/${cipCode}`,
           );
           if (outcomesRes.ok) {
             outcomesData = await outcomesRes.json();
@@ -144,9 +149,9 @@ export default function CollegeDetailsModal({
           overviewData?.school_name ||
           overviewData?.school?.school_name ||
           overviewData?.school?.name ||
-          (collegeId === "1"
+          (actualId === "1"
             ? "Stanford University"
-            : collegeId === "2"
+            : actualId === "2"
               ? "UC Berkeley"
               : "Unknown University");
 
@@ -158,9 +163,9 @@ export default function CollegeDetailsModal({
             ? `${city}, ${state}`
             : city ||
               state ||
-              (collegeId === "1"
+              (actualId === "1"
                 ? "Stanford, CA"
-                : collegeId === "2"
+                : actualId === "2"
                   ? "Berkeley, CA"
                   : "Unknown Location"));
         const control =
@@ -186,9 +191,9 @@ export default function CollegeDetailsModal({
           overviewData?.students?.size !== null &&
           overviewData?.students?.size !== undefined
             ? Number(overviewData.students.size)
-            : collegeId === "1"
+            : actualId === "1"
               ? 17249
-              : collegeId === "2"
+              : actualId === "2"
                 ? 43000
                 : null;
 
@@ -197,9 +202,9 @@ export default function CollegeDetailsModal({
           ? String(rawFacultyRatio).includes(":")
             ? String(rawFacultyRatio)
             : `${rawFacultyRatio}:1`
-          : collegeId === "1"
+          : actualId === "1"
             ? "5:1"
-            : collegeId === "2"
+            : actualId === "2"
               ? "18:1"
               : "N/A";
 
@@ -207,9 +212,9 @@ export default function CollegeDetailsModal({
         const retentionRate =
           rawRetention !== null && rawRetention !== undefined
             ? `${(Number(rawRetention) * 100).toFixed(0)}%`
-            : collegeId === "1"
+            : actualId === "1"
               ? "98%"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "97%"
                 : "N/A";
 
@@ -217,9 +222,9 @@ export default function CollegeDetailsModal({
           overviewData?.school?.program_count !== null &&
           overviewData?.school?.program_count !== undefined
             ? Number(overviewData.school.program_count)
-            : collegeId === "1"
+            : actualId === "1"
               ? 20
-              : collegeId === "2"
+              : actualId === "2"
                 ? 150
                 : null;
 
@@ -227,9 +232,9 @@ export default function CollegeDetailsModal({
           overviewData?.students?.fafsa_applications !== null &&
           overviewData?.students?.fafsa_applications !== undefined
             ? Number(overviewData.students.fafsa_applications)
-            : collegeId === "1"
+            : actualId === "1"
               ? 2412
-              : collegeId === "2"
+              : actualId === "2"
                 ? 5700
                 : null;
 
@@ -237,9 +242,9 @@ export default function CollegeDetailsModal({
         const completionRate =
           rawCompletion !== null && rawCompletion !== undefined
             ? `${Number(rawCompletion).toFixed(0)}%`
-            : collegeId === "1"
+            : actualId === "1"
               ? "94%"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "92%"
                 : "N/A";
 
@@ -248,18 +253,18 @@ export default function CollegeDetailsModal({
           tuitionData?.tuition?.tuition_in_state !== null &&
           tuitionData?.tuition?.tuition_in_state !== undefined
             ? Number(tuitionData.tuition.tuition_in_state)
-            : collegeId === "1"
+            : actualId === "1"
               ? 56169
-              : collegeId === "2"
+              : actualId === "2"
                 ? 14200
                 : null;
         const tuitionOutOfState =
           tuitionData?.tuition?.tuition_out_state !== null &&
           tuitionData?.tuition?.tuition_out_state !== undefined
             ? Number(tuitionData.tuition.tuition_out_state)
-            : collegeId === "1"
+            : actualId === "1"
               ? 56169
-              : collegeId === "2"
+              : actualId === "2"
                 ? 43980
                 : null;
 
@@ -270,9 +275,9 @@ export default function CollegeDetailsModal({
           overviewData?.admissions?.sat_rw_min !== undefined &&
           overviewData?.admissions?.sat_rw_max !== undefined
             ? `${overviewData.admissions.sat_rw_min} - ${overviewData.admissions.sat_rw_max}`
-            : collegeId === "1"
+            : actualId === "1"
               ? "690 - 840"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "660 - 780"
                 : null;
 
@@ -282,9 +287,9 @@ export default function CollegeDetailsModal({
           overviewData?.admissions?.sat_math_min !== undefined &&
           overviewData?.admissions?.sat_math_max !== undefined
             ? `${overviewData.admissions.sat_math_min} - ${overviewData.admissions.sat_math_max}`
-            : collegeId === "1"
+            : actualId === "1"
               ? "630 - 810"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "680 - 800"
                 : null;
 
@@ -292,9 +297,9 @@ export default function CollegeDetailsModal({
           overviewData?.admissions?.sat_avg_overall !== null &&
           overviewData?.admissions?.sat_avg_overall !== undefined
             ? String(overviewData.admissions.sat_avg_overall)
-            : collegeId === "1"
+            : actualId === "1"
               ? "1500"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "1380"
                 : null;
 
@@ -303,9 +308,9 @@ export default function CollegeDetailsModal({
           overviewData?.admissions?.admission_rate !== null &&
           overviewData?.admissions?.admission_rate !== undefined
             ? `${(Number(overviewData.admissions.admission_rate) * 100).toFixed(1)}%`
-            : collegeId === "1"
+            : actualId === "1"
               ? "4.3%"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "11.4%"
                 : "N/A";
 
@@ -315,9 +320,9 @@ export default function CollegeDetailsModal({
         const graduates3yr =
           repaymentRate3YrVal !== null
             ? `${repaymentRate3YrVal}%`
-            : collegeId === "1"
+            : actualId === "1"
               ? "98%"
-              : collegeId === "2"
+              : actualId === "2"
                 ? "92%"
                 : "N/A";
 
@@ -325,7 +330,7 @@ export default function CollegeDetailsModal({
         const salaryYear1 =
           sanitizeSalary(outcomesData?.earnings?.year_1) ||
           sanitizeSalary(overviewData?.earnings?.year_1) ||
-          (collegeId === "1" ? 91200 : collegeId === "2" ? 85000 : null);
+          (actualId === "1" ? 91200 : actualId === "2" ? 85000 : null);
         const salaryYear5 =
           sanitizeSalary(outcomesData?.earnings?.year_5) ||
           sanitizeSalary(overviewData?.earnings?.year_5) ||
@@ -333,7 +338,7 @@ export default function CollegeDetailsModal({
         const salaryYear10 =
           sanitizeSalary(outcomesData?.earnings?.year_10) ||
           sanitizeSalary(overviewData?.earnings?.year_10) ||
-          (collegeId === "1" ? 149696 : collegeId === "2" ? 135000 : null);
+          (actualId === "1" ? 149696 : actualId === "2" ? 135000 : null);
 
         // Gender demographics
         const menStudentsPct =
