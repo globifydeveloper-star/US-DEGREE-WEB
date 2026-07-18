@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, Plus } from "lucide-react";
+import { Building2,} from "lucide-react";
 import { UniOption } from "./useCompareColleges";
 
 interface EmptyComparisonStateProps {
@@ -8,8 +8,8 @@ interface EmptyComparisonStateProps {
 }
 
 export default function EmptyComparisonState({
-  initialUniversities,
-  onAdd,
+  // initialUniversities,
+  // onAdd,
 }: EmptyComparisonStateProps) {
   return (
     <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] border border-gray-100 shadow-xl p-6 sm:p-16 text-center max-w-2xl mx-auto my-6 sm:my-12">
@@ -23,7 +23,7 @@ export default function EmptyComparisonState({
         Add up to 5 universities from the database search selector to instantly
         evaluate and discover your best academic and financial match.
       </p>
-      <div>
+      {/* <div>
         <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">
           Quick Add Recommendations
         </p>
@@ -39,7 +39,7 @@ export default function EmptyComparisonState({
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

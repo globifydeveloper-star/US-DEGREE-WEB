@@ -4,8 +4,18 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, ArrowRight } from "lucide-react";
 import { removeFromCompare, clearCompare } from "./useCompareSelected";
+import {
+  parseEntryId,
+  mergeCompareEntryIds,
+} from "@/components/compare/useCompareColleges";
+import {
+  MATRIX_ENTRIES_KEY,
+  MATRIX_UPDATED_EVENT,
+  ENTRY_PROGRAMS_KEY,
+} from "@/hooks/useCompareCount";
 
-// Display shape for one college chip in the deck (also the localStorage detail shape).
+// College-level detail row, as cached in the shared "compared_colleges_details"
+// mirror (one row per unitid — see useCompareColleges.ts's dedupe comment).
 interface DeckCollege {
   id: string;
   name: string;
@@ -14,6 +24,39 @@ interface DeckCollege {
   location: string;
   cipCode: string;
   schoolUrl: string;
+}
+
+// One chip in the deck. A college compared under more than one program (via
+// the /compare page's own picker) renders as one chip per program — this is
+// the merged view of the shared college-level bucket (search cards, etc.)
+// and the /compare page's richer per-program matrix.
+interface DeckEntry extends DeckCollege {
+  entryId: string;
+  programName?: string;
+  credentialTitle?: string;
+}
+
+function readJsonArray(key: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readEntryPrograms(): Record<
+  string,
+  { programName: string; credentialTitle: string }
+> {
+  if (typeof window === "undefined") return {};
+  try {
+    const v = JSON.parse(localStorage.getItem(ENTRY_PROGRAMS_KEY) || "{}");
+    return v && typeof v === "object" ? v : {};
+  } catch {
+    return {};
+  }
 }
 
 // Minimal shapes for the API responses we read here.
@@ -39,38 +82,41 @@ interface DeckCollegeApi {
 
 export default function CompareDeck() {
   const router = useRouter();
-  const [colleges, setColleges] = useState<DeckCollege[]>([]);
+  const [entries, setEntries] = useState<DeckEntry[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
-  const loadColleges = async () => {
-    const list: string[] =
-      typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("compared_colleges") || "[]")
-        : [];
+  const loadEntries = async () => {
+    const entryIds = mergeCompareEntryIds();
+    if (entryIds.length === 0) {
+      setEntries([]);
+      return;
+    }
+
+    const unitids = Array.from(
+      new Set(entryIds.map((entryId) => parseEntryId(entryId).unitid)),
+    );
+
     const detailsList: DeckCollege[] =
       typeof window !== "undefined"
         ? JSON.parse(localStorage.getItem("compared_colleges_details") || "[]")
         : [];
 
-    if (list.length === 0) {
-      setColleges([]);
-      return;
-    }
-
-    // Filter detailsList to only include items that are in list
-    const currentColleges = detailsList.filter((c) =>
-      list.includes(String(c.id)),
+    // College-level (unitid) details — shared across every program entry for
+    // that college, so we only fetch/cache once per college, not per entry.
+    const currentDetails = detailsList.filter((c) =>
+      unitids.includes(String(c.id)),
+    );
+    const existingUnitids = currentDetails.map((c) => String(c.id));
+    const missingUnitids = unitids.filter(
+      (id) => !existingUnitids.includes(id),
     );
 
-    // Find which IDs in list are missing details
-    const existingIds = currentColleges.map((c) => String(c.id));
-    const missingIds = list.filter((id) => !existingIds.includes(String(id)));
-
-    if (missingIds.length > 0) {
+    let mergedDetails = currentDetails;
+    if (missingUnitids.length > 0) {
       const apiUrl = "/api/proxy";
       try {
         const fetchedDetails = await Promise.all(
-          missingIds.map(async (id): Promise<DeckCollege> => {
+          missingUnitids.map(async (id): Promise<DeckCollege> => {
             try {
               const [overviewRes, collegeRes] = await Promise.all([
                 fetch(`${apiUrl}/overview/${id}/default`),
@@ -147,64 +193,118 @@ export default function CompareDeck() {
           }),
         );
 
-        // Merge without duplicates
-        const merged = [...currentColleges];
+        mergedDetails = [...currentDetails];
         fetchedDetails.forEach((fd) => {
-          if (!merged.some((m) => String(m.id) === String(fd.id))) {
-            merged.push(fd);
+          if (!mergedDetails.some((m) => String(m.id) === String(fd.id))) {
+            mergedDetails.push(fd);
           }
         });
 
-        setColleges(merged);
         localStorage.setItem(
           "compared_colleges_details",
-          JSON.stringify(merged),
+          JSON.stringify(mergedDetails),
         );
       } catch (e) {
         console.error(e);
-        setColleges(currentColleges);
       }
-    } else {
-      setColleges(currentColleges);
     }
+
+    // Combine college-level details with each entry's own program info (if
+    // this is a program-specific entry, not a bare college-only one).
+    const detailsByUnitid = new Map(
+      mergedDetails.map((d) => [String(d.id), d]),
+    );
+    const entryPrograms = readEntryPrograms();
+    const built: DeckEntry[] = entryIds.map((entryId) => {
+      const { unitid, cipCode } = parseEntryId(entryId);
+      const detail = detailsByUnitid.get(unitid);
+      const programInfo =
+        entryId !== unitid ? entryPrograms[entryId] : undefined;
+      return {
+        id: unitid,
+        entryId,
+        name: detail?.name || `College ${unitid}`,
+        logo: detail?.logo,
+        logoColor: detail?.logoColor || "bg-blue-600",
+        location: detail?.location || "US",
+        cipCode,
+        schoolUrl: detail?.schoolUrl || "",
+        programName: programInfo?.programName,
+        credentialTitle: programInfo?.credentialTitle,
+      };
+    });
+
+    setEntries(built);
   };
 
   useEffect(() => {
     // Defer the initial load so its setState calls aren't synchronous within
-    // the effect body. Subsequent loads are driven by the external event below.
+    // the effect body. Subsequent loads are driven by the external events below.
     queueMicrotask(() => {
-      void loadColleges();
+      void loadEntries();
     });
-    window.addEventListener("compared-colleges-updated", loadColleges);
-    return () =>
-      window.removeEventListener("compared-colleges-updated", loadColleges);
+    window.addEventListener("compared-colleges-updated", loadEntries);
+    window.addEventListener(MATRIX_UPDATED_EVENT, loadEntries);
+    return () => {
+      window.removeEventListener("compared-colleges-updated", loadEntries);
+      window.removeEventListener(MATRIX_UPDATED_EVENT, loadEntries);
+    };
   }, []);
 
   useEffect(() => {
     // Both transitions are scheduled (not synchronous) so the deck still slides
     // in after a 50ms delay and out when emptied.
     const t = setTimeout(
-      () => setIsVisible(colleges.length > 0),
-      colleges.length > 0 ? 50 : 0,
+      () => setIsVisible(entries.length > 0),
+      entries.length > 0 ? 50 : 0,
     );
     return () => clearTimeout(t);
-  }, [colleges.length]);
+  }, [entries.length]);
 
-  const handleRemove = (id: string) => {
-    // Route through the shared store (updates backend + localStorage mirror +
-    // notifies the Navbar badge / profile section).
-    removeFromCompare(String(id)).catch((err) =>
-      console.error("Failed to remove from comparison:", err),
+  const handleRemove = (entryId: string) => {
+    const { unitid } = parseEntryId(entryId);
+
+    if (entryId === unitid) {
+      // Bare (no-program) entry — just drop the college from the shared store.
+      removeFromCompare(unitid).catch((err) =>
+        console.error("Failed to remove from comparison:", err),
+      );
+      return;
+    }
+
+    // Program-specific entry — drop just this entry from the /compare page's
+    // matrix (mirrors useCompareColleges.handleRemoveCollege, minus the URL
+    // sync, since this isn't the compare page). Only drop the college from
+    // the shared store once no entry for it remains.
+    const remaining = readJsonArray(MATRIX_ENTRIES_KEY).filter(
+      (id) => id !== entryId,
     );
+    localStorage.setItem(MATRIX_ENTRIES_KEY, JSON.stringify(remaining));
+    const programsMap = readEntryPrograms();
+    delete programsMap[entryId];
+    localStorage.setItem(ENTRY_PROGRAMS_KEY, JSON.stringify(programsMap));
+    window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
+
+    const stillPresent = remaining.some(
+      (id) => parseEntryId(id).unitid === unitid,
+    );
+    if (!stillPresent) {
+      removeFromCompare(unitid).catch((err) =>
+        console.error("Failed to remove from comparison:", err),
+      );
+    }
   };
 
   const handleClearAll = () => {
+    localStorage.setItem(MATRIX_ENTRIES_KEY, "[]");
+    localStorage.removeItem(ENTRY_PROGRAMS_KEY);
+    window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
     clearCompare().catch((err) =>
       console.error("Failed to clear comparison set:", err),
     );
   };
 
-  if (colleges.length === 0) return null;
+  if (entries.length === 0) return null;
 
   return (
     <div
@@ -212,12 +312,12 @@ export default function CompareDeck() {
         isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
-      {/* College List */}
+      {/* Entry List */}
       <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto degree-scrollbar py-1 pr-2">
-        {colleges.map((c) => (
+        {entries.map((c) => (
           <div
-            key={c.id}
-            className="relative flex items-center gap-2 bg-slate-50/80 border border-slate-100 pl-2 pr-3 py-1.5 rounded-xl hover:bg-white transition-all shrink-0 min-w-[130px] max-w-[180px] shadow-sm shadow-slate-100"
+            key={c.entryId}
+            className="relative flex items-center gap-2 bg-slate-50/80 border border-slate-100 pl-2 pr-3 py-1.5 rounded-xl hover:bg-white transition-all shrink-0 min-w-[130px] max-w-[200px] shadow-sm shadow-slate-100"
           >
             {/* Logo/Initials */}
             {c.logo ? (
@@ -245,16 +345,23 @@ export default function CompareDeck() {
               {c.name.charAt(0)}
             </div>
 
-            {/* School Name */}
-            <span className="text-xs font-bold text-slate-700 truncate flex-1 leading-tight select-none">
-              {c.name}
-            </span>
+            {/* School Name + Program (if this entry has one) */}
+            <div className="flex-1 min-w-0 leading-tight select-none">
+              <span className="block text-xs font-bold text-slate-700 truncate">
+                {c.name}
+              </span>
+              {c.programName && (
+                <span className="block text-[10px] font-semibold text-blue-600 truncate">
+                  {c.programName}
+                </span>
+              )}
+            </div>
 
             {/* Remove Button */}
             <button
-              onClick={() => handleRemove(c.id)}
+              onClick={() => handleRemove(c.entryId)}
               className="text-slate-400 hover:text-red-500 hover:bg-slate-200/50 p-0.5 rounded-full transition-colors cursor-pointer shrink-0"
-              aria-label={`Remove ${c.name}`}
+              aria-label={`Remove ${c.name}${c.programName ? ` — ${c.programName}` : ""}`}
             >
               <X size={12} />
             </button>
@@ -272,11 +379,13 @@ export default function CompareDeck() {
         </button>
         <button
           onClick={() =>
-            router.push(`/compare?ids=${colleges.map((c) => c.id).join(",")}`)
+            router.push(
+              `/compare?ids=${entries.map((c) => c.entryId).join(",")}`,
+            )
           }
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-5 rounded-full shadow-md active:scale-95 hover:scale-105 transition-all cursor-pointer flex items-center gap-1.5 select-none"
         >
-          <span>Compare ({colleges.length}/5)</span>
+          <span>Compare ({entries.length}/5)</span>
           <ArrowRight size={14} />
         </button>
       </div>

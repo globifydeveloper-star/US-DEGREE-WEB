@@ -11,7 +11,7 @@ interface ProgramRowProps {
 export default function ProgramRow({ colleges }: ProgramRowProps) {
   return (
     <tr className="hover:bg-slate-50/30 transition-colors">
-      <DesktopRowLabel title="Program Details" subtitle="Compared program & CIP code" />
+      <DesktopRowLabel title="Program Details" subtitle="Compared program, credential level & CIP code" />
       {colleges.map((college) => (
         <td key={college.id} className="p-4 md:p-8 text-center font-mono">
           {college.programName ? (
@@ -20,11 +20,18 @@ export default function ProgramRow({ colleges }: ProgramRowProps) {
                 <span className="text-xs md:text-sm font-black text-slate-900 line-clamp-2 leading-snug">
                   {college.programName}
                 </span>
-                {college.cipCode && college.cipCode !== "default" && (
-                  <span className="mt-1 md:mt-1.5 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#3F51B5] bg-blue-50 px-1.5 md:px-2 py-0.5 rounded-md border border-blue-100">
-                    CIP: {college.cipCode}
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center justify-center gap-1 mt-1 md:mt-1.5">
+                  {college.credentialTitle && (
+                    <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-1.5 md:px-2 py-0.5 rounded-md border border-emerald-100">
+                      {college.credentialTitle}
+                    </span>
+                  )}
+                  {college.cipCode && college.cipCode !== "default" && (
+                    <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-[#3F51B5] bg-blue-50 px-1.5 md:px-2 py-0.5 rounded-md border border-blue-100">
+                      CIP: {college.cipCode}
+                    </span>
+                  )}
+                </div>
               </div>
             </Tooltip>
           ) : (
