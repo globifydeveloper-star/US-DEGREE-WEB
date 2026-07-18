@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { AdmissionsOverviewProps } from "@/types/university/AdmissionsOverview";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 const parseDisplayNumber = (value: string) =>
   Number(value.replace(/[^0-9.]/g, ""));
@@ -367,9 +369,10 @@ export default function AdmissionsOverview({
             >
               {outcomesAnimated ? animSalary10 : "$0"}+
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-lexend mt-3">
+            <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-lexend mt-3">
               Median Salary in 10
               <span className="align-super text-[7px]">th</span> Year
+              <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.ipeds} />
             </p>
           </div>
 
@@ -388,9 +391,10 @@ export default function AdmissionsOverview({
             >
               {outcomesAnimated ? animSalary1 : "$0"}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
+            <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Median Salary in 1
               <span className="align-super text-[7px]">st</span> Year
+              <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.ipeds} />
             </p>
           </div>
 
@@ -412,8 +416,11 @@ export default function AdmissionsOverview({
             >
               {outcomesAnimated ? animRoi : "$0"}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
+            <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Lifetime Earnings Premium
+              <DisclaimerTooltip
+                text={DATA_SOURCE_DISCLAIMERS.lehdCalculated}
+              />
             </p>
           </div>
 
@@ -432,8 +439,11 @@ export default function AdmissionsOverview({
             >
               {outcomesAnimated ? animGrowth : "0%"}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
+            <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-poppins mt-3">
               Growth Rate
+              <DisclaimerTooltip
+                text={DATA_SOURCE_DISCLAIMERS.lehdCalculated}
+              />
             </p>
           </div>
         </div>

@@ -11,6 +11,8 @@ import {
   YAxis,
 } from "recharts";
 import { AthleticsData } from "@/types/university/AthleticsData";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 interface RevenueExpenseChartProps {
   data: AthleticsData;
@@ -45,14 +47,15 @@ export default function RevenueExpenseChart({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-black font-poppins mb-1">
+      <h2 className="flex items-center gap-1.5 text-2xl font-bold text-black font-poppins mb-1">
         Revenue vs expense
+        <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.eada} />
       </h2>
       <p className="text-xs text-slate-500 font-poppins mb-4">
         Reported athletics revenue and expense for{" "}
-        {data.surveyYear ?? "the most recent survey year"}. Athletic
-        departments are typically subsidized to balance revenue and expense —
-        this is not a measure of financial health.
+        {data.surveyYear ?? "the most recent survey year"}. Athletic departments
+        are typically subsidized to balance revenue and expense — this is not a
+        measure of financial health.
       </p>
 
       <div
@@ -80,7 +83,12 @@ export default function RevenueExpenseChart({
                 tick={{ fontSize: 13, fontFamily: "var(--font-poppins)" }}
               />
               <Tooltip formatter={(v) => `$${v}M`} />
-              <Bar dataKey="value" name="Reported" radius={[0, 6, 6, 0]} barSize={22}>
+              <Bar
+                dataKey="value"
+                name="Reported"
+                radius={[0, 6, 6, 0]}
+                barSize={22}
+              >
                 {chartData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
@@ -95,18 +103,14 @@ export default function RevenueExpenseChart({
               className="w-2.5 h-2.5 rounded-sm inline-block"
               style={{ background: REVENUE_COLOR }}
             />
-            <span className="text-xs text-slate-600 font-poppins">
-              Revenue
-            </span>
+            <span className="text-xs text-slate-600 font-poppins">Revenue</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-sm inline-block"
               style={{ background: EXPENSE_COLOR }}
             />
-            <span className="text-xs text-slate-600 font-poppins">
-              Expense
-            </span>
+            <span className="text-xs text-slate-600 font-poppins">Expense</span>
           </div>
         </div>
       </div>

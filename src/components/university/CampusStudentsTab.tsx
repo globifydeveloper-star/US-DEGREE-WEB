@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { CampusStudentsTabProps } from "@/types/university/CampusStudentsTab";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 export default function CampusStudentsTab({
   campusData,
@@ -208,8 +210,9 @@ export default function CampusStudentsTab({
 
       {/* 2. Gender Distribution */}
       <div>
-        <h2 className="text-xl sm:text-[26px] font-black text-[#1E293B] mb-4 sm:mb-6 tracking-tight leading-none">
+        <h2 className="flex items-center gap-1.5 text-xl sm:text-[26px] font-black text-[#1E293B] mb-4 sm:mb-6 tracking-tight leading-none">
           Gender Distribution
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.collegeScorecard} />
         </h2>
 
         <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm">
@@ -312,8 +315,11 @@ export default function CampusStudentsTab({
       {/* 3. Repayment Progress By Group */}
       <div>
         <div className="bg-white border border-[#EAEFF5] rounded-2xl sm:rounded-[32px] p-4 sm:p-8 shadow-sm flex flex-col gap-5 sm:gap-6">
-          <h3 className="text-lg sm:text-[20px] font-black text-slate-900 tracking-tight leading-none">
+          <h3 className="flex items-center gap-1.5 text-lg sm:text-[20px] font-black text-slate-900 tracking-tight leading-none">
             Repayment Progress By Group
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </h3>
 
           <div className="flex flex-col gap-5">

@@ -7,6 +7,8 @@ import {
   AdmissionsTabContentProps,
   TestingBadgeColor,
 } from "@/types/university/AdmissionsTabContent";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 // Map the backend's badge color token → the app's existing Tailwind pill classes
 // (same bg-50 / border-200 / text-700 idiom used for pills elsewhere). No new
@@ -279,10 +281,11 @@ export default function AdmissionsTabContent({
       {/* ── 1. Acceptance Rate ── */}
       <div className="flex flex-col gap-8">
         <h2
-          className="text-2xl font-semibold font-poppins"
+          className="flex items-center gap-1.5 text-2xl font-semibold font-poppins"
           style={{ color: "#F7221F" }}
         >
           Acceptance Rate
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.collegeScorecard} />
         </h2>
 
         <div className="flex flex-col md:flex-row items-center gap-10">
@@ -348,10 +351,11 @@ export default function AdmissionsTabContent({
       {/* ── 2. Standardized Test Scores ── */}
       <div className="flex flex-col gap-10">
         <h2
-          className="text-2xl font-semibold font-poppins"
+          className="flex items-center gap-1.5 text-2xl font-semibold font-poppins"
           style={{ color: "#F7221F" }}
         >
           Standardized Test Scores (25th–75th Percentile)
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.collegeScorecard} />
         </h2>
 
         <div className="flex flex-col gap-10 max-w-3xl">

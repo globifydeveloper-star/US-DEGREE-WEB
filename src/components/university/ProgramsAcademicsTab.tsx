@@ -4,6 +4,8 @@ import {
   PopularField,
   DegreeLevel,
 } from "@/types/university/ProgramsAcademicsTab";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 export default function ProgramsAcademicsTab({
   data,
@@ -155,8 +157,11 @@ export default function ProgramsAcademicsTab({
       >
         {/* Acceptance Rate */}
         <div className="bg-[#EEF2FF] border border-[#E0E7FF]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-          <p className="text-[10px] font-black text-[#4F46E5] uppercase tracking-wider mb-1">
+          <p className="flex items-center gap-1 text-[10px] font-black text-[#4F46E5] uppercase tracking-wider mb-1">
             Acceptance Rate
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </p>
           <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animAdmission : "0%"}
@@ -168,8 +173,11 @@ export default function ProgramsAcademicsTab({
 
         {/* Tuition (EST.) */}
         <div className="bg-[#FEFCE8] border border-[#FEF9C3]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
-          <p className="text-[10px] font-black text-[#CA8A04] uppercase tracking-wider mb-1">
+          <p className="flex items-center gap-1 text-[10px] font-black text-[#CA8A04] uppercase tracking-wider mb-1">
             Tuition (EST.)
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </p>
           <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animTuition : "$0"}
@@ -181,8 +189,11 @@ export default function ProgramsAcademicsTab({
 
         {/* Total Enrollment */}
         <div className="bg-[#FFF1F2] border border-[#FFE4E6]/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
-          <p className="text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">
+          <p className="flex items-center gap-1 text-[10px] font-black text-[#E11D48] uppercase tracking-wider mb-1">
             Total Enrollment
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </p>
           <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight mb-0.5">
             {metricsVisible ? animEnrollment : "0"}
@@ -222,8 +233,11 @@ export default function ProgramsAcademicsTab({
               <p className="text-2xl sm:text-3xl font-black text-[#15803D] tracking-tight mb-0.5">
                 {completionRate}
               </p>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <p className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
                 Graduation Rate
+                <DisclaimerTooltip
+                  text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+                />
               </p>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
                 Consistency in student success through comprehensive support
@@ -253,8 +267,11 @@ export default function ProgramsAcademicsTab({
               <p className="text-2xl sm:text-3xl font-black text-[#1D4ED8] tracking-tight mb-0.5">
                 {facultyRatio}
               </p>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <p className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
                 Student-Faculty
+                <DisclaimerTooltip
+                  text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+                />
               </p>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
                 Helps estimate the level of faculty availability and potential
@@ -284,8 +301,11 @@ export default function ProgramsAcademicsTab({
               <p className="text-2xl sm:text-3xl font-black text-[#E11D48] tracking-tight mb-0.5">
                 {loanRepaymentDisplay}
               </p>
-              <p className="text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <p className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5 sm:mb-2">
                 Loan Repayment (3-Yr)
+                <DisclaimerTooltip
+                  text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+                />
               </p>
               <p className="text-[10px] sm:text-[11px] text-gray-500 leading-normal sm:leading-relaxed font-medium">
                 Graduates actively repaying student loans within three years of

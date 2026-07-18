@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { TuitionCostsSectionProps } from "@/types/university/TuitionCostsSection";
+import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 const fmt = (val: number | null | undefined): string => {
   if (val == null || !Number.isFinite(val)) return "N/A";
@@ -216,8 +218,9 @@ export default function TuitionCostsSection({
     <div ref={containerRef} className="flex flex-col gap-8 py-6 max-w-4xl">
       {/* ── 1. Cost of Attendance ── */}
       <div>
-        <h2 className="text-2xl font-bold text-black font-poppins mb-4">
+        <h2 className="flex items-center gap-1.5 text-2xl font-bold text-black font-poppins mb-4">
           Cost of Attendance
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.collegeScorecard} />
         </h2>
 
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -251,8 +254,11 @@ export default function TuitionCostsSection({
               ? `${Math.round(aidPercentage * animProgress)}%`
               : "N/A"}
           </p>
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
+          <p className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Receive Financial Aid
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </p>
           <p className="text-[10px] sm:text-xs text-slate-500 font-poppins leading-normal sm:leading-relaxed">
             Students receive need-based grants to ease the cost of education.
@@ -275,8 +281,11 @@ export default function TuitionCostsSection({
               ? `${Math.round(studentsWithLoan * animProgress)}%`
               : "N/A"}
           </p>
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
+          <p className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase text-slate-500 tracking-wider font-poppins">
             Students with any loan
+            <DisclaimerTooltip
+              text={DATA_SOURCE_DISCLAIMERS.collegeScorecard}
+            />
           </p>
           <p className="text-[10px] sm:text-xs text-slate-500 font-poppins leading-normal sm:leading-relaxed">
             {loanMessage}
@@ -380,8 +389,9 @@ export default function TuitionCostsSection({
           </div>
         </div>
 
-        <p className="text-sm font-normal text-black font-poppins">
+        <p className="flex items-center gap-1.5 text-sm font-normal text-black font-poppins">
           Net price by income bracket (per year)
+          <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.collegeScorecard} />
         </p>
 
         {/* Slider */}
