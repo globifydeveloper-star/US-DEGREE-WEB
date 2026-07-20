@@ -83,12 +83,16 @@ export default function CollegeMatchesSection({
           programName: match.programTitle || undefined,
         },
         // Enriched record so the profile's comparison grid shows it instantly.
+        // GET /compare/selected always reports acceptanceRate as a raw
+        // fraction (e.g. 0.62); matchEngine's is already scaled to a
+        // percentage, so it needs converting back for a consistent shape.
         {
-          unitid: match.unitid,
+          unitid: Number(match.unitid) || null,
           name: match.name,
           location,
           tuitionInState: match.tuition,
-          acceptanceRate: match.acceptanceRate,
+          acceptanceRate:
+            match.acceptanceRate !== null ? match.acceptanceRate / 100 : null,
           addedAt: new Date().toISOString(),
         },
       );

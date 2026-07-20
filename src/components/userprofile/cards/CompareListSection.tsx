@@ -9,10 +9,7 @@ import {
   DollarOutlined,
   PercentageOutlined,
 } from "@ant-design/icons";
-import {
-  fetchCompareSelected,
-  SelectedCompareCollege,
-} from "../../../lib/auth/api";
+import { fetchCompareSelected, type CompareSummary } from "../../../lib/auth/api";
 import {
   COMPARE_SELECTED_EVENT,
   removeFromCompare,
@@ -43,24 +40,16 @@ function formatAddedAt(value: string | null | undefined): string | null {
 }
 
 // Enriched values come straight from GET /compare/selected — never hardcoded.
-function formatTuition(
-  value: SelectedCompareCollege["tuitionInState"],
-): string {
-  if (value === null || value === undefined || value === "") return "N/A";
-  const n = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(n)
-    ? String(value)
-    : `$${Math.round(n).toLocaleString()}/yr`;
+// null means "no data" and is rendered as "N/A", never as 0.
+function formatTuition(value: number | null): string {
+  if (value === null) return "N/A";
+  return `$${Math.round(value).toLocaleString()}/yr`;
 }
 
-function formatRate(value: SelectedCompareCollege["acceptanceRate"]): string {
-  if (value === null || value === undefined || value === "") return "N/A";
-  const n = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(n)) return String(value);
-  // Backend admission rates arrive as a 0–1 fraction (e.g. 0.7582); scale those
-  // up to render "75.8%". Values already on a 0–100 scale are left as-is.
-  const pct = n <= 1 ? n * 100 : n;
-  return `${pct.toFixed(1)}%`;
+// acceptanceRate is always a raw fraction from this endpoint (e.g. 0.7582).
+function formatRate(value: number | null): string {
+  if (value === null) return "N/A";
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 const BADGE_CLASS =
@@ -130,7 +119,7 @@ function readLocalProgramsByUnitid(): Record<string, LocalProgramInfo[]> {
 
 export default function CompareListSection() {
   const router = useRouter();
-  const [items, setItems] = useState<SelectedCompareCollege[]>([]);
+  const [items, setItems] = useState<CompareSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -324,10 +313,12 @@ export default function CompareListSection() {
                     className="border-neutral-200 shadow-xxs rounded-xl relative h-full"
                   >
                     <button
-                      aria-label={`Remove ${c.name} from comparison`}
+                      aria-label={`Remove ${c.name ?? "this college"} from comparison`}
                       disabled={busyId === String(c.unitid)}
                       className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-full h-5 w-5 flex items-center justify-center transition-colors disabled:opacity-40"
-                      onClick={() => handleRemove(c.unitid, c.name)}
+                      onClick={() =>
+                        handleRemove(String(c.unitid), c.name ?? "this college")
+                      }
                     >
                       ×
                     </button>

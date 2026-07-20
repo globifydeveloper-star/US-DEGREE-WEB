@@ -62,6 +62,7 @@ export type ApiNumber = number | string | null | undefined;
 export interface OverviewResponse {
   program?: { cip_code?: string };
   school_name?: string;
+  school_url?: string;
   school?: {
     school_name?: string;
     name?: string;
