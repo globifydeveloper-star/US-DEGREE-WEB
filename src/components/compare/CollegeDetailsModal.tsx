@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { X, DollarSign, Percent, Info, Users, BookOpen } from "lucide-react";
 import StatsGrid from "@/components/university/StatsGrid";
+import EarningsMethodBadge from "@/components/common/EarningsMethodBadge";
 import {
   College,
   CollegeDetail,
@@ -340,6 +341,19 @@ export default function CollegeDetailsModal({
           sanitizeSalary(overviewData?.earnings?.year_10) ||
           (actualId === "1" ? 149696 : actualId === "2" ? 135000 : null);
 
+        const salaryYear1Method =
+          outcomesData?.earnings?.year_1_method ??
+          overviewData?.earnings?.year_1_method ??
+          null;
+        const salaryYear5Method =
+          outcomesData?.earnings?.year_5_method ??
+          overviewData?.earnings?.year_5_method ??
+          null;
+        const salaryYear10Method =
+          outcomesData?.earnings?.year_10_method ??
+          overviewData?.earnings?.year_10_method ??
+          null;
+
         // Gender demographics
         const menStudentsPct =
           campusData?.students?.demographics?.men !== null &&
@@ -375,6 +389,9 @@ export default function CollegeDetailsModal({
           salaryYear1,
           salaryYear5,
           salaryYear10,
+          salaryYear1Method,
+          salaryYear5Method,
+          salaryYear10Method,
           menStudentsPct,
           womenStudentsPct,
           menFacultyPct,
@@ -706,8 +723,11 @@ export default function CollegeDetailsModal({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   {/* 1 Year */}
                   <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-3xl p-6 flex flex-col justify-center min-h-[108px] shadow-sm">
-                    <p className="text-[11px] font-bold text-gray-400 mb-1">
+                    <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       1 Year
+                      {data.salaryYear1Method && (
+                        <EarningsMethodBadge method={data.salaryYear1Method} />
+                      )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
                       {data.salaryYear1 ? (
@@ -720,8 +740,11 @@ export default function CollegeDetailsModal({
 
                   {/* 5 Year */}
                   <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-3xl p-6 flex flex-col justify-center min-h-[108px] shadow-sm">
-                    <p className="text-[11px] font-bold text-gray-400 mb-1">
+                    <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       5 Year
+                      {data.salaryYear5Method && (
+                        <EarningsMethodBadge method={data.salaryYear5Method} />
+                      )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
                       {data.salaryYear5 ? (
@@ -734,8 +757,11 @@ export default function CollegeDetailsModal({
 
                   {/* 10 Year */}
                   <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-3xl p-6 flex flex-col justify-center min-h-[108px] shadow-sm">
-                    <p className="text-[11px] font-bold text-gray-400 mb-1">
+                    <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       10 Year
+                      {data.salaryYear10Method && (
+                        <EarningsMethodBadge method={data.salaryYear10Method} />
+                      )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
                       {data.salaryYear10 ? (

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { AdmissionsOverviewProps } from "@/types/university/AdmissionsOverview";
 import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import EarningsMethodBadge from "@/components/common/EarningsMethodBadge";
 import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
 
 const parseDisplayNumber = (value: string) =>
@@ -45,6 +46,8 @@ export default function AdmissionsOverview({
   satAverage,
   salaryYear1,
   salaryYear10,
+  salaryYear1Method,
+  salaryYear10Method,
   netRoi20Yr,
   growthRate,
 }: AdmissionsOverviewProps) {
@@ -373,6 +376,9 @@ export default function AdmissionsOverview({
               Median Salary in 10
               <span className="align-super text-[7px]">th</span> Year
               <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.ipeds} />
+              {salaryYear10Method && (
+                <EarningsMethodBadge method={salaryYear10Method} />
+              )}
             </p>
           </div>
 
@@ -395,6 +401,9 @@ export default function AdmissionsOverview({
               Median Salary in 1
               <span className="align-super text-[7px]">st</span> Year
               <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.ipeds} />
+              {salaryYear1Method && (
+                <EarningsMethodBadge method={salaryYear1Method} />
+              )}
             </p>
           </div>
 

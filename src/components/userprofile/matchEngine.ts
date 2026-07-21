@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 import { authedFetch } from "@/lib/auth/api";
 import { StudentProfile } from "../../types/profile";
 import { SearchResult } from "../../types/search-details";
+import { EarningsFillMethod } from "@/types/earningsMethod";
 
 /** A single matched college, ready to render. Rates are percentages (0–100). */
 export interface CollegeMatch {
@@ -36,6 +37,7 @@ export interface CollegeMatch {
   graduationRate: number | null; // %
   employmentRate: number | null; // %
   medianSalary1yr: number | null; // 1-year median salary, $
+  medianSalary1yrMethod: EarningsFillMethod | null;
   schoolUrl: string | null; // official website (for the Saved Colleges "Visit website")
 }
 
@@ -248,6 +250,7 @@ export function useCollegeMatches(profile: StudentProfile): {
           employmentRate: toPercent(r.emp_factor),
           graduationRate: null, // filled in by the enrichment pass below
           medianSalary1yr: null,
+          medianSalary1yrMethod: null,
           schoolUrl: r.school_url ?? null,
         }));
 
@@ -267,17 +270,21 @@ export function useCollegeMatches(profile: StudentProfile): {
 
               let graduationRate: number | null = null;
               let medianSalary1yr: number | null = null;
+              let medianSalary1yrMethod: EarningsFillMethod | null = null;
               let costOfAttendance: number | null = null;
 
               if (ovRes.ok) {
                 const ov = await ovRes.json();
                 graduationRate = toPercent(ov?.completion?.completion_rate);
                 medianSalary1yr = sanitizeSalary(ov?.earnings?.year_1);
+                medianSalary1yrMethod = ov?.earnings?.year_1_method ?? null;
               }
               if (outRes.ok) {
                 const out = await outRes.json();
                 medianSalary1yr =
                   sanitizeSalary(out?.earnings?.year_1) ?? medianSalary1yr;
+                medianSalary1yrMethod =
+                  out?.earnings?.year_1_method ?? medianSalary1yrMethod;
               }
               if (tuitionRes.ok) {
                 const tui = await tuitionRes.json();
@@ -287,7 +294,13 @@ export function useCollegeMatches(profile: StudentProfile): {
                 costOfAttendance = toNum(tui?.tuition?.sticker_price_by_api);
               }
 
-              return { ...m, graduationRate, medianSalary1yr, costOfAttendance };
+              return {
+                ...m,
+                graduationRate,
+                medianSalary1yr,
+                medianSalary1yrMethod,
+                costOfAttendance,
+              };
             } catch {
               return m;
             }

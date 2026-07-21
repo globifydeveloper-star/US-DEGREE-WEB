@@ -1,3 +1,5 @@
+import { EarningsFillMethod } from "@/types/earningsMethod";
+
 export interface College {
   schoolUrl: string | undefined;
   /** Unique per row in the comparison matrix — may be `unitid` alone, or
@@ -50,6 +52,9 @@ export interface CollegeDetail {
   salaryYear1: number | null;
   salaryYear5: number | null;
   salaryYear10: number | null;
+  salaryYear1Method: EarningsFillMethod | null;
+  salaryYear5Method: EarningsFillMethod | null;
+  salaryYear10Method: EarningsFillMethod | null;
   menStudentsPct: number;
   womenStudentsPct: number;
   menFacultyPct: number;
@@ -87,7 +92,14 @@ export interface OverviewResponse {
     sat_avg_overall?: ApiNumber;
     admission_rate?: number | null;
   };
-  earnings?: { year_1?: ApiNumber; year_5?: ApiNumber; year_10?: ApiNumber };
+  earnings?: {
+    year_1?: ApiNumber;
+    year_5?: ApiNumber;
+    year_10?: ApiNumber;
+    year_1_method?: EarningsFillMethod | null;
+    year_5_method?: EarningsFillMethod | null;
+    year_10_method?: EarningsFillMethod | null;
+  };
 }
 
 export interface TuitionResponse {
@@ -109,5 +121,12 @@ export interface CollegeResponse {
 }
 
 export interface OutcomesResponse {
-  earnings?: { year_1?: ApiNumber; year_5?: ApiNumber; year_10?: ApiNumber };
+  earnings?: {
+    year_1?: ApiNumber;
+    year_5?: ApiNumber;
+    year_10?: ApiNumber;
+    year_1_method?: EarningsFillMethod | null;
+    year_5_method?: EarningsFillMethod | null;
+    year_10_method?: EarningsFillMethod | null;
+  };
 }

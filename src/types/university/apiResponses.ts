@@ -1,5 +1,7 @@
 // Minimal shapes for the backend JSON the university page consumes. Every field
 // is optional because the endpoints may omit data; we only declare what is read.
+import { EarningsFillMethod } from "@/types/earningsMethod";
+
 export type ApiNum = number | string | null;
 
 export interface ApiOverview {
@@ -38,6 +40,9 @@ export interface ApiOverview {
     year_1?: ApiNum;
     year_5?: ApiNum;
     year_10?: ApiNum;
+    year_1_method?: EarningsFillMethod | null;
+    year_5_method?: EarningsFillMethod | null;
+    year_10_method?: EarningsFillMethod | null;
     growth_rate?: ApiNum;
     avg_salary?: ApiNum;
   };
@@ -50,6 +55,9 @@ export interface ApiOutcomes {
     year_1?: ApiNum;
     year_5?: ApiNum;
     year_10?: ApiNum;
+    year_1_method?: EarningsFillMethod | null;
+    year_5_method?: EarningsFillMethod | null;
+    year_10_method?: EarningsFillMethod | null;
     growth_rate?: ApiNum;
     avg_salary?: ApiNum;
   };
