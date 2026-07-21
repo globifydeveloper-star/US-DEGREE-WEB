@@ -14,39 +14,49 @@ export default function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  // Build a smart page list with ellipsis for large page counts
+  // Build a smart page list with ellipsis for large page counts. Always
+  // surfaces a run of pages at whichever edge(s) are close to the current
+  // page (e.g. "1 2 3 4 5 ... 100" on page 1) rather than collapsing
+  // everything but the immediate neighbors down to a single leading/trailing
+  // page number.
   const getPageNumbers = (): (number | "ellipsis-start" | "ellipsis-end")[] => {
-    const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+    const siblingCount = 1;
+    const totalNumbersShown = siblingCount * 2 + 5; // first + last + current + 2 siblings + 2 edge fillers
 
-    if (totalPages <= 7) {
-      // Show all pages if 7 or fewer
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-      return pages;
+    const range = (start: number, end: number) =>
+      Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+    if (totalPages <= totalNumbersShown) {
+      return range(1, totalPages);
     }
 
-    // Always show first page
-    pages.push(1);
+    const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+    const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
 
-    if (currentPage > 3) {
-      pages.push("ellipsis-start");
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
+
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      const leftItemCount = 3 + siblingCount * 2;
+      return [...range(1, leftItemCount), "ellipsis-end", totalPages];
     }
 
-    // Pages around current
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      const rightItemCount = 3 + siblingCount * 2;
+      return [
+        1,
+        "ellipsis-start",
+        ...range(totalPages - rightItemCount + 1, totalPages),
+      ];
     }
 
-    if (currentPage < totalPages - 2) {
-      pages.push("ellipsis-end");
-    }
-
-    // Always show last page
-    pages.push(totalPages);
-
-    return pages;
+    return [
+      1,
+      "ellipsis-start",
+      ...range(leftSiblingIndex, rightSiblingIndex),
+      "ellipsis-end",
+      totalPages,
+    ];
   };
 
   const pageNumbers = getPageNumbers();

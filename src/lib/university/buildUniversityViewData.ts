@@ -192,6 +192,19 @@ export async function buildUniversityViewData(
     sanitizeSalary(apiData?.earnings?.year_10) ||
     (id === "1" ? 149696 : id === "2" ? 135000 : null);
 
+  const salaryYear1Method =
+    outcomesData?.earnings?.year_1_method ??
+    apiData?.earnings?.year_1_method ??
+    null;
+  const salaryYear5Method =
+    outcomesData?.earnings?.year_5_method ??
+    apiData?.earnings?.year_5_method ??
+    null;
+  const salaryYear10Method =
+    outcomesData?.earnings?.year_10_method ??
+    apiData?.earnings?.year_10_method ??
+    null;
+
   const netRoi20Yr =
     sParams.roi ||
     outcomesData?.roi?.roi_20yr ||
@@ -265,6 +278,9 @@ export async function buildUniversityViewData(
     salaryYear1,
     salaryYear5,
     salaryYear10,
+    salaryYear1Method,
+    salaryYear5Method,
+    salaryYear10Method,
     netRoi20Yr,
     growthRate,
     empFactor,

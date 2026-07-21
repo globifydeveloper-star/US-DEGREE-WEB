@@ -1,14 +1,20 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useId } from "react";
+import { Info } from "lucide-react";
 import { OutcomesSectionProps } from "@/types/university/OutcomesSection";
 import DisclaimerTooltip from "@/components/common/DisclaimerTooltip";
+import EarningsMethodBadge from "@/components/common/EarningsMethodBadge";
 import { DATA_SOURCE_DISCLAIMERS } from "@/constants/dataSourceDisclaimers";
+import { EARNINGS_SKIPPED_METHODS } from "@/types/earningsMethod";
 
 export default function OutcomesSection({
   salaryYear1,
   salaryYear5,
   salaryYear10,
+  salaryYear1Method,
+  salaryYear5Method,
+  salaryYear10Method,
   netRoi20Yr,
   empFactor,
   debtIncomeRatio,
@@ -203,32 +209,6 @@ export default function OutcomesSection({
     programTitle?.toLowerCase().includes("bio") ||
     programTitle?.toLowerCase().includes("nurs");
 
-  const roles = isBusiness
-    ? [
-        "Investment Banker",
-        "Financial Analyst",
-        "Consultant",
-        "Product Manager",
-        "Business Analyst",
-        "Operations Manager",
-      ]
-    : isHealth
-      ? [
-          "Clinical Research Associate",
-          "Healthcare Administrator",
-          "Medical Technologist",
-          "Bioinformatics Specialist",
-          "Consultant",
-        ]
-      : [
-          "Software Engineer",
-          "Product Manager",
-          "Data Scientist",
-          "Investment Banker",
-          "Consultant",
-          "UX Designer",
-        ];
-
   return (
     <div ref={containerRef} className="flex flex-col gap-10 py-6 max-w-4xl">
       {/* 1. Median Salary Section */}
@@ -238,7 +218,13 @@ export default function OutcomesSection({
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
           {/* 1 Year */}
-          <div className="bg-[#FEF9C3]/80 border border-yellow-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
+          <div
+            className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm border ${
+              salaryYear1Method && EARNINGS_SKIPPED_METHODS.has(salaryYear1Method)
+                ? "bg-gray-50 border-gray-200"
+                : "bg-[#FEF9C3]/80 border-yellow-100"
+            }`}
+          >
             <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               1 Year
               <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
@@ -247,13 +233,26 @@ export default function OutcomesSection({
               {s1 != null ? (
                 formatCurrency(s1 * animProgress)
               ) : (
-                <span className="text-gray-300 text-base">No data</span>
+                <span className="text-gray-300 text-xl sm:text-2xl md:text-3xl">
+                  —
+                </span>
               )}
             </p>
+            {salaryYear1Method && (
+              <div className="mt-2">
+                <EarningsMethodBadge method={salaryYear1Method} variant="pill" />
+              </div>
+            )}
           </div>
 
           {/* 5 Year */}
-          <div className="bg-[#FEE2E2]/80 border border-red-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm">
+          <div
+            className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm border ${
+              salaryYear5Method && EARNINGS_SKIPPED_METHODS.has(salaryYear5Method)
+                ? "bg-gray-50 border-gray-200"
+                : "bg-[#FEE2E2]/80 border-red-100"
+            }`}
+          >
             <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               5 Year
               <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
@@ -262,13 +261,27 @@ export default function OutcomesSection({
               {s5 != null ? (
                 formatCurrency(s5 * animProgress)
               ) : (
-                <span className="text-gray-300 text-base">No data</span>
+                <span className="text-gray-300 text-xl sm:text-2xl md:text-3xl">
+                  —
+                </span>
               )}
             </p>
+            {salaryYear5Method && (
+              <div className="mt-2">
+                <EarningsMethodBadge method={salaryYear5Method} variant="pill" />
+              </div>
+            )}
           </div>
 
           {/* 10 Year */}
-          <div className="bg-[#EEF2FF]/80 border border-indigo-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm col-span-2 sm:col-span-1">
+          <div
+            className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-center min-h-[96px] sm:min-h-[108px] shadow-sm border col-span-2 sm:col-span-1 ${
+              salaryYear10Method &&
+              EARNINGS_SKIPPED_METHODS.has(salaryYear10Method)
+                ? "bg-gray-50 border-gray-200"
+                : "bg-[#EEF2FF]/80 border-indigo-100"
+            }`}
+          >
             <p className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-gray-400 mb-1">
               10 Year
               <DisclaimerTooltip text={DATA_SOURCE_DISCLAIMERS.censusLehd} />
@@ -277,9 +290,19 @@ export default function OutcomesSection({
               {s10 != null ? (
                 formatCurrency(s10 * animProgress)
               ) : (
-                <span className="text-gray-300 text-base">No data</span>
+                <span className="text-gray-300 text-xl sm:text-2xl md:text-3xl">
+                  —
+                </span>
               )}
             </p>
+            {salaryYear10Method && (
+              <div className="mt-2">
+                <EarningsMethodBadge
+                  method={salaryYear10Method}
+                  variant="pill"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -321,9 +344,9 @@ export default function OutcomesSection({
             <p className="text-2xl sm:text-4xl md:text-5xl font-black text-[#2563EB] tracking-tighter mb-1">
               {formatRoi(netRoi20Yr || null)}
             </p>
-            <p className="text-[10px] sm:text-xs text-gray-400 font-medium">
+            {/* <p className="text-[10px] sm:text-xs text-gray-400 font-medium">
               Lifetime premium
-            </p>
+            </p> */}
           </div>
         </div>
       </div>
@@ -482,24 +505,7 @@ export default function OutcomesSection({
         </div>
       </div>
 
-      {/* 4. In-Demand Roles */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          In-Demand Roles
-        </h2>
-        <div className="flex flex-wrap gap-2.5">
-          {roles.map((role, i) => (
-            <span
-              key={i}
-              className="px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors rounded-full text-xs font-semibold cursor-default"
-            >
-              {role}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Debt-to-Income Ratio */}
+      {/* 4. Debt-to-Income Ratio */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Debt-to-Income Ratio
@@ -554,6 +560,26 @@ export default function OutcomesSection({
             Students typically earn ~
             {(Number(multiplier) * animProgress).toFixed(1)}x their debt after
             graduation
+          </p>
+        </div>
+      </div>
+
+      {/* 5. Earnings Figures Disclaimer */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6 flex gap-3">
+        <Info size={18} className="shrink-0 text-slate-400 mt-0.5" />
+        <div>
+          <h3 className="text-sm font-bold text-slate-700 mb-1">
+            About These Earnings Figures
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Earnings data comes from the U.S. Department of Education&apos;s
+            College Scorecard and U.S. Census Bureau&apos;s LEHD. Where official
+            figures aren&apos;t available for a specific program, we provide a
+            statistical estimate based on related data points, clearly marked
+            as &quot;Estimated&quot; or &quot;Rough Estimate.&quot; Figures
+            marked &quot;Reported&quot; reflect actual reported outcomes.
+            These numbers are historical and may not reflect current earnings
+            for recent graduates.
           </p>
         </div>
       </div>

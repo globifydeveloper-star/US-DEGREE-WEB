@@ -109,6 +109,8 @@ export default function TabContent({ data }: { data: any }) {
                 satAverage={data.satAverage}
                 salaryYear1={data.salaryYear1}
                 salaryYear10={data.salaryYear10}
+                salaryYear1Method={data.salaryYear1Method}
+                salaryYear10Method={data.salaryYear10Method}
                 netRoi20Yr={data.netRoi20Yr}
                 growthRate={data.growthRate}
               />
@@ -136,6 +138,9 @@ export default function TabContent({ data }: { data: any }) {
               salaryYear1={data.salaryYear1}
               salaryYear5={data.salaryYear5}
               salaryYear10={data.salaryYear10}
+              salaryYear1Method={data.salaryYear1Method}
+              salaryYear5Method={data.salaryYear5Method}
+              salaryYear10Method={data.salaryYear10Method}
               netRoi20Yr={data.netRoi20Yr}
               growthRate={data.growthRate}
               empFactor={data.empFactor}

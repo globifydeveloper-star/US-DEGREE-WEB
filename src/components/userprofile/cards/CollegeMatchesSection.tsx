@@ -38,6 +38,7 @@ import {
   reloadSaved,
 } from "../../search/useSavedColleges";
 import type { SavedCollege } from "../../../lib/auth/api";
+import EarningsMethodBadge from "../../common/EarningsMethodBadge";
 
 interface CollegeMatchesSectionProps {
   matches: CollegeMatch[];
@@ -83,12 +84,16 @@ export default function CollegeMatchesSection({
           programName: match.programTitle || undefined,
         },
         // Enriched record so the profile's comparison grid shows it instantly.
+        // GET /compare/selected always reports acceptanceRate as a raw
+        // fraction (e.g. 0.62); matchEngine's is already scaled to a
+        // percentage, so it needs converting back for a consistent shape.
         {
-          unitid: match.unitid,
+          unitid: Number(match.unitid) || null,
           name: match.name,
           location,
           tuitionInState: match.tuition,
-          acceptanceRate: match.acceptanceRate,
+          acceptanceRate:
+            match.acceptanceRate !== null ? match.acceptanceRate / 100 : null,
           addedAt: new Date().toISOString(),
         },
       );
@@ -358,8 +363,13 @@ export default function CollegeMatchesSection({
                     </span>
                   </div>
                   <div className="bg-teal-50 rounded-lg px-2.5 py-2 col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-teal-600/80 font-semibold block">
+                    <span className="flex items-center gap-1 text-[10px] text-teal-600/80 font-semibold">
                       1-Yr Median Salary
+                      {match.medianSalary1yrMethod && (
+                        <EarningsMethodBadge
+                          method={match.medianSalary1yrMethod}
+                        />
+                      )}
                     </span>
                     <span className="font-bold text-teal-700">
                       {fmtMoney(match.medianSalary1yr)}
@@ -498,8 +508,13 @@ export default function CollegeMatchesSection({
                           </span>
                         </div>
                         <div className="bg-teal-50 rounded-lg px-2.5 py-2 col-span-2">
-                          <span className="text-[10px] text-teal-600/80 font-semibold block">
+                          <span className="flex items-center gap-1 text-[10px] text-teal-600/80 font-semibold">
                             1-Year Median Salary
+                            {match.medianSalary1yrMethod && (
+                              <EarningsMethodBadge
+                                method={match.medianSalary1yrMethod}
+                              />
+                            )}
                           </span>
                           <span className="font-bold text-teal-700">
                             {fmtMoney(match.medianSalary1yr)}

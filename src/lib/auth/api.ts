@@ -282,21 +282,87 @@ export async function unsaveCollege(unitid: string): Promise<void> {
 
 // ---- Colleges selected for comparison -------------------------------------
 
-/** A college selected for comparison, enriched by GET /compare/selected. */
+/**
+ * One row from GET /compare/selected, exactly as the backend sends it.
+ *
+ * Inconsistent percentage encoding is inherited from the underlying tables,
+ * not a bug: `acceptanceRate` and `cost.debtIncomeRatio` are raw fractions
+ * (e.g. 0.62), while `academics.graduationRate` and
+ * `programs.repaymentSuccess` are already scaled (e.g. 31.69, meaning
+ * 31.69%). Every field can be null — null means "no data", never render it
+ * as 0 or "N/A" unless the value is actually 0.
+ */
 export interface SelectedCompareCollege {
-  unitid: string;
-  name: string;
-  location: string;
-  tuitionInState: number | string | null;
-  acceptanceRate: number | string | null;
+  unitid: number | null;
+  name: string | null;
+  location: string | null;
+  tuitionInState: number | null;
+  acceptanceRate: number | null; // fraction, e.g. 0.62 — multiply by 100 for %
   addedAt: string | null;
+  schoolUrl: string | null;
+  schoolType: string | null;
+  accreditor: string | null;
+  academics: {
+    satRangeLow: number | null;
+    satRangeHigh: number | null;
+    graduationRate: number | null; // already a percentage, e.g. 31.69
+  };
+  cost: {
+    tuitionOutState: number | null;
+    stickerPrice: number | null;
+    avgDebt: number | null;
+    debtIncomeRatio: number | null; // fraction
+  };
+  outcomes: {
+    programEarnings: number | null;
+    avgSalary: number | null;
+    roi20Yr: number | null;
+  };
+  programs: {
+    studentFacultyRatio: string | null; // e.g. "15:1"
+    repaymentSuccess: number | null; // already a percentage, e.g. 36
+    popularFields: {
+      fieldName: string;
+      percentage: number;
+      programCount: number;
+    }[];
+    degreeLevels: {
+      level: string;
+      totalPrograms: number;
+      topTitles: string[];
+    }[];
+    // Only set when the `?program=` query matched a program at this college.
+    selectedProgram: {
+      title: string;
+      cipCode: string | null;
+      degreeLevelCategory: string | null;
+      credentialLevel: number | null;
+      earnings: number | null;
+    } | null;
+  };
 }
 
-/** GET /compare/selected — the user's comparison set, enriched by the backend. */
-export async function fetchCompareSelected(): Promise<
-  SelectedCompareCollege[]
-> {
-  const res = await authedFetch("/compare/selected");
+/**
+ * The subset of a SelectedCompareCollege that callers can build locally
+ * before the backend confirms a selection (e.g. from a search-card click) —
+ * just enough to render the profile's "selected for comparison" grid
+ * instantly, without waiting on a GET /compare/selected refetch.
+ */
+export type CompareSummary = Pick<
+  SelectedCompareCollege,
+  "unitid" | "name" | "location" | "tuitionInState" | "acceptanceRate" | "addedAt"
+>;
+
+/**
+ * GET /compare/selected — the user's comparison set, enriched by the backend.
+ * Pass `program` to also resolve `programs.selectedProgram` for whichever
+ * college in the set offers a matching program.
+ */
+export async function fetchCompareSelected(
+  program?: string,
+): Promise<SelectedCompareCollege[]> {
+  const query = program ? `?program=${encodeURIComponent(program)}` : "";
+  const res = await authedFetch(`/compare/selected${query}`);
   if (!res.ok) throw new Error(`Load comparison set failed (${res.status})`);
   const data = await res.json();
   return Array.isArray(data) ? (data as SelectedCompareCollege[]) : [];

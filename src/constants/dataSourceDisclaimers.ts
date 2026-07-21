@@ -10,7 +10,7 @@ export const DATA_SOURCE_DISCLAIMERS = {
   collegeNavigator:
     "College information is sourced from College Navigator, maintained by the National Center for Education Statistics (NCES).",
   censusLehd:
-    "Employment and workforce insights are based on data from the U.S. Census Bureau's LEHD program.",
+    "Employment and workforce insights are based on data from the U.S. Census Bureau's LEHD -(Post-Secondary Employment Outcomes Explorer) program.",
   eada: "Athletics data is sourced from the U.S. Department of Education's Equity in Athletics Disclosure Act (EADA) database.",
   lehdCalculated:
     "This figure is calculated manually from LEHD data and is not reported directly by the source.",
