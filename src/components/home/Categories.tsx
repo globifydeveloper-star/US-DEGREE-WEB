@@ -4,21 +4,35 @@ import { AlertCircle } from "lucide-react";
 
 import EmptyState from "@/components/common/EmptyState";
 import CategoriesHeader from "./CategoriesHeader";
-import CategoryCarousel, { hasMoreThanPreview } from "./CategoryCarousel";
 import CategoryGrid from "./CategoryGrid";
 import CompleteMatchPreferencesCard from "./CompleteMatchPreferencesCard";
 import PopularCategoriesSkeleton from "./PopularCategoriesSkeleton";
 import StateRelaxedNote from "./StateRelaxedNote";
 import { usePopularCategories } from "./usePopularCategories";
 
+// Two rows of the 4-column grid before "View all" expands to the full list.
+const GRID_PREVIEW_COUNT = 8;
+
 export default function Categories() {
-  const { categories, source, showCompletePrompt, isLoading, error } =
-    usePopularCategories();
+  const {
+    categories,
+    source,
+    showCompletePrompt,
+    isLoading,
+    error,
+    isStaticDefault,
+  } = usePopularCategories();
   const [showAll, setShowAll] = useState(false);
 
   const hasContent = !isLoading && !error && categories.length > 0;
-  const canToggleView =
-    hasContent && (hasMoreThanPreview(categories) || showAll);
+  const hasMore = categories.length > GRID_PREVIEW_COUNT;
+  // The static logged-out list is small enough to always show fully — no
+  // "view all" toggle needed.
+  const canToggleView = hasContent && !isStaticDefault && (hasMore || showAll);
+  const displayedCategories =
+    showAll || isStaticDefault
+      ? categories
+      : categories.slice(0, GRID_PREVIEW_COUNT);
 
   return (
     <section className="px-4 sm:px-10 lg:px-[86px] py-12 sm:py-16 flex justify-center">
@@ -54,11 +68,7 @@ export default function Categories() {
             {showCompletePrompt && <CompleteMatchPreferencesCard />}
             {source === "personalized_state_relaxed" && <StateRelaxedNote />}
 
-            {showAll ? (
-              <CategoryGrid categories={categories} />
-            ) : (
-              <CategoryCarousel categories={categories} />
-            )}
+            <CategoryGrid categories={displayedCategories} />
           </>
         )}
       </div>

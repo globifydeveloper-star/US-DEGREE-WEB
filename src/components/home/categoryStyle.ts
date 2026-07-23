@@ -45,6 +45,29 @@ const DEFAULT_CATEGORY_STYLE = {
   bg: "bg-slate-50",
 };
 
-export function getCategoryStyle(slug: string | undefined) {
-  return (slug && CATEGORY_STYLE[slug]) || DEFAULT_CATEGORY_STYLE;
+// The personalized endpoint doesn't return a slug (see PopularCategory.slug),
+// so styling for it falls back to matching on category_name against the
+// same six categories the static logged-out list uses — keeps personalized
+// cards from all landing on the neutral default style.
+const NAME_TO_SLUG: Record<string, string> = {
+  business: "business",
+  "computer science": "computer-science",
+  psychology: "psychology",
+  "mechanical engineering": "mechanical-engineering",
+  "public health": "public-health",
+  design: "design",
+};
+
+export function getCategoryStyle(
+  slug: string | undefined,
+  categoryName?: string,
+) {
+  if (slug && CATEGORY_STYLE[slug]) return CATEGORY_STYLE[slug];
+
+  const nameSlug = categoryName
+    ? NAME_TO_SLUG[categoryName.trim().toLowerCase()]
+    : undefined;
+  if (nameSlug) return CATEGORY_STYLE[nameSlug];
+
+  return DEFAULT_CATEGORY_STYLE;
 }

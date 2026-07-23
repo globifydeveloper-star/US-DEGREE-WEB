@@ -14,7 +14,7 @@ export default function CategoryCard({
   category,
   fixedWidth = false,
 }: CategoryCardProps) {
-  const style = getCategoryStyle(category.slug);
+  const style = getCategoryStyle(category.slug, category.category_name);
   const Icon = style.icon;
   // No slug in the live response yet — fall back to a free-text title
   // search on the category name rather than inventing a slug/category

@@ -9,8 +9,9 @@ export interface PopularCategory {
    * back to a category_name-based search when absent. */
   slug?: string;
   description?: string;
-  /** IPEDS credential_level code, 1-8 — see src/constants/credentialLevel.ts */
-  credential_level: number;
+  /** IPEDS credential_level code, 1-8 — see src/constants/credentialLevel.ts.
+   * Null for the static logged-out default set, which has no single level. */
+  credential_level: number | null;
   popularity_score: number;
   /** Server-assigned display order, unique within a response. The grid must
    * render in this order as-is and must not re-sort client-side. */

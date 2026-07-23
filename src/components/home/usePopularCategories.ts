@@ -9,30 +9,38 @@ import {
   PopularCategoriesSource,
   PopularCategory,
 } from "@/types/home/PopularCategory";
+import { DEFAULT_CATEGORIES } from "./defaultCategories";
+
+interface FetchedCategories {
+  categories: PopularCategory[];
+  source: PopularCategoriesSource;
+  showCompletePrompt: boolean;
+}
 
 export function usePopularCategories() {
-  // Only used to know *when* auth state changes so we refetch (e.g. right
-  // after login) — the id itself is never sent to fetchPopularCategories,
-  // which resolves the user from the app JWT on the backend.
-  const { user } = useAuth();
-  const [categories, setCategories] = useState<PopularCategory[]>([]);
-  const [source, setSource] = useState<PopularCategoriesSource | null>(null);
-  const [showCompletePrompt, setShowCompletePrompt] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // `loading` gates the fetch below until Firebase has resolved whether
+  // there's a user at all; `user` re-triggers the fetch on login/logout.
+  const { user, loading: authLoading } = useAuth();
+  const [fetched, setFetched] = useState<FetchedCategories | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Logged-out visitors have nothing to personalize — skip the network
+    // call entirely rather than round-tripping to
+    // /popular-categories/personalized for an anonymous "default" response.
+    // The static set is served below, derived at render time.
+    if (authLoading || !user) return;
+
     let cancelled = false;
 
     (async () => {
       try {
-        setIsLoading(true);
+        setIsFetching(true);
         const response = await fetchPopularCategories();
         if (cancelled) return;
 
-        setCategories(response.categories);
-        setSource(response.source);
-        setShowCompletePrompt(response.showCompletePrompt);
+        setFetched(response);
         setError(null);
         trackEvent("home_categories_source", { source: response.source });
       } catch (err) {
@@ -42,14 +50,43 @@ export function usePopularCategories() {
           err instanceof Error ? err.message : "Failed to load categories",
         );
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setIsFetching(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [authLoading, user]);
 
-  return { categories, source, showCompletePrompt, isLoading, error };
+  if (authLoading) {
+    return {
+      categories: [],
+      source: null,
+      showCompletePrompt: false,
+      isLoading: true,
+      error: null,
+      isStaticDefault: false,
+    };
+  }
+
+  if (!user) {
+    return {
+      categories: DEFAULT_CATEGORIES,
+      source: "default" as const,
+      showCompletePrompt: false,
+      isLoading: false,
+      error: null,
+      isStaticDefault: true,
+    };
+  }
+
+  return {
+    categories: fetched?.categories ?? [],
+    source: fetched?.source ?? null,
+    showCompletePrompt: fetched?.showCompletePrompt ?? false,
+    isLoading: isFetching,
+    error,
+    isStaticDefault: false,
+  };
 }
