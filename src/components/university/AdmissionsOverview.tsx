@@ -205,12 +205,9 @@ export default function AdmissionsOverview({
     <div className="mb-10 flex flex-col gap-8">
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <h2 className="text-2xl font-bold text-slate-900 font-lexend inline-block border-b-[3px] border-slate-900 pb-1 leading-none">
+        <h2 className="text-2xl font-bold text-slate-900 font-lexend  border-slate-900 pb-1 leading-none">
           Admissions Overview
         </h2>
-        <p className="text-[10px] italic text-slate-400">
-          Source: From College ScoreCard & IPEDS Data
-        </p>
       </div>
 
       {/* Acceptance Rate + SAT Bars */}

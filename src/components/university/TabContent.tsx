@@ -99,6 +99,7 @@ export default function TabContent({ data }: { data: any }) {
                 degree={data.degree}
                 cipCode={data.cipCode}
                 description={data.programDescription}
+                credentialLevel={data.credentialLevel}
               />
 
               <AdmissionsOverview
