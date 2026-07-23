@@ -1,105 +1,66 @@
-import Link from "next/link";
-import {
-  Briefcase,
-  Monitor,
-  BrainCircuit,
-  Settings,
-  HeartPulse,
-  PenTool,
-} from "lucide-react";
+"use client";
+import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 
-const categories = [
-  {
-    title: "Business",
-    slug: "business",
-    desc: "MBA, Finance, Business Management, and Entrepreneurship programs.",
-    icon: Briefcase,
-    iconColor: "text-orange-600",
-    bg: "bg-orange-50",
-  },
-  {
-    title: "Computer Science",
-    slug: "computer-science",
-    desc: "AI, Software Engineering, Cybersecurity, and Data Science.",
-    icon: Monitor,
-    iconColor: "text-blue-600",
-    bg: "bg-blue-50",
-  },
-  {
-    title: "Psychology",
-    slug: "psychology",
-    desc: "Biopsychology, Clinical, Behavioral Sciences, and Counseling specializations.",
-    icon: BrainCircuit,
-    iconColor: "text-pink-600",
-    bg: "bg-pink-50",
-  },
-  {
-    title: "Mechanical Engineering",
-    slug: "mechanical-engineering",
-    desc: "Mechanical Engineering Related Technologies/Technicians, Aerospace, and Material design programs.",
-    icon: Settings,
-    iconColor: "text-gray-600",
-    bg: "bg-gray-100",
-  },
-  {
-    title: "Public Health",
-    slug: "public-health",
-    desc: "Public Health and Health-Related Fields and Global Health studies.",
-    icon: HeartPulse,
-    iconColor: "text-emerald-600",
-    bg: "bg-emerald-50",
-  },
-  {
-    title: "Design",
-    slug: "design",
-    desc: "Environmental Design, Drafting/Design Engineering Technologies/Technicians, and Multimedia programs.",
-    icon: PenTool,
-    iconColor: "text-yellow-600",
-    bg: "bg-yellow-50",
-  },
-];
+import EmptyState from "@/components/common/EmptyState";
+import CategoriesHeader from "./CategoriesHeader";
+import CategoryCarousel, { hasMoreThanPreview } from "./CategoryCarousel";
+import CategoryGrid from "./CategoryGrid";
+import CompleteMatchPreferencesCard from "./CompleteMatchPreferencesCard";
+import PopularCategoriesSkeleton from "./PopularCategoriesSkeleton";
+import StateRelaxedNote from "./StateRelaxedNote";
+import { usePopularCategories } from "./usePopularCategories";
 
 export default function Categories() {
+  const { categories, source, showCompletePrompt, isLoading, error } =
+    usePopularCategories();
+  const [showAll, setShowAll] = useState(false);
+
+  const hasContent = !isLoading && !error && categories.length > 0;
+  const canToggleView =
+    hasContent && (hasMoreThanPreview(categories) || showAll);
+
   return (
     <section className="px-4 sm:px-10 lg:px-[86px] py-12 sm:py-16 flex justify-center">
       <div className="w-full max-w-[2380px]">
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-8 sm:mb-10">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Popular Categories
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-500">
-              Explore the most in-demand fields of study across the United
-              States.
-            </p>
-          </div>
-        </div>
+        <CategoriesHeader
+          showToggle={canToggleView}
+          showAll={showAll}
+          onToggle={() => setShowAll((prev) => !prev)}
+        />
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {categories.map((cat, i) => {
-            const Icon = cat.icon;
-            return (
-              <Link
-                key={i}
-                href={`/search?category=${cat.slug}${cat.slug === "graphic-design" ? "&title=Design" : ""}`}
-                className={`block p-4 sm:p-8 rounded-2xl sm:rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${cat.bg}`}
-              >
-                <div className="mb-3 sm:mb-6">
-                  <Icon
-                    className={`${cat.iconColor} w-6 h-6 sm:w-7 sm:h-7`}
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">
-                  {cat.title}
-                </h3>
-                <p className="text-[11px] sm:text-sm text-gray-600 leading-normal sm:leading-relaxed">
-                  {cat.desc}
-                </p>
-              </Link>
-            );
-          })}
-        </div>
+        {isLoading && <PopularCategoriesSkeleton />}
+
+        {!isLoading && error && (
+          <EmptyState
+            title="Couldn't load categories"
+            description="Something went wrong loading popular categories. Please try again shortly."
+            icon={AlertCircle}
+          />
+        )}
+
+        {!isLoading && !error && categories.length === 0 && (
+          <EmptyState
+            title="No categories to show"
+            description="Check back soon — we're adding new fields of study regularly."
+          />
+        )}
+
+        {hasContent && (
+          <>
+            {/* Both banners are personalization states — logged-out and
+                just-logged-in-without-preferences users see neither, only
+                the plain default category set below. */}
+            {showCompletePrompt && <CompleteMatchPreferencesCard />}
+            {source === "personalized_state_relaxed" && <StateRelaxedNote />}
+
+            {showAll ? (
+              <CategoryGrid categories={categories} />
+            ) : (
+              <CategoryCarousel categories={categories} />
+            )}
+          </>
+        )}
       </div>
     </section>
   );
