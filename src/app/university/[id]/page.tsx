@@ -17,7 +17,11 @@ export default async function UniversityPage({
   const { id } = await params;
   const sParams = await searchParams;
 
-  const bundle = await fetchUniversityData(id, sParams.cip);
+  // ProgramSearchBand links only set `degree` (which it populates with the
+  // real credential title); search-result links set both, and `degree`
+  // there is a program title instead — prefer `credentialTitle` when present.
+  const credentialTitleParam = sParams.credentialTitle || sParams.degree;
+  const bundle = await fetchUniversityData(id, sParams.cip, credentialTitleParam);
 
   // If no backend data is found for this university ID
   if (!bundle.collegeData && !bundle.apiData) {

@@ -141,6 +141,9 @@ export default function TabContent({ data }: { data: any }) {
               salaryYear1Method={data.salaryYear1Method}
               salaryYear5Method={data.salaryYear5Method}
               salaryYear10Method={data.salaryYear10Method}
+              salaryYear1Cohort={data.salaryYear1Cohort}
+              salaryYear5Cohort={data.salaryYear5Cohort}
+              salaryYear10Cohort={data.salaryYear10Cohort}
               netRoi20Yr={data.netRoi20Yr}
               growthRate={data.growthRate}
               empFactor={data.empFactor}
@@ -174,10 +177,10 @@ export default function TabContent({ data }: { data: any }) {
         <div className="w-full lg:w-[320px] shrink-0 lg:sticky lg:top-[120px] self-start">
           <CourseSummarySideCard
             degree={data.degree}
-            duration={data.duration}
             format={data.format}
             financialAid={data.financialAid}
             schoolUrl={data.schoolUrl}
+            credentialLevel={data.credentialLevel}
           />
         </div>
       </div>

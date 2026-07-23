@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import {
   EarningsFillMethod,
-  EARNINGS_METHOD_COPY,
   EARNINGS_METHOD_LABEL,
+  describeEarningsMethod,
 } from "@/types/earningsMethod";
 
 const METHOD_STYLE: Record<
@@ -62,6 +62,11 @@ const METHOD_PILL_CLASSES: Record<EarningsFillMethod, string> = {
 
 interface EarningsMethodBadgeProps {
   method: EarningsFillMethod;
+  /** grad_cohort year this figure was resolved from (e.g. "2016"), when the
+   * backend provides one. Each of year_1/5/10 is resolved independently and
+   * can legitimately carry a different cohort — always pass the cohort that
+   * matches this specific metric, not a page-wide value. */
+  cohort?: string | null;
   className?: string;
   /** "icon" (default) is the small circular affordance used inline next to a
    * label. "pill" renders the labeled badge (e.g. "Reported", "Estimated"). */
@@ -75,11 +80,14 @@ interface EarningsMethodBadgeProps {
  */
 export default function EarningsMethodBadge({
   method,
+  cohort,
   className,
   variant = "icon",
 }: EarningsMethodBadgeProps) {
   const { icon: Icon, classes } = METHOD_STYLE[method];
-  const text = EARNINGS_METHOD_COPY[method];
+  const text = describeEarningsMethod(method, cohort);
+  // const showCohortInPill =
+  //   variant === "pill" && cohort && method !== "skipped_no_anchor";
 
   const trigger = (
     <button
@@ -104,7 +112,10 @@ export default function EarningsMethodBadge({
       }
     >
       {variant === "pill" ? (
-        EARNINGS_METHOD_LABEL[method]
+        <>
+          {EARNINGS_METHOD_LABEL[method]}
+          {/* {showCohortInPill && <> &middot; Class f {cohort}</>} */}
+        </>
       ) : (
         <Icon size={10} strokeWidth={2.5} />
       )}

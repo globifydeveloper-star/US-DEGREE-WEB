@@ -15,6 +15,9 @@ export default function OutcomesSection({
   salaryYear1Method,
   salaryYear5Method,
   salaryYear10Method,
+  salaryYear1Cohort,
+  salaryYear5Cohort,
+  salaryYear10Cohort,
   netRoi20Yr,
   empFactor,
   debtIncomeRatio,
@@ -240,7 +243,11 @@ export default function OutcomesSection({
             </p>
             {salaryYear1Method && (
               <div className="mt-2">
-                <EarningsMethodBadge method={salaryYear1Method} variant="pill" />
+                <EarningsMethodBadge
+                  method={salaryYear1Method}
+                  cohort={salaryYear1Cohort}
+                  variant="pill"
+                />
               </div>
             )}
           </div>
@@ -268,7 +275,11 @@ export default function OutcomesSection({
             </p>
             {salaryYear5Method && (
               <div className="mt-2">
-                <EarningsMethodBadge method={salaryYear5Method} variant="pill" />
+                <EarningsMethodBadge
+                  method={salaryYear5Method}
+                  cohort={salaryYear5Cohort}
+                  variant="pill"
+                />
               </div>
             )}
           </div>
@@ -299,6 +310,7 @@ export default function OutcomesSection({
               <div className="mt-2">
                 <EarningsMethodBadge
                   method={salaryYear10Method}
+                  cohort={salaryYear10Cohort}
                   variant="pill"
                 />
               </div>

@@ -1,4 +1,5 @@
 import { EarningsFillMethod } from "@/types/earningsMethod";
+import { ApiEarningsResolved } from "@/types/university/apiResponses";
 
 export interface College {
   schoolUrl: string | undefined;
@@ -55,6 +56,9 @@ export interface CollegeDetail {
   salaryYear1Method: EarningsFillMethod | null;
   salaryYear5Method: EarningsFillMethod | null;
   salaryYear10Method: EarningsFillMethod | null;
+  salaryYear1Cohort: string | null;
+  salaryYear5Cohort: string | null;
+  salaryYear10Cohort: string | null;
   menStudentsPct: number;
   womenStudentsPct: number;
   menFacultyPct: number;
@@ -92,6 +96,8 @@ export interface OverviewResponse {
     sat_avg_overall?: ApiNumber;
     admission_rate?: number | null;
   };
+  // Legacy flat shape — a single implicitly-chosen grad_cohort row. Kept only
+  // as a fallback for `earnings_resolved`; new code should read that instead.
   earnings?: {
     year_1?: ApiNumber;
     year_5?: ApiNumber;
@@ -100,6 +106,7 @@ export interface OverviewResponse {
     year_5_method?: EarningsFillMethod | null;
     year_10_method?: EarningsFillMethod | null;
   };
+  earnings_resolved?: ApiEarningsResolved;
 }
 
 export interface TuitionResponse {
@@ -129,4 +136,5 @@ export interface OutcomesResponse {
     year_5_method?: EarningsFillMethod | null;
     year_10_method?: EarningsFillMethod | null;
   };
+  earnings_resolved?: ApiEarningsResolved;
 }

@@ -377,6 +377,12 @@ export default function ResultCard({
       city: location.split(", ")[0] || "",
       state: location.split(", ")[1] || "",
       degree: degree,
+      // `degree` here is actually the program title (e.g. "Physics"), not a
+      // credential level — `specializations` carries the real credential
+      // title (e.g. "Doctoral Degree"). The university page needs the real
+      // one to disambiguate which credential level of this cip_code to
+      // fetch, since the same cip can be offered at more than one level.
+      credentialTitle: specializations,
       type: schoolType,
       admissionRate: admissionRate,
       tuition: estCost,

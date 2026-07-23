@@ -4,8 +4,31 @@ import { EarningsFillMethod } from "@/types/earningsMethod";
 
 export type ApiNum = number | string | null;
 
+// Per-horizon cohort-resolved earnings — year_1/year_5/year_10 are each
+// independently resolved against whichever grad_cohort has the best
+// available data for that specific horizon, so they can legitimately carry
+// different `cohort` years from one another. Supersedes the flat
+// `earnings.year_1/5/10` + `earnings.year_N_method` fields below, which
+// reflect a single (implicitly first-returned) grad_cohort row and don't
+// expose which cohort backed them.
+export interface ApiResolvedEarningsMetric {
+  value?: ApiNum;
+  method?: EarningsFillMethod | null;
+  cohort?: string | null;
+}
+
+export interface ApiEarningsResolved {
+  year_1?: ApiResolvedEarningsMetric;
+  year_5?: ApiResolvedEarningsMetric;
+  year_10?: ApiResolvedEarningsMetric;
+}
+
 export interface ApiOverview {
-  program?: { cip_code?: string };
+  program?: {
+    cip_code?: string;
+    credential_title?: string;
+    credential_level?: number | null;
+  };
   school?: {
     school_name?: string;
     school_description?: string;
@@ -51,6 +74,9 @@ export interface ApiOverview {
 }
 
 export interface ApiOutcomes {
+  // Legacy flat shape — a single implicitly-chosen grad_cohort row. Kept only
+  // as a fallback for `earnings_resolved` below; new code should read
+  // `earnings_resolved`, not this.
   earnings?: {
     year_1?: ApiNum;
     year_5?: ApiNum;
@@ -61,6 +87,7 @@ export interface ApiOutcomes {
     growth_rate?: ApiNum;
     avg_salary?: ApiNum;
   };
+  earnings_resolved?: ApiEarningsResolved;
   roi?: { roi_20yr?: ApiNum };
   completion?: { emp_factor?: ApiNum };
   debt_income_ratio?: { debt_income_ratio?: ApiNum };
@@ -90,6 +117,11 @@ export interface UniversitySearchParams {
   city?: string;
   state?: string;
   degree?: string;
+  // The real credential title (e.g. "Doctoral Degree"), when the caller
+  // has one — used to disambiguate which credential level of a shared
+  // cip_code to fetch. `degree` above is sometimes a program title instead
+  // (see ResultCard.tsx), so it can't always be trusted for this.
+  credentialTitle?: string;
   type?: string;
   admissionRate?: string;
   tuition?: string;

@@ -14,6 +14,7 @@ export default function TileCard({
   university,
   location,
   degree,
+  specializations,
   schoolType,
   admissionRate,
   gradRate,
@@ -31,6 +32,10 @@ export default function TileCard({
       city: location.split(", ")[0] || "",
       state: location.split(", ")[1] || "",
       degree: degree,
+      // See ResultCard.tsx — `degree` is the program title, `specializations`
+      // is the real credential title, needed to disambiguate which
+      // credential level of this cip_code to fetch.
+      credentialTitle: specializations,
       type: schoolType,
       admissionRate: admissionRate,
       tuition: estCost,
