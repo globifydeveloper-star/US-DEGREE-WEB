@@ -695,7 +695,9 @@ export default function ResultCard({
                 {shouldShowFit ? "Tap to update" : "Tap to find"}
               </span>
             </div>
-            <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+            <div
+              className={`relative w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-500 ${!shouldShowFit ? "filter blur-[1.5px] opacity-80" : ""}`}
+            >
               <svg
                 className="w-full h-full transform -rotate-90"
                 viewBox="0 0 36 36"
@@ -745,13 +747,21 @@ export default function ResultCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-200/60 min-w-0">
+          <div className="grid grid-cols-5 gap-1 pt-1 border-t border-slate-200/60 min-w-0">
             <div className="min-w-0">
               <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
                 Admission
               </p>
               <p className="text-[10px] font-bold text-slate-800 truncate">
                 {admissionRate}
+              </p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                SAT/ACT
+              </p>
+              <p className="text-[10px] font-bold text-slate-800 truncate">
+                {satAct}
               </p>
             </div>
             <div className="min-w-0">
