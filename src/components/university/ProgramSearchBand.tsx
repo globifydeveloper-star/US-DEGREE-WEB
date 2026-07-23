@@ -139,6 +139,7 @@ export default function ProgramSearchBand({
     if (city) params.set("city", city);
     if (state) params.set("state", state);
     params.set("degree", program.credential_title);
+    params.set("credentialTitle", program.credential_title);
     if (schoolType) params.set("type", schoolType);
     if (admissionRate != null) params.set("admissionRate", String(admissionRate));
     if (tuitionFee != null) params.set("tuition", String(tuitionFee));

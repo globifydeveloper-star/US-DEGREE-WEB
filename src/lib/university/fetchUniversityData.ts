@@ -45,20 +45,32 @@ export interface UniversityApiBundle {
 export async function fetchUniversityData(
   id: string,
   cip: string | undefined,
+  // The same cip_code can be offered at more than one credential level at a
+  // school (e.g. a Bachelor's and a Doctoral program both filed under the
+  // same CIP) — /overview and /outcomes otherwise silently return whichever
+  // level's row comes back first (observed: always the lowest level), so a
+  // program picked for its credential level (e.g. "Doctoral Degree") would
+  // render with the wrong Course Summary / Education Level info. Passing
+  // credential_title disambiguates; an unrecognized value is safely ignored
+  // by the backend and falls back to prior (single-row) behavior.
+  credentialTitle: string | undefined,
 ): Promise<UniversityApiBundle> {
   const apiUrl = getApiUrl();
+  const credentialQuery = credentialTitle
+    ? `?credential_title=${encodeURIComponent(credentialTitle)}`
+    : "";
 
   // 1. Gather all data we can fetch from the backend overview endpoint
   let apiData: ApiOverview | null = null;
   if (cip) {
     apiData = await fetchJson<ApiOverview>(
-      `${apiUrl}/overview/${id}/${cip}`,
+      `${apiUrl}/overview/${id}/${cip}${credentialQuery}`,
       "Error fetching overview details:",
     );
     if (apiData) console.log("API Data:", apiData);
   } else {
     apiData = await fetchJson<ApiOverview>(
-      `${apiUrl}/overview/${id}/default`,
+      `${apiUrl}/overview/${id}/default${credentialQuery}`,
       "Error fetching overview details with default cip:",
     );
     if (apiData) console.log("API Data:", apiData);
@@ -69,7 +81,7 @@ export async function fetchUniversityData(
   let outcomesData: ApiOutcomes | null = null;
   if (resolvedCip) {
     outcomesData = await fetchJson<ApiOutcomes>(
-      `${apiUrl}/outcomes/${id}/${resolvedCip}`,
+      `${apiUrl}/outcomes/${id}/${resolvedCip}${credentialQuery}`,
       "Error fetching outcomes details:",
     );
   }

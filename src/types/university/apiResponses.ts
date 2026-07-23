@@ -117,6 +117,11 @@ export interface UniversitySearchParams {
   city?: string;
   state?: string;
   degree?: string;
+  // The real credential title (e.g. "Doctoral Degree"), when the caller
+  // has one — used to disambiguate which credential level of a shared
+  // cip_code to fetch. `degree` above is sometimes a program title instead
+  // (see ResultCard.tsx), so it can't always be trusted for this.
+  credentialTitle?: string;
   type?: string;
   admissionRate?: string;
   tuition?: string;

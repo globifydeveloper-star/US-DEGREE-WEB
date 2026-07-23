@@ -765,7 +765,7 @@ export default function CollegeDetailsModal({
                     </p>
                     {data.salaryYear1Cohort && (
                       <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
-                        Class of {data.salaryYear1Cohort}
+                        Data from {data.salaryYear1Cohort} LEHD Graduation Report
                       </p>
                     )}
                   </div>
@@ -790,7 +790,7 @@ export default function CollegeDetailsModal({
                     </p>
                     {data.salaryYear5Cohort && (
                       <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
-                        Class of {data.salaryYear5Cohort}
+                        Data from {data.salaryYear5Cohort} LEHD Graduation Report
                       </p>
                     )}
                   </div>
@@ -815,7 +815,7 @@ export default function CollegeDetailsModal({
                     </p>
                     {data.salaryYear10Cohort && (
                       <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
-                        Class of {data.salaryYear10Cohort}
+                        Data from {data.salaryYear10Cohort} LEHD Graduation Report
                       </p>
                     )}
                   </div>
