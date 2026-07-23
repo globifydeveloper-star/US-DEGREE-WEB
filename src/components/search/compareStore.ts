@@ -226,10 +226,18 @@ export async function clearCompare(): Promise<void> {
   selectedSet = new Set();
   writeBucket([], []);
   dispatch({ action: "cleared" }); // clear listeners before the backend catches up
-  const results = await Promise.allSettled(
-    Array.from(ids).map((id) => removeCompareSelected(id)),
-  );
-  const failed = results.filter((r) => r.status === "rejected");
+  // Removed one at a time, not in parallel: the backend's DELETE endpoint
+  // does a read-modify-write on the user's stored set, so concurrent
+  // requests race on a stale read and only the last write survives —
+  // sequencing them avoids that lost-update.
+  const failed: unknown[] = [];
+  for (const id of ids) {
+    try {
+      await removeCompareSelected(id);
+    } catch (err) {
+      failed.push(err);
+    }
+  }
   if (failed.length > 0) {
     console.error(`Failed to clear ${failed.length} comparison entries:`, failed);
   }
