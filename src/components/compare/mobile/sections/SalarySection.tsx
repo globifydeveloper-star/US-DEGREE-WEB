@@ -20,7 +20,7 @@ export default function SalarySection({
   highestSalaryId,
 }: SalarySectionProps) {
   return (
-    <MobileSectionCard title="Median Graduate Salary" subtitle="Outcomes after 10 years">
+    <MobileSectionCard title="Avg. Salary" subtitle="Average annual earnings for graduates">
       {colleges.map((college) => {
         const salary = college.medianSalary;
 

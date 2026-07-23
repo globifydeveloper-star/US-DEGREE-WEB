@@ -19,8 +19,9 @@ export const EARNINGS_METHOD_COPY: Record<EarningsFillMethod, string> = {
   low_confidence:
     "This figure is a rough estimate based on limited data. Treat it as approximate.",
   skipped_future:
-    "This data isn't available yet — it covers a time period that hasn't happened for this group of students.",
-  skipped_no_anchor: "No earnings data is available for this program.",
+    "Not yet available — this class hasn't reached this many years post-graduation.",
+  skipped_no_anchor:
+    "Not yet published by the data source — check back after the next data update.",
 };
 
 // Short label shown on the pill badge variant.
@@ -38,3 +39,27 @@ export const EARNINGS_METHOD_LABEL: Record<EarningsFillMethod, string> = {
 // "here's a number, with a confidence level."
 export const EARNINGS_SKIPPED_METHODS: ReadonlySet<EarningsFillMethod> =
   new Set(["skipped_future", "skipped_no_anchor"]);
+
+// One horizon (year_1/5/10) resolved independently against whichever
+// grad_cohort has the best available data for that specific horizon — the
+// three metrics for the same program can legitimately come from different
+// cohorts. `cohort` is the grad_cohort year (e.g. "2016") that produced
+// `value`/`method`, or null when the backend has no cohort to attribute
+// (e.g. skipped_no_anchor).
+export interface ResolvedEarningsMetric {
+  value: number | null;
+  method: EarningsFillMethod | null;
+  cohort: string | null;
+}
+
+// Tooltip copy for a method, with the cohort folded in when one is known.
+// skipped_no_anchor has no meaningful cohort to attribute, so it's left off
+// even when the backend happens to send one.
+export function describeEarningsMethod(
+  method: EarningsFillMethod,
+  cohort?: string | null,
+): string {
+  const base = EARNINGS_METHOD_COPY[method];
+  if (!cohort || method === "skipped_no_anchor") return base;
+  return `${base} Based on the ${cohort} LEHD Available Report.`;
+}

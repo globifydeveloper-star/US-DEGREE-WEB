@@ -327,32 +327,53 @@ export default function CollegeDetailsModal({
                 ? "92%"
                 : "N/A";
 
-        // Salaries
+        // Salaries — same per-metric cohort resolution as the main
+        // Outcomes & Careers page (src/lib/university/buildUniversityViewData.ts):
+        // year_1/5/10 are each resolved independently against whichever
+        // grad_cohort has the best data for that specific horizon, and can
+        // legitimately come from different cohorts. `earnings_resolved` is
+        // preferred; the flat `earnings.year_N` fields are kept only as a
+        // fallback for responses that haven't been upgraded yet.
+        const resolvedEarnings =
+          outcomesData?.earnings_resolved ?? overviewData?.earnings_resolved;
+
         const salaryYear1 =
+          sanitizeSalary(resolvedEarnings?.year_1?.value) ||
           sanitizeSalary(outcomesData?.earnings?.year_1) ||
           sanitizeSalary(overviewData?.earnings?.year_1) ||
           (actualId === "1" ? 91200 : actualId === "2" ? 85000 : null);
         const salaryYear5 =
+          sanitizeSalary(resolvedEarnings?.year_5?.value) ||
           sanitizeSalary(outcomesData?.earnings?.year_5) ||
           sanitizeSalary(overviewData?.earnings?.year_5) ||
           null;
         const salaryYear10 =
+          sanitizeSalary(resolvedEarnings?.year_10?.value) ||
           sanitizeSalary(outcomesData?.earnings?.year_10) ||
           sanitizeSalary(overviewData?.earnings?.year_10) ||
           (actualId === "1" ? 149696 : actualId === "2" ? 135000 : null);
 
         const salaryYear1Method =
+          resolvedEarnings?.year_1?.method ??
           outcomesData?.earnings?.year_1_method ??
           overviewData?.earnings?.year_1_method ??
           null;
         const salaryYear5Method =
+          resolvedEarnings?.year_5?.method ??
           outcomesData?.earnings?.year_5_method ??
           overviewData?.earnings?.year_5_method ??
           null;
         const salaryYear10Method =
+          resolvedEarnings?.year_10?.method ??
           outcomesData?.earnings?.year_10_method ??
           overviewData?.earnings?.year_10_method ??
           null;
+
+        // Cohort attribution has no legacy equivalent — only earnings_resolved
+        // carries it.
+        const salaryYear1Cohort = resolvedEarnings?.year_1?.cohort ?? null;
+        const salaryYear5Cohort = resolvedEarnings?.year_5?.cohort ?? null;
+        const salaryYear10Cohort = resolvedEarnings?.year_10?.cohort ?? null;
 
         // Gender demographics
         const menStudentsPct =
@@ -392,6 +413,9 @@ export default function CollegeDetailsModal({
           salaryYear1Method,
           salaryYear5Method,
           salaryYear10Method,
+          salaryYear1Cohort,
+          salaryYear5Cohort,
+          salaryYear10Cohort,
           menStudentsPct,
           womenStudentsPct,
           menFacultyPct,
@@ -726,7 +750,10 @@ export default function CollegeDetailsModal({
                     <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       1 Year
                       {data.salaryYear1Method && (
-                        <EarningsMethodBadge method={data.salaryYear1Method} />
+                        <EarningsMethodBadge
+                          method={data.salaryYear1Method}
+                          cohort={data.salaryYear1Cohort}
+                        />
                       )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
@@ -736,6 +763,11 @@ export default function CollegeDetailsModal({
                         <span className="text-gray-300 text-xl">No data</span>
                       )}
                     </p>
+                    {data.salaryYear1Cohort && (
+                      <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
+                        Class of {data.salaryYear1Cohort}
+                      </p>
+                    )}
                   </div>
 
                   {/* 5 Year */}
@@ -743,7 +775,10 @@ export default function CollegeDetailsModal({
                     <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       5 Year
                       {data.salaryYear5Method && (
-                        <EarningsMethodBadge method={data.salaryYear5Method} />
+                        <EarningsMethodBadge
+                          method={data.salaryYear5Method}
+                          cohort={data.salaryYear5Cohort}
+                        />
                       )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
@@ -753,6 +788,11 @@ export default function CollegeDetailsModal({
                         <span className="text-gray-300 text-xl">No data</span>
                       )}
                     </p>
+                    {data.salaryYear5Cohort && (
+                      <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
+                        Class of {data.salaryYear5Cohort}
+                      </p>
+                    )}
                   </div>
 
                   {/* 10 Year */}
@@ -760,7 +800,10 @@ export default function CollegeDetailsModal({
                     <p className="flex items-center gap-1 text-[11px] font-bold text-gray-400 mb-1">
                       10 Year
                       {data.salaryYear10Method && (
-                        <EarningsMethodBadge method={data.salaryYear10Method} />
+                        <EarningsMethodBadge
+                          method={data.salaryYear10Method}
+                          cohort={data.salaryYear10Cohort}
+                        />
                       )}
                     </p>
                     <p className="text-3xl font-black text-[#16A34A] tracking-tight">
@@ -770,6 +813,11 @@ export default function CollegeDetailsModal({
                         <span className="text-gray-300 text-xl">No data</span>
                       )}
                     </p>
+                    {data.salaryYear10Cohort && (
+                      <p className="text-[10px] font-semibold text-gray-400 mt-0.5">
+                        Class of {data.salaryYear10Cohort}
+                      </p>
+                    )}
                   </div>
                 </div>
 

@@ -178,32 +178,54 @@ export async function buildUniversityViewData(
       : await getTestingRequirementsForCategory(disclosureCategory);
   }
 
-  // Outcomes & Careers statistics
+  // Outcomes & Careers statistics.
+  //
+  // year_1/5/10 are each resolved independently by the backend against
+  // whichever grad_cohort has the best data for that specific horizon
+  // (`earnings_resolved`) — they can legitimately come from different
+  // cohorts. The old flat `earnings.year_N` fields reflected a single
+  // implicitly-chosen cohort row and are kept only as a fallback for
+  // responses that haven't been upgraded yet.
+  const resolvedEarnings = outcomesData?.earnings_resolved;
+
   const salaryYear1 =
+    sanitizeSalary(resolvedEarnings?.year_1?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_1) ||
     sanitizeSalary(apiData?.earnings?.year_1) ||
     (id === "1" ? 91200 : id === "2" ? 85000 : null);
   const salaryYear5 =
+    sanitizeSalary(resolvedEarnings?.year_5?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_5) ||
     sanitizeSalary(apiData?.earnings?.year_5) ||
     null;
   const salaryYear10 =
+    sanitizeSalary(resolvedEarnings?.year_10?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_10) ||
     sanitizeSalary(apiData?.earnings?.year_10) ||
     (id === "1" ? 149696 : id === "2" ? 135000 : null);
 
   const salaryYear1Method =
+    resolvedEarnings?.year_1?.method ??
     outcomesData?.earnings?.year_1_method ??
     apiData?.earnings?.year_1_method ??
     null;
   const salaryYear5Method =
+    resolvedEarnings?.year_5?.method ??
     outcomesData?.earnings?.year_5_method ??
     apiData?.earnings?.year_5_method ??
     null;
   const salaryYear10Method =
+    resolvedEarnings?.year_10?.method ??
     outcomesData?.earnings?.year_10_method ??
     apiData?.earnings?.year_10_method ??
     null;
+
+  // Cohort attribution has no legacy equivalent — only `earnings_resolved`
+  // carries it. Shown next to each fill-method badge so users don't assume
+  // the three figures come from the same graduating class.
+  const salaryYear1Cohort = resolvedEarnings?.year_1?.cohort ?? null;
+  const salaryYear5Cohort = resolvedEarnings?.year_5?.cohort ?? null;
+  const salaryYear10Cohort = resolvedEarnings?.year_10?.cohort ?? null;
 
   const netRoi20Yr =
     sParams.roi ||
@@ -233,6 +255,12 @@ export async function buildUniversityViewData(
       ? Number(outcomesData.debt_income_ratio.debt_income_ratio)
       : null;
 
+  const credentialLevel =
+    apiData?.program?.credential_level !== null &&
+    apiData?.program?.credential_level !== undefined
+      ? Number(apiData.program.credential_level)
+      : null;
+
   const avgSalary =
     outcomesData?.earnings?.avg_salary !== null &&
     outcomesData?.earnings?.avg_salary !== undefined
@@ -252,7 +280,7 @@ export async function buildUniversityViewData(
       apiData?.school?.school_description ||
       `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
     degree,
-    duration: "4 Years",
+    credentialLevel,
     format: "Full-time, On-campus",
     financialAid: "Available",
     cipCode,
@@ -281,6 +309,9 @@ export async function buildUniversityViewData(
     salaryYear1Method,
     salaryYear5Method,
     salaryYear10Method,
+    salaryYear1Cohort,
+    salaryYear5Cohort,
+    salaryYear10Cohort,
     netRoi20Yr,
     growthRate,
     empFactor,

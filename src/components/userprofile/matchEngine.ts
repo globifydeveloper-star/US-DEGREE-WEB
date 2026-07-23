@@ -281,10 +281,19 @@ export function useCollegeMatches(profile: StudentProfile): {
               }
               if (outRes.ok) {
                 const out = await outRes.json();
+                // Prefer the cohort-resolved year_1 figure over the legacy
+                // flat `earnings.year_1` — the latter reflects whichever
+                // grad_cohort row happened to come back first, not
+                // necessarily the best-available one for this horizon.
+                const resolvedYear1 = out?.earnings_resolved?.year_1;
                 medianSalary1yr =
-                  sanitizeSalary(out?.earnings?.year_1) ?? medianSalary1yr;
+                  sanitizeSalary(resolvedYear1?.value) ??
+                  sanitizeSalary(out?.earnings?.year_1) ??
+                  medianSalary1yr;
                 medianSalary1yrMethod =
-                  out?.earnings?.year_1_method ?? medianSalary1yrMethod;
+                  resolvedYear1?.method ??
+                  out?.earnings?.year_1_method ??
+                  medianSalary1yrMethod;
               }
               if (tuitionRes.ok) {
                 const tui = await tuitionRes.json();

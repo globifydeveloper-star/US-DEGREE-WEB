@@ -14,7 +14,7 @@ interface SalaryRowProps {
 export default function SalaryRow({ colleges, averageSalary, highestSalaryId }: SalaryRowProps) {
   return (
     <tr className="hover:bg-slate-50/30 transition-colors">
-      <DesktopRowLabel title="Average Graduate Salary" subtitle="Average of Year 1, Year 5, and Year 10 Salaries" />
+      <DesktopRowLabel title="Avg. Salary" subtitle="Average annual earnings for graduates" />
       {colleges.map((college) => {
         const salary = college.medianSalary;
 
