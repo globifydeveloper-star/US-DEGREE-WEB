@@ -3,6 +3,7 @@ import {
   MATRIX_UPDATED_EVENT,
   ENTRY_PROGRAMS_KEY,
 } from "@/hooks/useCompareCount";
+import type { CompareMatrixEntry } from "@/lib/auth/api";
 
 /**
  * Since we compare programs (not just colleges), the same college can appear
@@ -114,4 +115,43 @@ export function mergeCompareEntryIds(): string[] {
     }
   });
   return result;
+}
+
+/** Entry ids + the local program-name map -> the shape /compare/matrix persists. */
+export function matrixEntryIdsToApi(ids: string[]): CompareMatrixEntry[] {
+  const programs = readEntryPrograms();
+  return ids.map((entryId) => {
+    const { unitid, cipCode, credentialLevel } = parseEntryId(entryId);
+    const info = programs[entryId];
+    return {
+      unitid,
+      cipCode: cipCode === "default" ? null : cipCode,
+      credentialLevel: credentialLevel || null,
+      programName: info?.programName || null,
+      credentialTitle: info?.credentialTitle || null,
+    };
+  });
+}
+
+/** The reverse of matrixEntryIdsToApi — rebuilds entry ids from persisted rows. */
+export function apiEntriesToMatrixIds(entries: CompareMatrixEntry[]): string[] {
+  return entries.map((e) =>
+    makeEntryId(e.unitid, e.cipCode || "default", e.credentialLevel ?? undefined),
+  );
+}
+
+/** The program-name map (ENTRY_PROGRAMS_KEY shape) rebuilt from persisted rows. */
+export function apiEntriesToPrograms(
+  entries: CompareMatrixEntry[],
+): Record<string, EntryProgramInfo> {
+  const map: Record<string, EntryProgramInfo> = {};
+  entries.forEach((e) => {
+    if (!e.programName) return;
+    const entryId = makeEntryId(e.unitid, e.cipCode || "default", e.credentialLevel ?? undefined);
+    map[entryId] = {
+      programName: e.programName,
+      credentialTitle: e.credentialTitle || "",
+    };
+  });
+  return map;
 }

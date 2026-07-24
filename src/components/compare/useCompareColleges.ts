@@ -6,10 +6,14 @@ import {
   removeFromCompare,
   clearCompare,
 } from "@/components/search/useCompareSelected";
+import { fetchCompareMatrix, saveCompareMatrix } from "@/lib/auth/api";
 import {
   makeEntryId,
   parseEntryId,
   mergeCompareEntryIds,
+  matrixEntryIdsToApi,
+  apiEntriesToMatrixIds,
+  apiEntriesToPrograms,
   readEntryPrograms,
   writeEntryPrograms,
   writeMatrixEntries,
@@ -73,10 +77,14 @@ export function useCompareColleges() {
 
   const { highlights, averages } = useCompareHighlights(comparedColleges);
 
-  // Hydrate the URL from localStorage on first mount (one-time).
+  // Hydrate the URL on first mount (one-time). The backend's persisted
+  // matrix (/compare/matrix) is the durable source of truth for program info
+  // — localStorage is only a fast local mirror that can be empty/stale on a
+  // fresh device or after a fresh login, which is exactly when this matters.
   useEffect(() => {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
+    let cancelled = false;
 
     if (idsParam) {
       // Keep the badge's entry-level mirror in sync with whatever the URL
@@ -87,25 +95,70 @@ export function useCompareColleges() {
       // ids into it would break other consumers (e.g. CompareDeck) that match
       // on bare unitid.
       writeMatrixEntries(idsParam.split(",").filter(Boolean));
-      return;
+      // Backfill program names/cip codes from the backend in case this URL
+      // was opened on a device/session whose localStorage never saw them
+      // (e.g. a shared compare link, or login on a new browser).
+      fetchCompareMatrix()
+        .then((entries) => {
+          if (cancelled || entries.length === 0) return;
+          const backendPrograms = apiEntriesToPrograms(entries);
+          const localPrograms = readEntryPrograms();
+          writeEntryPrograms({ ...backendPrograms, ...localPrograms });
+        })
+        .catch((e) => console.error("Failed to backfill compare matrix:", e));
+      return () => {
+        cancelled = true;
+      };
     }
 
-    // No ids in the URL (e.g. the plain "/compare" nav link) — restore the
-    // same merged view CompareDeck shows, so the two never disagree.
-    try {
-      const ids = mergeCompareEntryIds();
-      if (ids.length > 0) {
-        const params = new URLSearchParams();
-        params.set("ids", ids.join(","));
-        router.replace(`/compare?${params.toString()}`);
+    // No ids in the URL (e.g. the plain "/compare" nav link). Prefer the
+    // backend's persisted matrix so program info survives a fresh login;
+    // fall back to the local merge (bucket + localStorage matrix) if the
+    // backend has nothing yet, e.g. colleges added before this endpoint
+    // existed, or while offline.
+    (async () => {
+      try {
+        const backendEntries = await fetchCompareMatrix();
+        if (cancelled) return;
+        let ids: string[];
+        if (backendEntries.length > 0) {
+          ids = apiEntriesToMatrixIds(backendEntries);
+          writeMatrixEntries(ids);
+          writeEntryPrograms({
+            ...apiEntriesToPrograms(backendEntries),
+            ...readEntryPrograms(),
+          });
+        } else {
+          ids = mergeCompareEntryIds();
+        }
+        if (ids.length > 0) {
+          const params = new URLSearchParams();
+          params.set("ids", ids.join(","));
+          router.replace(`/compare?${params.toString()}`);
+        }
+      } catch (e) {
+        console.error("Failed to load compare matrix, falling back to local:", e);
+        try {
+          const ids = mergeCompareEntryIds();
+          if (ids.length > 0) {
+            const params = new URLSearchParams();
+            params.set("ids", ids.join(","));
+            router.replace(`/compare?${params.toString()}`);
+          }
+        } catch (e2) {
+          console.error(e2);
+        }
       }
-    } catch (e) {
-      console.error(e);
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [idsParam, router]);
 
-  // Keep URL query param synchronised with active compared IDs, and mirror
-  // the entry-level list into the nav badge's local key.
+  // Keep URL query param synchronised with active compared IDs, mirror the
+  // entry-level list into the nav badge's local key, and persist the matrix
+  // (with program info) to the backend so it survives a fresh login.
   const syncUrlParams = useCallback(
     (ids: string[]) => {
       const params = new URLSearchParams();
@@ -114,6 +167,9 @@ export function useCompareColleges() {
       }
       router.push(`/compare?${params.toString()}`);
       writeMatrixEntries(ids);
+      saveCompareMatrix(matrixEntryIdsToApi(ids)).catch((err) =>
+        console.error("Failed to persist compare matrix:", err),
+      );
     },
     [router],
   );

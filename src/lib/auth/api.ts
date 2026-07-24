@@ -387,6 +387,50 @@ export async function removeCompareSelected(unitid: string): Promise<void> {
   if (!res.ok) throw new Error(`Deselect comparison failed (${res.status})`);
 }
 
+// ---- Compare page's per-program matrix -------------------------------------
+//
+// The /compare page can hold the same unitid more than once (one entry per
+// program picked for that college). That's distinct from — and layered on
+// top of — the bare-unitid "selected for comparison" bucket above, which
+// every other surface (search cards, nav badge, Intelligent Matches) reads.
+// Previously this per-program detail (cipCode/programName/credentialLevel)
+// only lived in localStorage, so it silently disappeared on a new
+// device/session or whenever storage was cleared. These two calls persist it
+// server-side instead, keyed by user, so it survives a fresh login.
+
+/** One program-specific row in the compare matrix. */
+export interface CompareMatrixEntry {
+  unitid: string;
+  cipCode: string | null;
+  credentialLevel: string | null;
+  programName: string | null;
+  credentialTitle: string | null;
+}
+
+/** GET /compare/matrix — the signed-in user's persisted compare-page matrix. */
+export async function fetchCompareMatrix(): Promise<CompareMatrixEntry[]> {
+  const res = await authedFetch("/compare/matrix");
+  if (!res.ok) throw new Error(`Load comparison matrix failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as CompareMatrixEntry[]) : [];
+}
+
+/**
+ * PUT /compare/matrix — replaces the user's entire compare-page matrix with
+ * `entries`. Whole-list replace (not incremental add/remove) to match how
+ * the matrix is already maintained client-side (see writeMatrixEntries).
+ */
+export async function saveCompareMatrix(
+  entries: CompareMatrixEntry[],
+): Promise<void> {
+  const res = await authedFetch("/compare/matrix", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ entries }),
+  });
+  if (!res.ok) throw new Error(`Save comparison matrix failed (${res.status})`);
+}
+
 // ---- Generated reports ------------------------------------------------------
 
 /** A college entry as returned inside a report's `colleges` array. */

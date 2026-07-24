@@ -79,6 +79,26 @@ export default function CompareHeader({
       duration: 0,
     });
 
+    // One entry per compared program — the same unitid can legitimately
+    // repeat here (same college, different programs), so this is NOT
+    // deduped by unitid. Entries without a specific program attached
+    // (cipCode "default") omit program fields; the backend falls back to
+    // `programId` for those.
+    const selectedColleges = comparedColleges.map((college) => ({
+      unitid: Number(college.unitid),
+      cipCode: college.cipCode && college.cipCode !== "default" ? college.cipCode : undefined,
+      programName: college.programName || undefined,
+      credentialTitle: college.credentialTitle || undefined,
+    }));
+
+    const invalidEntry = selectedColleges.find((c) => Number.isNaN(c.unitid));
+    if (invalidEntry) {
+      console.warn("comparedColleges contains an unresolved unitid", {
+        raw: comparedColleges,
+        resolved: selectedColleges,
+      });
+    }
+
     try {
       const res = await authedFetch("/report/generate", {
         method: "POST",
@@ -86,8 +106,8 @@ export default function CompareHeader({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          selectedColleges: comparedIds.map((id) => Number(id)),
-          programId: 20015, // Default to Computer Science
+          selectedColleges,
+          programId: 20015, // Fallback for entries with no program attached
         }),
       });
 
