@@ -16,9 +16,15 @@
  *
  * Adds/removes go through the atomic POST/DELETE /compare/matrix/entry
  * endpoints (not the whole-list PUT /compare/matrix), so multiple independent
- * UI surfaces mutating concurrently can't clobber each other's rows. Only
- * clearCompare uses the whole-list PUT, since "replace everything with
- * nothing" has no concurrent-mutation hazard.
+ * UI surfaces mutating concurrently can't clobber each other's rows on the
+ * BACKEND. But each call still writes its own full response into the local
+ * mirror — so two mutations fired close together (e.g. removing two colleges
+ * in quick succession) could still race on the CLIENT: whichever response
+ * happens to resolve last wins, even if it was actually the earlier-
+ * initiated call whose response was computed before the other removal had
+ * landed. `enqueueMutation` below serializes every add/remove/clear through
+ * this module so they always run — and their responses always get applied —
+ * in the order they were called, eliminating that race entirely.
  */
 
 import { useEffect, useState } from "react";
@@ -56,6 +62,21 @@ export interface CollegeProgramDetail {
 
 let loaded = false;
 let inflight: Promise<void> | null = null;
+
+// Serializes add/remove/clear so their network calls (and, critically, the
+// local-mirror writes derived from their responses) always run in the order
+// they were invoked — see the module doc comment above.
+let mutationQueue: Promise<unknown> = Promise.resolve();
+function enqueueMutation<T>(fn: () => Promise<T>): Promise<T> {
+  const result = mutationQueue.then(fn, fn);
+  // Keep the queue alive even if this mutation rejects — swallow the error
+  // here only for chaining purposes; `result` still carries it to the caller.
+  mutationQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 function readEntries(): string[] {
   if (typeof window === "undefined") return [];
@@ -131,31 +152,33 @@ export async function reloadMatrix(): Promise<void> {
 // matrix. Returns "full" once the 5-entry cap is hit (enforced server-side),
 // "exists" for an exact duplicate (same college + same course + same
 // credential level) caught locally before ever hitting the network.
-export async function addCollegeToCompare(
+export function addCollegeToCompare(
   detail: CollegeProgramDetail,
 ): Promise<AddResult> {
-  const unitid = String(detail.unitid);
-  if (!unitid) return "exists";
-  const cipCode = detail.cipCode || "default";
-  const entryId = makeEntryId(unitid, cipCode, detail.credentialLevel);
+  return enqueueMutation(async () => {
+    const unitid = String(detail.unitid);
+    if (!unitid) return "exists";
+    const cipCode = detail.cipCode || "default";
+    const entryId = makeEntryId(unitid, cipCode, detail.credentialLevel);
 
-  if (readEntries().includes(entryId)) return "exists";
+    if (readEntries().includes(entryId)) return "exists";
 
-  try {
-    const backendEntries = await addCompareMatrixEntry({
-      unitid,
-      cipCode: cipCode === "default" ? null : cipCode,
-      credentialLevel: detail.credentialLevel ?? null,
-      programName: detail.programName ?? null,
-      credentialTitle: detail.credentialTitle ?? null,
-    });
-    writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
-    writeEntryPrograms(apiEntriesToPrograms(backendEntries));
-  } catch (err) {
-    if (err instanceof CompareLimitReachedError) return "full";
-    throw err;
-  }
-  return "added";
+    try {
+      const backendEntries = await addCompareMatrixEntry({
+        unitid,
+        cipCode: cipCode === "default" ? null : cipCode,
+        credentialLevel: detail.credentialLevel ?? null,
+        programName: detail.programName ?? null,
+        credentialTitle: detail.credentialTitle ?? null,
+      });
+      writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
+      writeEntryPrograms(apiEntriesToPrograms(backendEntries));
+    } catch (err) {
+      if (err instanceof CompareLimitReachedError) return "full";
+      throw err;
+    }
+    return "added";
+  });
 }
 
 // Remove a college from the matrix. With no `opts`, removes every entry for
@@ -163,34 +186,39 @@ export async function addCollegeToCompare(
 // cards, which don't know/care about a specific program). With `opts.cipCode`,
 // removes only that one program entry (used by the /compare page's own
 // per-program remove).
-export async function removeCollegeFromCompare(
+export function removeCollegeFromCompare(
   unitid: string,
   opts?: { cipCode?: string; credentialLevel?: number | string },
 ): Promise<void> {
-  const id = String(unitid);
-  const backendEntries = await removeCompareMatrixEntry(
-    id,
-    opts?.cipCode
-      ? { cipCode: opts.cipCode, credentialLevel: opts.credentialLevel }
-      : undefined,
-  );
-  writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
-  writeEntryPrograms(apiEntriesToPrograms(backendEntries));
+  return enqueueMutation(async () => {
+    const id = String(unitid);
+    const backendEntries = await removeCompareMatrixEntry(
+      id,
+      opts?.cipCode
+        ? { cipCode: opts.cipCode, credentialLevel: opts.credentialLevel }
+        : undefined,
+    );
+    writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
+    writeEntryPrograms(apiEntriesToPrograms(backendEntries));
+  });
 }
 
-// Clear the entire comparison matrix. The only mutation still using the
-// whole-list PUT — "replace everything with nothing" has no concurrent-
-// mutation hazard the way one-at-a-time adds/removes do.
-export async function clearCompare(): Promise<void> {
-  const prevIds = readEntries();
-  writeMatrixEntries([]);
-  writeEntryPrograms({});
-  try {
-    await saveCompareMatrix([]);
-  } catch (err) {
-    writeMatrixEntries(prevIds);
-    throw err;
-  }
+// Clear the entire comparison matrix. Still queued alongside add/remove even
+// though the whole-list PUT itself has no concurrent-mutation hazard —
+// otherwise a clear racing an in-flight add/remove could still land out of
+// order on the client.
+export function clearCompare(): Promise<void> {
+  return enqueueMutation(async () => {
+    const prevIds = readEntries();
+    writeMatrixEntries([]);
+    writeEntryPrograms({});
+    try {
+      await saveCompareMatrix([]);
+    } catch (err) {
+      writeMatrixEntries(prevIds);
+      throw err;
+    }
+  });
 }
 
 // Toggle a college's membership (any program); returns the resulting action.

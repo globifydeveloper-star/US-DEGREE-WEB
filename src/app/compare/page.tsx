@@ -17,9 +17,7 @@ function CompareContent() {
   const {
     comparedIds,
     comparedColleges,
-    selectOptions,
     initialUniversities,
-    isSearching,
     isDetailsLoading,
     isLimitModalOpen,
     setIsLimitModalOpen,
@@ -29,14 +27,10 @@ function CompareContent() {
     setCollegeDetailsCache,
     averages,
     highlights,
-    handleDropdownSearch,
     handleAddCollege,
     handleRemoveCollege,
     handleClearAll,
-    MIN_SEARCH_CHARS,
   } = useCompareColleges();
-
-  console.log("comparedColleges", comparedColleges);
 
   return (
     <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-6 lg:pb-20 font-sans">
@@ -50,11 +44,7 @@ function CompareContent() {
         {/* 2. Selection search bar */}
         <CompareSearchBar
           comparedCount={comparedColleges.length}
-          isSearching={isSearching}
-          selectOptions={selectOptions}
           comparedIds={comparedIds}
-          minSearchChars={MIN_SEARCH_CHARS}
-          onSearch={handleDropdownSearch}
           onAdd={handleAddCollege}
           onClearAll={handleClearAll}
         />

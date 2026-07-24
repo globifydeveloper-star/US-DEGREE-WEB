@@ -280,6 +280,69 @@ export async function unsaveCollege(unitid: string): Promise<void> {
   if (!res.ok) throw new Error(`Unsave college failed (${res.status})`);
 }
 
+// ---- Reversed compare-bar lookups: Credential -> Program -> College -------
+
+/** One row from GET /programs — a distinct program offered at a credential level. */
+export interface ProgramByCredential {
+  title: string;
+  cip_code: string;
+  credential_level: number;
+  credential_title: string;
+}
+
+/**
+ * GET /programs?credential_level=&q=&limit= — distinct programs offered at
+ * that credential level across every school (not scoped to one college),
+ * optionally keyword-searched by title. Powers the compare page's own
+ * search bar's "Program" step once a credential level has been chosen.
+ */
+export async function fetchProgramsByCredential(
+  credentialLevel: number,
+  q?: string,
+  limit = 20,
+): Promise<ProgramByCredential[]> {
+  const params = new URLSearchParams();
+  params.set("credential_level", String(credentialLevel));
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  const res = await authedFetch(`/programs?${params.toString()}`);
+  if (!res.ok) throw new Error(`Load programs failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as ProgramByCredential[]) : [];
+}
+
+/** One row from GET /programs/:cip_code/schools. */
+export interface SchoolForProgram {
+  unitid: number;
+  school_name: string;
+  city: string | null;
+  state: string | null;
+}
+
+/**
+ * GET /programs/:cip_code/schools?credential_level=&q=&limit= — schools
+ * offering that specific program at that specific credential level (the
+ * reverse of GET /schools/:id/programs). Powers the compare page's own
+ * search bar's "College" step once a program has been chosen.
+ */
+export async function fetchSchoolsForProgram(
+  cipCode: string,
+  credentialLevel: number,
+  q?: string,
+  limit = 20,
+): Promise<SchoolForProgram[]> {
+  const params = new URLSearchParams();
+  params.set("credential_level", String(credentialLevel));
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  const res = await authedFetch(
+    `/programs/${encodeURIComponent(cipCode)}/schools?${params.toString()}`,
+  );
+  if (!res.ok) throw new Error(`Load schools for program failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as SchoolForProgram[]) : [];
+}
+
 // ---- Colleges selected for comparison -------------------------------------
 
 /**
