@@ -84,3 +84,34 @@ export function getCredentialLevelInfo(
   if (level === null || level === undefined) return null;
   return CREDENTIAL_LEVEL_INFO[level] ?? null;
 }
+
+// Placeholder Tailwind pill colors, one per IPEDS level — chosen only for
+// visual separation between levels. No design-system color tokens exist in
+// this project yet (tailwind.config.tsx has no custom palette); swap these
+// for real tokens once design confirms them.
+export const CREDENTIAL_LEVEL_COLOR: Record<number, string> = {
+  1: "bg-slate-50 text-slate-700 border-slate-200",
+  2: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  3: "bg-blue-50 text-blue-700 border-blue-200",
+  4: "bg-purple-50 text-purple-700 border-purple-200",
+  5: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  6: "bg-rose-50 text-rose-700 border-rose-200",
+  7: "bg-amber-50 text-amber-700 border-amber-200",
+  8: "bg-teal-50 text-teal-700 border-teal-200",
+};
+
+export const CREDENTIAL_LEVEL_COLOR_DEFAULT =
+  "bg-gray-100 text-gray-500 border-gray-300";
+
+// Short forms of CREDENTIAL_LEVEL_INFO[x].title for space-constrained chips;
+// the full title is still available via getCredentialLevelInfo for tooltips.
+export const CREDENTIAL_LEVEL_SHORT_LABEL: Record<number, string> = {
+  1: "Certificate",
+  2: "Associate's",
+  3: "Bachelor's",
+  4: "Post-Bacc Cert.",
+  5: "Master's",
+  6: "Doctoral",
+  7: "Professional",
+  8: "Grad Certificate",
+};

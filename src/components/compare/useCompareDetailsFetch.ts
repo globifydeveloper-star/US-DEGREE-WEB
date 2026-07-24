@@ -1,6 +1,6 @@
 import { useEffect, useState, type RefObject } from "react";
 import type { College } from "@/types/university/ComparisonTable";
-import { fetchCompareSelected } from "@/lib/auth/api";
+import { fetchCompareMatrixDetails, type SelectedCompareCollege } from "@/lib/auth/api";
 import { parseEntryId, readEntryPrograms } from "./compareEntryIds";
 import { buildCollegeRow } from "./buildCollegeRow";
 import type { RawUniversity, StoredDetail, UniOption } from "./compareCollegeTypes";
@@ -19,9 +19,9 @@ function readStoredDetails(): StoredDetail[] {
   }
 }
 
-// The shared cross-app mirror (read by CompareDeck, search cards, the profile
-// section) only ever holds one row per unitid — dedupe here so a college
-// compared under two programs doesn't write two rows with the same id.
+// The shared cross-app mirror (read by search cards, the profile section)
+// only ever holds one row per unitid — dedupe here so a college compared
+// under two programs doesn't write two rows with the same id.
 function writeSharedDetailsMirror(colleges: College[]) {
   const seenUnitids = new Set<string>();
   const details: StoredDetail[] = [];
@@ -45,16 +45,37 @@ function writeSharedDetailsMirror(colleges: College[]) {
   localStorage.setItem(DETAILS_MIRROR_KEY, JSON.stringify(details));
 }
 
-// Which program name (if any) an entry needs resolved via `?program=`, so we
-// call the backend once per distinct program instead of once per entry.
-function programNameFor(entryId: string, storedDetails: StoredDetail[]) {
-  const { unitid, cipCode } = parseEntryId(entryId);
-  const isBareEntry = entryId === unitid;
-  if (!isBareEntry) return cipCode !== "default" ? cipCode : "";
-  const stored = storedDetails.find((d) => String(d.id) === unitid);
-  return stored?.cipCode && stored.cipCode !== "default"
-    ? stored.programName || ""
-    : "";
+/**
+ * Match each requested entryId to its own row from GET /compare/matrix/details.
+ * The backend returns rows in the same order as the compare_matrix_entries
+ * table (id ASC) — the same order `comparedIds` is derived from — so a
+ * positional zip is correct in the normal case. Falls back to matching by
+ * unitid (one row consumed per match, in order) if the lengths ever diverge,
+ * e.g. a stale URL from a shared link.
+ */
+function matchDetailsToEntries(
+  entryIds: string[],
+  details: SelectedCompareCollege[],
+): Map<string, SelectedCompareCollege> {
+  const map = new Map<string, SelectedCompareCollege>();
+  if (entryIds.length === details.length) {
+    entryIds.forEach((entryId, i) => map.set(entryId, details[i]));
+    return map;
+  }
+  const byUnitid = new Map<string, SelectedCompareCollege[]>();
+  details.forEach((c) => {
+    if (c.unitid == null) return;
+    const key = String(c.unitid);
+    const arr = byUnitid.get(key) || [];
+    arr.push(c);
+    byUnitid.set(key, arr);
+  });
+  entryIds.forEach((entryId) => {
+    const { unitid } = parseEntryId(entryId);
+    const arr = byUnitid.get(unitid);
+    if (arr && arr.length > 0) map.set(entryId, arr.shift()!);
+  });
+  return map;
 }
 
 interface DetailsFetchDeps {
@@ -63,11 +84,11 @@ interface DetailsFetchDeps {
 }
 
 /**
- * Resolves every id in the compare matrix against GET /compare/selected —
- * once for the base (college-level) data, plus once per distinct program
- * name in use for program-specific earnings — and keeps the shared
- * cross-app details mirror in sync. Replaces what used to be 4-5 separate
- * backend calls (`/overview`, `/tuition`, `/outcomes`, `/colleges`) per entry.
+ * Resolves every id in the compare matrix against a single GET
+ * /compare/matrix/details call — each row's `programs.selectedProgram` is
+ * already resolved from that row's own cipCode/credentialLevel, no
+ * per-program round trip needed — and keeps the shared cross-app details
+ * mirror in sync.
  */
 export function useCompareDetailsFetch(
   comparedIds: string[],
@@ -88,34 +109,16 @@ export function useCompareDetailsFetch(
       setIsDetailsLoading(true);
       const storedDetails = readStoredDetails();
       const entryProgramsMap = readEntryPrograms();
-      const programNames = Array.from(
-        new Set(
-          comparedIds
-            .map((id) => programNameFor(id, storedDetails))
-            .filter(Boolean),
-        ),
-      );
 
       try {
-        const [baseList, ...programLists] = await Promise.all([
-          fetchCompareSelected(),
-          ...programNames.map((name) => fetchCompareSelected(name)),
-        ]);
+        const list = await fetchCompareMatrixDetails();
         if (cancelled) return;
 
-        const baseByUnitid = new Map(
-          baseList
-            .filter((c) => c.unitid != null)
-            .map((c) => [String(c.unitid), c]),
-        );
-        const programByName = new Map(
-          programNames.map((name, i) => [name, programLists[i]]),
-        );
+        const baseByEntryId = matchDetailsToEntries(comparedIds, list);
 
         const rows = comparedIds.map((entryId) =>
           buildCollegeRow(entryId, {
-            baseByUnitid,
-            programByName,
+            baseByEntryId,
             storedDetails,
             entryProgramsMap,
             allUniversities: deps.allUniversitiesRef.current,

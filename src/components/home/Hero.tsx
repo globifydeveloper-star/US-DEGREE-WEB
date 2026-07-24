@@ -60,7 +60,10 @@ export default function Hero() {
         </div>
 
         {/* Centered Search Card (Desktop only) */}
-        <div className="hidden lg:flex justify-center mt-12">
+        <div
+          id="search-programs-section"
+          className="hidden lg:flex justify-center mt-12"
+        >
           <HeroSearchCard variant="desktop" search={search} />
         </div>
       </div>

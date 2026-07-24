@@ -54,6 +54,8 @@ export default function TabContent({ data }: { data: any }) {
         accreditor={data.accreditor}
         cipCode={data.cipCode}
         degree={data.degree}
+        credentialLevel={data.credentialLevel}
+        credentialTitle={data.credentialTitle}
       />
       <TrustBanner />
 
@@ -99,6 +101,7 @@ export default function TabContent({ data }: { data: any }) {
                 degree={data.degree}
                 cipCode={data.cipCode}
                 description={data.programDescription}
+                credentialLevel={data.credentialLevel}
               />
 
               <AdmissionsOverview

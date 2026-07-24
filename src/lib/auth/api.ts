@@ -280,10 +280,87 @@ export async function unsaveCollege(unitid: string): Promise<void> {
   if (!res.ok) throw new Error(`Unsave college failed (${res.status})`);
 }
 
+// ---- Reversed compare-bar lookups: Credential -> Program -> College -------
+
+/** One row from GET /programs — a distinct program offered at a credential level. */
+export interface ProgramByCredential {
+  title: string;
+  cip_code: string;
+  credential_level: number;
+  credential_title: string;
+}
+
+/**
+ * GET /programs?credential_level=&q=&limit= — distinct programs offered at
+ * that credential level across every school (not scoped to one college),
+ * optionally keyword-searched by title. Powers the compare page's own
+ * search bar's "Program" step once a credential level has been chosen.
+ */
+export async function fetchProgramsByCredential(
+  credentialLevel: number,
+  q?: string,
+  limit = 20,
+): Promise<ProgramByCredential[]> {
+  const params = new URLSearchParams();
+  params.set("credential_level", String(credentialLevel));
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  const res = await authedFetch(`/programs?${params.toString()}`);
+  if (!res.ok) throw new Error(`Load programs failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as ProgramByCredential[]) : [];
+}
+
+/** One row from GET /programs/:cip_code/schools. */
+export interface SchoolForProgram {
+  unitid: number;
+  school_name: string;
+  city: string | null;
+  state: string | null;
+}
+
+/**
+ * GET /programs/:cip_code/schools?credential_level=&q=&limit= — schools
+ * offering that specific program at that specific credential level (the
+ * reverse of GET /schools/:id/programs). Powers the compare page's own
+ * search bar's "College" step once a program has been chosen.
+ */
+export async function fetchSchoolsForProgram(
+  cipCode: string,
+  credentialLevel: number,
+  q?: string,
+  limit = 20,
+): Promise<SchoolForProgram[]> {
+  const params = new URLSearchParams();
+  params.set("credential_level", String(credentialLevel));
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  const res = await authedFetch(
+    `/programs/${encodeURIComponent(cipCode)}/schools?${params.toString()}`,
+  );
+  if (!res.ok) throw new Error(`Load schools for program failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as SchoolForProgram[]) : [];
+}
+
 // ---- Colleges selected for comparison -------------------------------------
 
 /**
- * One row from GET /compare/selected, exactly as the backend sends it.
+ * A salary figure resolved via the backend's getEarningsForProgram() — one
+ * horizon (e.g. "year_5"), whichever grad_cohort has the best available data
+ * for it. Sent instead of a bare number whenever a specific program was
+ * matched (see programs.selectedProgram below); use resolveSalaryValue() to
+ * get a plain number out of either shape.
+ */
+export interface EarningsAvgSalaryResolved {
+  value: number | null;
+  cohort: string | null;
+  basis: string | null;
+  basis_is_estimated: boolean;
+}
+
+/**
+ * One row from GET /compare/matrix/details, exactly as the backend sends it.
  *
  * Inconsistent percentage encoding is inherited from the underlying tables,
  * not a bug: `acceptanceRate` and `cost.debtIncomeRatio` are raw fractions
@@ -315,8 +392,13 @@ export interface SelectedCompareCollege {
   };
   outcomes: {
     programEarnings: number | null;
-    avgSalary: number | null;
+    // A bare school-wide average, OR the getEarningsForProgram() resolution
+    // when a specific program was matched — see EarningsAvgSalaryResolved.
+    avgSalary: number | EarningsAvgSalaryResolved | null;
     roi20Yr: number | null;
+  };
+  students: {
+    size: number | null; // total enrollment
   };
   programs: {
     studentFacultyRatio: string | null; // e.g. "15:1"
@@ -331,60 +413,135 @@ export interface SelectedCompareCollege {
       totalPrograms: number;
       topTitles: string[];
     }[];
-    // Only set when the `?program=` query matched a program at this college.
+    // Set whenever this entry's own cipCode/credentialLevel matched a
+    // program at this college (see GET /compare/matrix/details).
     selectedProgram: {
       title: string;
       cipCode: string | null;
       degreeLevelCategory: string | null;
       credentialLevel: number | null;
-      earnings: number | null;
+      earnings: number | EarningsAvgSalaryResolved | null;
     } | null;
   };
 }
 
-/**
- * The subset of a SelectedCompareCollege that callers can build locally
- * before the backend confirms a selection (e.g. from a search-card click) —
- * just enough to render the profile's "selected for comparison" grid
- * instantly, without waiting on a GET /compare/selected refetch.
- */
-export type CompareSummary = Pick<
-  SelectedCompareCollege,
-  "unitid" | "name" | "location" | "tuitionInState" | "acceptanceRate" | "addedAt"
->;
-
-/**
- * GET /compare/selected — the user's comparison set, enriched by the backend.
- * Pass `program` to also resolve `programs.selectedProgram` for whichever
- * college in the set offers a matching program.
- */
-export async function fetchCompareSelected(
-  program?: string,
-): Promise<SelectedCompareCollege[]> {
-  const query = program ? `?program=${encodeURIComponent(program)}` : "";
-  const res = await authedFetch(`/compare/selected${query}`);
-  if (!res.ok) throw new Error(`Load comparison set failed (${res.status})`);
-  const data = await res.json();
-  return Array.isArray(data) ? (data as SelectedCompareCollege[]) : [];
+/** Unwraps either shape outcomes.avgSalary / selectedProgram.earnings can take. */
+export function resolveSalaryValue(
+  v: number | EarningsAvgSalaryResolved | null | undefined,
+): number | null {
+  if (v === null || v === undefined) return null;
+  return typeof v === "number" ? v : v.value;
 }
 
-/** POST /compare/selected — body is exactly { unitid }. */
-export async function addCompareSelected(unitid: string): Promise<void> {
-  const res = await authedFetch("/compare/selected", {
+// ---- Compare page's per-program matrix -------------------------------------
+//
+// The single source of truth for "colleges queued for comparison" across the
+// whole app (search cards, Intelligent Matches, the university page, and the
+// /compare page's own filter) — see compareMatrixStore.ts. The same unitid
+// can appear more than once, one entry per program picked for that college.
+
+/** One program-specific row in the compare matrix. */
+export interface CompareMatrixEntry {
+  unitid: string;
+  cipCode: string | null;
+  credentialLevel: string | null;
+  programName: string | null;
+  credentialTitle: string | null;
+}
+
+/** GET /compare/matrix — the signed-in user's persisted compare-page matrix. */
+export async function fetchCompareMatrix(): Promise<CompareMatrixEntry[]> {
+  const res = await authedFetch("/compare/matrix");
+  if (!res.ok) throw new Error(`Load comparison matrix failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as CompareMatrixEntry[]) : [];
+}
+
+/**
+ * PUT /compare/matrix — replaces the user's entire compare-page matrix with
+ * `entries`. Whole-list replace; only safe for single-writer operations like
+ * clearing the matrix entirely. Anything that adds/removes one entry at a
+ * time should use addCompareMatrixEntry/removeCompareMatrixEntry instead,
+ * which are atomic against concurrent callers.
+ */
+export async function saveCompareMatrix(
+  entries: CompareMatrixEntry[],
+): Promise<void> {
+  const res = await authedFetch("/compare/matrix", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ entries }),
+  });
+  if (!res.ok) throw new Error(`Save comparison matrix failed (${res.status})`);
+}
+
+/** Thrown by addCompareMatrixEntry when the 5-entry cap is already hit. */
+export class CompareLimitReachedError extends Error {
+  constructor(message = "Compare limit reached") {
+    super(message);
+    this.name = "CompareLimitReachedError";
+  }
+}
+
+/**
+ * POST /compare/matrix/entry — atomically upserts one compare-matrix entry
+ * (dedupe key: unitid + cipCode + credentialLevel). Safe for multiple
+ * independent UI surfaces (search cards, Intelligent Matches, university
+ * page, the /compare page's own filter) to call concurrently, unlike the
+ * whole-list saveCompareMatrix. Returns the caller's full updated matrix.
+ */
+export async function addCompareMatrixEntry(entry: {
+  unitid: string;
+  cipCode?: string | null;
+  credentialLevel?: string | number | null;
+  programName?: string | null;
+  credentialTitle?: string | null;
+}): Promise<CompareMatrixEntry[]> {
+  const res = await authedFetch("/compare/matrix/entry", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ unitid }),
+    body: JSON.stringify(entry),
   });
-  if (!res.ok) throw new Error(`Select for comparison failed (${res.status})`);
+  if (res.status === 409) throw new CompareLimitReachedError();
+  if (!res.ok) throw new Error(`Add compare matrix entry failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as CompareMatrixEntry[]) : [];
 }
 
-/** DELETE /compare/selected/:unitid — removes a college from the comparison set. */
-export async function removeCompareSelected(unitid: string): Promise<void> {
-  const res = await authedFetch(
-    `/compare/selected/${encodeURIComponent(unitid)}`,
-    { method: "DELETE" },
-  );
-  if (!res.ok) throw new Error(`Deselect comparison failed (${res.status})`);
+/**
+ * DELETE /compare/matrix/entry/:unitid — removes every entry for a college
+ * (no program given), or DELETE /compare/matrix/entry/:unitid/:cipCode/
+ * :credentialLevel — removes one specific program entry. Returns the
+ * caller's full updated matrix.
+ */
+export async function removeCompareMatrixEntry(
+  unitid: string,
+  program?: { cipCode: string; credentialLevel?: string | number },
+): Promise<CompareMatrixEntry[]> {
+  const path = program
+    ? `/compare/matrix/entry/${encodeURIComponent(unitid)}/${encodeURIComponent(program.cipCode)}/${encodeURIComponent(String(program.credentialLevel ?? ""))}`
+    : `/compare/matrix/entry/${encodeURIComponent(unitid)}`;
+  const res = await authedFetch(path, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Remove compare matrix entry failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as CompareMatrixEntry[]) : [];
+}
+
+/**
+ * GET /compare/matrix/details — enriched details for the caller's compare
+ * matrix rows, same shape as fetchCompareSelected, but one row per matrix
+ * entry (a college compared under two programs gets two rows) with each
+ * row's own programs.selectedProgram already resolved from that row's own
+ * cipCode/credentialLevel — no per-program round trip needed.
+ */
+export async function fetchCompareMatrixDetails(): Promise<
+  SelectedCompareCollege[]
+> {
+  const res = await authedFetch("/compare/matrix/details");
+  if (!res.ok)
+    throw new Error(`Load comparison matrix details failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? (data as SelectedCompareCollege[]) : [];
 }
 
 // ---- Generated reports ------------------------------------------------------

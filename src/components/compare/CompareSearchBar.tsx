@@ -1,33 +1,23 @@
 import React, { useRef, useState } from "react";
 import { Select, Button, Spin } from "antd";
 import { BarChart3, ChevronRight, Search, Trash2, Plus } from "lucide-react";
-import { authedFetch } from "@/lib/auth/api";
-import { UniOption, parseEntryId } from "./useCompareColleges";
+import {
+  fetchProgramsByCredential,
+  fetchSchoolsForProgram,
+  type ProgramByCredential,
+  type SchoolForProgram,
+} from "@/lib/auth/api";
+import { CREDENTIAL_LEVEL_INFO } from "@/constants/credentialLevel";
+import { parseEntryId } from "./compareEntryIds";
 
 const MAX_COMPARE = 5;
 
-const MIN_PROGRAM_SEARCH_CHARS = 3;
-const PROGRAM_SEARCH_DEBOUNCE_MS = 300;
-
-interface CredentialOption {
-  credential_title: string;
-  credential_level: number;
-}
-
-interface ProgramResult {
-  title: string;
-  cip_code: string;
-  credential_title: string;
-  credential_level: number;
-}
+const MIN_SEARCH_CHARS = 3;
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface CompareSearchBarProps {
   comparedCount: number;
-  isSearching: boolean;
-  selectOptions: UniOption[];
   comparedIds: string[];
-  minSearchChars: number;
-  onSearch: (searchText: string) => void;
   onAdd: (
     id: string,
     program?: {
@@ -40,114 +30,77 @@ interface CompareSearchBarProps {
   onClearAll: () => void;
 }
 
+const CREDENTIAL_LEVEL_OPTIONS = Object.entries(CREDENTIAL_LEVEL_INFO).map(
+  ([level, info]) => ({
+    value: Number(level),
+    label: info.title,
+  }),
+);
+
 export default function CompareSearchBar({
   comparedCount,
-  isSearching,
-  selectOptions,
   comparedIds,
-  minSearchChars,
-  onSearch,
   onAdd,
   onClearAll,
 }: CompareSearchBarProps) {
-  // Step 1: which college the user is currently configuring.
-  const [pendingCollege, setPendingCollege] = useState<UniOption | null>(null);
+  // Step 1: credential level — a fixed, static list (no backend call).
+  const [credentialLevel, setCredentialLevel] = useState<number | null>(null);
 
-  // Step 2: credential level (degree level) offered at that college — required
-  // before a course can be picked.
-  const [credentialOptions, setCredentialOptions] = useState<CredentialOption[]>([]);
-  const [credentialTitle, setCredentialTitle] = useState<string | null>(null);
-  const [isLoadingCredentials, setIsLoadingCredentials] = useState(false);
-
-  // Step 3: course/program search, scoped to the college + credential level.
-  // `programResults` holds up to 20 courses — the credential level's default
-  // list until the user types at least MIN_PROGRAM_SEARCH_CHARS, then live
-  // search results — so the field is never empty as soon as it's usable.
+  // Step 2: program search, scoped to the chosen credential level (global
+  // across every school, not any one college).
   const [programQuery, setProgramQuery] = useState("");
-  const [programResults, setProgramResults] = useState<ProgramResult[]>([]);
+  const [programResults, setProgramResults] = useState<ProgramByCredential[]>(
+    [],
+  );
   const [isSearchingPrograms, setIsSearchingPrograms] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramResult | null>(null);
-  const programSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedProgram, setSelectedProgram] =
+    useState<ProgramByCredential | null>(null);
+  const programSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  // Step 3: college search, scoped to the chosen program's cip_code + the
+  // credential level — the reverse of the compare page's old college-first flow.
+  const [collegeQuery, setCollegeQuery] = useState("");
+  const [collegeResults, setCollegeResults] = useState<SchoolForProgram[]>([]);
+  const [isSearchingColleges, setIsSearchingColleges] = useState(false);
+  const [selectedCollege, setSelectedCollege] =
+    useState<SchoolForProgram | null>(null);
+  const collegeSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const resetFlow = () => {
-    setPendingCollege(null);
-    setCredentialOptions([]);
-    setCredentialTitle(null);
+    setCredentialLevel(null);
     setProgramQuery("");
     setProgramResults([]);
     setSelectedProgram(null);
+    setCollegeQuery("");
+    setCollegeResults([]);
+    setSelectedCollege(null);
   };
 
-  // Fetches up to 20 programs for a college; `q` empty returns the default
-  // course list for that credential level, otherwise it's a keyword search —
-  // always hits the backend rather than filtering whatever's already on
-  // screen, so a search can surface courses outside the initial 20.
-  const fetchPrograms = async (
-    collegeId: string,
-    q: string,
-    credential: string | null,
-  ): Promise<ProgramResult[]> => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (credential) params.set("credential_title", credential);
-    params.set("limit", "20");
-
-    const res = await authedFetch(
-      `/schools/${collegeId}/programs?${params.toString()}`,
-    );
-    if (!res.ok) return [];
-    const data: unknown = await res.json();
-    return Array.isArray(data)
-      ? data
-      : Array.isArray((data as { programs?: ProgramResult[] })?.programs)
-        ? (data as { programs: ProgramResult[] }).programs
-        : [];
-  };
-
-  // Load the credential (degree) levels a college actually offers. Triggered
-  // directly from the college picker's onChange (not an effect) so the
-  // subsequent setState calls happen inside a real event handler.
-  const loadCredentialsFor = (college: UniOption) => {
-    setIsLoadingCredentials(true);
-    setCredentialOptions([]);
-    setCredentialTitle(null);
-    setProgramQuery("");
-    setProgramResults([]);
-    setSelectedProgram(null);
-
-    authedFetch(`/schools/${college.id}/programs/credentials`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data) => {
-        const items: CredentialOption[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.credentials)
-            ? data.credentials
-            : [];
-        setCredentialOptions(items);
-      })
-      .catch(() => setCredentialOptions([]))
-      .finally(() => setIsLoadingCredentials(false));
-  };
-
-  // Debounced keyword search for courses within the chosen college/credential level.
-  const handleProgramSearch = (text: string, credentialOverride?: string | null) => {
+  // Debounced keyword search for programs at the chosen credential level.
+  // Below MIN_SEARCH_CHARS, falls back to the level's default list instead of
+  // hitting search — so the field is never empty as soon as it's usable.
+  const handleProgramSearch = (
+    text: string,
+    credentialOverride?: number | null,
+  ) => {
     setProgramQuery(text);
     if (programSearchTimerRef.current) {
       clearTimeout(programSearchTimerRef.current);
       programSearchTimerRef.current = null;
     }
 
-    const trimmed = text.trim();
     const activeCredential =
-      credentialOverride !== undefined ? credentialOverride : credentialTitle;
-    // A credential level must be chosen before courses can be browsed/searched.
-    if (!pendingCollege || !activeCredential) return;
+      credentialOverride !== undefined ? credentialOverride : credentialLevel;
+    if (activeCredential === null) return;
 
-    // Below the minimum keyword length, fall back to the default list for
-    // this credential level instead of hitting search.
-    if (trimmed.length < MIN_PROGRAM_SEARCH_CHARS) {
+    const trimmed = text.trim();
+    if (trimmed.length < MIN_SEARCH_CHARS) {
       setIsSearchingPrograms(true);
-      fetchPrograms(pendingCollege.id, "", activeCredential)
+      fetchProgramsByCredential(activeCredential)
         .then((items) => setProgramResults(items))
         .catch((err) => console.error("Failed to load default programs:", err))
         .finally(() => setIsSearchingPrograms(false));
@@ -157,10 +110,9 @@ export default function CompareSearchBar({
     setIsSearchingPrograms(true);
     programSearchTimerRef.current = setTimeout(async () => {
       try {
-        const items = await fetchPrograms(
-          pendingCollege.id,
-          trimmed,
+        const items = await fetchProgramsByCredential(
           activeCredential,
+          trimmed,
         );
         setProgramResults(items);
       } catch (err) {
@@ -168,44 +120,90 @@ export default function CompareSearchBar({
       } finally {
         setIsSearchingPrograms(false);
       }
-    }, PROGRAM_SEARCH_DEBOUNCE_MS);
+    }, SEARCH_DEBOUNCE_MS);
   };
 
-  // Credential level changed — load that level's default course list (or
-  // re-run the current search under it), from the credential Select's own
-  // onChange handler. Clearing the credential disables/empties the course field.
-  const handleCredentialChange = (value: string | null | undefined) => {
+  // Credential level changed — reset everything downstream and load that
+  // level's default program list.
+  const handleCredentialChange = (value: number | null | undefined) => {
     const next = value ?? null;
-    setCredentialTitle(next);
+    setCredentialLevel(next);
+    setProgramQuery("");
+    setProgramResults([]);
     setSelectedProgram(null);
-    if (!next) {
-      setProgramResults([]);
-      setProgramQuery("");
+    setCollegeQuery("");
+    setCollegeResults([]);
+    setSelectedCollege(null);
+    if (next === null) return;
+    handleProgramSearch("", next);
+  };
+
+  // Debounced keyword search for colleges offering the chosen program.
+  const handleCollegeSearch = (text: string) => {
+    setCollegeQuery(text);
+    if (collegeSearchTimerRef.current) {
+      clearTimeout(collegeSearchTimerRef.current);
+      collegeSearchTimerRef.current = null;
+    }
+
+    if (!selectedProgram || credentialLevel === null) return;
+
+    const trimmed = text.trim();
+    if (trimmed.length < MIN_SEARCH_CHARS) {
+      setIsSearchingColleges(true);
+      fetchSchoolsForProgram(selectedProgram.cip_code, credentialLevel)
+        .then((items) => setCollegeResults(items))
+        .catch((err) => console.error("Failed to load default colleges:", err))
+        .finally(() => setIsSearchingColleges(false));
       return;
     }
-    handleProgramSearch(programQuery, next);
+
+    setIsSearchingColleges(true);
+    collegeSearchTimerRef.current = setTimeout(async () => {
+      try {
+        const items = await fetchSchoolsForProgram(
+          selectedProgram.cip_code,
+          credentialLevel,
+          trimmed,
+        );
+        setCollegeResults(items);
+      } catch (err) {
+        console.error("Failed to search colleges:", err);
+      } finally {
+        setIsSearchingColleges(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  // Program changed — reset the college step and load that program's default
+  // college list.
+  const handleProgramChange = (value: string | null | undefined) => {
+    const prog = programResults.find((p) => p.title === value) ?? null;
+    setSelectedProgram(prog);
+    setCollegeQuery("");
+    setCollegeResults([]);
+    setSelectedCollege(null);
+    if (!prog || credentialLevel === null) return;
+    setIsSearchingColleges(true);
+    fetchSchoolsForProgram(prog.cip_code, credentialLevel)
+      .then((items) => setCollegeResults(items))
+      .catch((err) => console.error("Failed to load default colleges:", err))
+      .finally(() => setIsSearchingColleges(false));
   };
 
   const handleFinalAdd = () => {
-    if (!pendingCollege) return;
-    if (selectedProgram) {
-      onAdd(pendingCollege.id, {
-        cipCode: selectedProgram.cip_code,
-        programName: selectedProgram.title,
-        credentialTitle: selectedProgram.credential_title,
-        credentialLevel: selectedProgram.credential_level,
-      });
-    } else {
-      onAdd(pendingCollege.id);
-    }
+    if (!selectedCollege || !selectedProgram) return;
+    onAdd(String(selectedCollege.unitid), {
+      cipCode: selectedProgram.cip_code,
+      programName: selectedProgram.title,
+      credentialTitle: selectedProgram.credential_title,
+      credentialLevel: selectedProgram.credential_level,
+    });
     resetFlow();
-    // Reset the college picker back to its default (unfiltered) list rather
-    // than leaving it stuck on whatever search text/results were last typed.
-    onSearch("");
   };
 
-  const credentialEnabled = !!pendingCollege;
-  const courseEnabled = !!pendingCollege && !!credentialTitle;
+  const programEnabled = credentialLevel !== null;
+  const collegeEnabled = !!selectedProgram;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 sm:mb-10 overflow-hidden">
@@ -252,9 +250,9 @@ export default function CompareSearchBar({
 
       <div className="border-t border-gray-100" />
 
-      {/* All three steps are shown together — college is always pickable;
-          credential level unlocks once a college is chosen; course search
-          unlocks once a credential level is chosen. */}
+      {/* All three steps are shown together — credential is always pickable;
+          program unlocks once a credential level is chosen; college search
+          unlocks once a program is chosen. */}
       <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-0">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
@@ -263,58 +261,20 @@ export default function CompareSearchBar({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-bold text-slate-800 leading-tight">
-                College
+                Credential
               </p>
               <p className="text-[11px] text-gray-400 leading-tight truncate">
-                Search and select a college
+                Select credential type
               </p>
             </div>
           </div>
           <Select
-            showSearch
             className="w-full h-11"
-            placeholder="Search for a college"
-            value={pendingCollege?.id ?? null}
-            filterOption={false}
-            onSearch={onSearch}
-            loading={isSearching}
-            suffixIcon={<Search className="w-3.5 h-3.5 text-gray-400" />}
-            notFoundContent={
-              isSearching ? (
-                <Spin size="small" />
-              ) : (
-                <span className="text-gray-400 text-xs">
-                  Type at least {minSearchChars} characters to search
-                </span>
-              )
-            }
-            onChange={(value) => {
-              const opt = selectOptions.find((c) => c.id === value);
-              if (opt) {
-                setPendingCollege(opt);
-                loadCredentialsFor(opt);
-              }
-            }}
-            options={(pendingCollege &&
-            !selectOptions.some((c) => c.id === pendingCollege.id)
-              ? [pendingCollege, ...selectOptions]
-              : selectOptions
-            ).map((c) => {
-              const base =
-                c.city && c.state
-                  ? `${c.name} (${c.city}, ${c.state})`
-                  : c.name;
-              // We compare programs now, not just colleges — a college
-              // already in the matrix can still be added again under a
-              // different course, so this is a hint, not a disabled state.
-              const alreadyAdded = comparedIds.some(
-                (entryId) => parseEntryId(entryId).unitid === c.id,
-              );
-              return {
-                value: c.id,
-                label: alreadyAdded ? `${base} • already added` : base,
-              };
-            })}
+            placeholder="Select credential"
+            value={credentialLevel}
+            allowClear
+            onChange={handleCredentialChange}
+            options={CREDENTIAL_LEVEL_OPTIONS}
           />
         </div>
 
@@ -329,34 +289,36 @@ export default function CompareSearchBar({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-bold text-slate-800 leading-tight">
-                Credential
+                Program
               </p>
               <p className="text-[11px] text-gray-400 leading-tight truncate">
-                Select credential type
+                Select program of study
               </p>
             </div>
           </div>
           <Select
+            showSearch
             className="w-full h-11"
-            placeholder="Select credential"
-            disabled={!credentialEnabled}
-            value={credentialTitle}
-            loading={isLoadingCredentials}
-            allowClear
-            onChange={handleCredentialChange}
-            options={credentialOptions.map((c) => ({
-              value: c.credential_title,
-              label: c.credential_title,
-            }))}
+            placeholder="Select program"
+            disabled={!programEnabled}
+            value={selectedProgram?.title ?? null}
+            filterOption={false}
+            onSearch={(text) => handleProgramSearch(text)}
+            loading={isSearchingPrograms}
+            onChange={handleProgramChange}
             notFoundContent={
-              isLoadingCredentials ? (
+              isSearchingPrograms ? (
                 <Spin size="small" />
               ) : (
                 <span className="text-gray-400 text-xs">
-                  No credential levels found
+                  No programs found for this search
                 </span>
               )
             }
+            options={programResults.map((p) => ({
+              value: p.title,
+              label: p.title,
+            }))}
           />
         </div>
 
@@ -371,39 +333,55 @@ export default function CompareSearchBar({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-bold text-slate-800 leading-tight">
-                Program
+                College
               </p>
               <p className="text-[11px] text-gray-400 leading-tight truncate">
-                Select program of study
+                Search and select a college
               </p>
             </div>
           </div>
           <Select
             showSearch
             className="w-full h-11"
-            placeholder="Select program"
-            disabled={!courseEnabled}
-            value={selectedProgram?.title ?? null}
+            placeholder="Search for a college"
+            disabled={!collegeEnabled}
+            value={selectedCollege ? String(selectedCollege.unitid) : null}
             filterOption={false}
-            onSearch={handleProgramSearch}
-            loading={isSearchingPrograms}
+            onSearch={handleCollegeSearch}
+            loading={isSearchingColleges}
+            suffixIcon={<Search className="w-3.5 h-3.5 text-gray-400" />}
             onChange={(value) => {
-              const prog = programResults.find((p) => p.title === value);
-              setSelectedProgram(prog ?? null);
+              const college = collegeResults.find(
+                (c) => String(c.unitid) === value,
+              );
+              setSelectedCollege(college ?? null);
             }}
             notFoundContent={
-              isSearchingPrograms ? (
+              isSearchingColleges ? (
                 <Spin size="small" />
               ) : (
                 <span className="text-gray-400 text-xs">
-                  No courses found for this search
+                  No colleges found for this search
                 </span>
               )
             }
-            options={programResults.map((p) => ({
-              value: p.title,
-              label: p.title,
-            }))}
+            options={collegeResults.map((c) => {
+              const base =
+                c.city && c.state
+                  ? `${c.school_name} (${c.city}, ${c.state})`
+                  : c.school_name;
+              // We compare programs now, not just colleges — a college
+              // already in the matrix can still be added again under a
+              // different course, so this is a hint, not a disabled state.
+              const alreadyAdded = comparedIds.some(
+                (entryId) =>
+                  parseEntryId(entryId).unitid === String(c.unitid),
+              );
+              return {
+                value: String(c.unitid),
+                label: alreadyAdded ? `${base} • already added` : base,
+              };
+            })}
           />
         </div>
 
@@ -412,7 +390,7 @@ export default function CompareSearchBar({
             type="primary"
             icon={<Plus className="w-4 h-4" />}
             onClick={handleFinalAdd}
-            disabled={!pendingCollege}
+            disabled={!selectedCollege}
             className="w-full lg:w-auto self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-11 px-5 shadow-sm flex items-center justify-center gap-1.5 shrink-0"
           >
             Add to Comparison

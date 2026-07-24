@@ -138,10 +138,11 @@ export default function ProgramSearchBand({
     if (universityName) params.set("name", universityName);
     if (city) params.set("city", city);
     if (state) params.set("state", state);
-    params.set("degree", program.credential_title);
+    params.set("degree", program.title);
     params.set("credentialTitle", program.credential_title);
     if (schoolType) params.set("type", schoolType);
-    if (admissionRate != null) params.set("admissionRate", String(admissionRate));
+    if (admissionRate != null)
+      params.set("admissionRate", String(admissionRate));
     if (tuitionFee != null) params.set("tuition", String(tuitionFee));
     if (avgSalary != null) params.set("avgSalary", String(avgSalary));
     if (netRoi20Yr != null) params.set("roi", String(netRoi20Yr));
@@ -249,8 +250,7 @@ export default function ProgramSearchBand({
             </h2>
             <p className="mt-2 text-xs font-medium text-gray-500">
               Explore the complete catalog of{" "}
-              {universityName || "this university"}&apos;s academic
-              offerings.
+              {universityName || "this university"}&apos;s academic offerings.
             </p>
 
             {searchForm}

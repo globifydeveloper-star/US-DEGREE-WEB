@@ -261,6 +261,8 @@ export async function buildUniversityViewData(
       ? Number(apiData.program.credential_level)
       : null;
 
+  const credentialTitle = apiData?.program?.credential_title || null;
+
   const avgSalary =
     outcomesData?.earnings?.avg_salary !== null &&
     outcomesData?.earnings?.avg_salary !== undefined
@@ -281,6 +283,7 @@ export async function buildUniversityViewData(
       `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
     degree,
     credentialLevel,
+    credentialTitle,
     format: "Full-time, On-campus",
     financialAid: "Available",
     cipCode,

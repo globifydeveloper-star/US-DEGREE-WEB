@@ -29,9 +29,10 @@ import {
 import { CollegeMatch } from "../matchEngine";
 import {
   toggleCompare as toggleCompareStore,
-  useCompareIds,
+  useCompareEntryIds,
   MAX_COMPARE,
-} from "../../search/useCompareSelected";
+} from "../../compare/compareMatrixStore";
+import { parseEntryId } from "../../compare/compareEntryIds";
 import {
   toggleSaved,
   useSavedIds,
@@ -59,44 +60,29 @@ export default function CollegeMatchesSection({
 
   const [view, setView] = useState<"Grid" | "List">("Grid");
 
-  // Selected-for-comparison set, from the single shared store. Kept in sync with
-  // selections made anywhere (search cards, university page, /compare page).
-  const comparedIds = useCompareIds();
+  // Selected-for-comparison entries, from the single shared matrix store. Kept
+  // in sync with selections made anywhere (search cards, university page,
+  // /compare page).
+  const comparedEntryIds = useCompareEntryIds();
+  const isCollegeCompared = (unitid: string) =>
+    comparedEntryIds.some((e) => parseEntryId(e).unitid === String(unitid));
 
   // Saved-college set, from the same shared store the Saved Colleges grid reads.
   // Reading it here keeps the heart indicator in sync with saves made anywhere.
   const savedIds = useSavedIds();
 
-  // Add/remove a matched college via the shared store, which handles the
-  // localStorage mirror, the backend `/compare/selected` set, and the 5-max.
+  // Add/remove a matched college via the shared matrix store, which handles
+  // the localStorage mirror, backend persistence, and the 5-entry cap.
   const toggleCompare = async (match: CollegeMatch) => {
-    const location =
-      match.city && match.state
-        ? `${match.city}, ${match.state}`
-        : match.city || match.state || "";
     try {
-      const result = await toggleCompareStore(
-        {
-          id: match.id,
-          name: match.name,
-          location,
-          cipCode: match.cipCode || "default",
-          programName: match.programTitle || undefined,
-        },
-        // Enriched record so the profile's comparison grid shows it instantly.
-        // GET /compare/selected always reports acceptanceRate as a raw
-        // fraction (e.g. 0.62); matchEngine's is already scaled to a
-        // percentage, so it needs converting back for a consistent shape.
-        {
-          unitid: Number(match.unitid) || null,
-          name: match.name,
-          location,
-          tuitionInState: match.tuition,
-          acceptanceRate:
-            match.acceptanceRate !== null ? match.acceptanceRate / 100 : null,
-          addedAt: new Date().toISOString(),
-        },
-      );
+      const hasCip = !!match.cipCode && match.cipCode !== "default";
+      const result = await toggleCompareStore({
+        unitid: match.id,
+        cipCode: match.cipCode || "default",
+        programName: hasCip ? match.programTitle || undefined : undefined,
+        credentialLevel: hasCip ? match.credentialLevel ?? undefined : undefined,
+        credentialTitle: hasCip ? match.degreeLevel || undefined : undefined,
+      });
       if (result === "removed") {
         message.info(`Removed ${match.name} from comparison.`);
       } else if (result === "added") {
@@ -219,7 +205,7 @@ export default function CollegeMatchesSection({
         <div className="flex flex-col gap-3">
           {matches.map((match) => {
             const isSaved = savedIds.includes(match.unitid);
-            const isCompared = comparedIds.includes(match.id);
+            const isCompared = isCollegeCompared(match.id);
             const location =
               match.city && match.state
                 ? `${match.city}, ${match.state}`
@@ -396,7 +382,7 @@ export default function CollegeMatchesSection({
         <Row gutter={[20, 20]}>
           {matches.map((match) => {
             const isSaved = savedIds.includes(match.unitid);
-            const isCompared = comparedIds.includes(match.id);
+            const isCompared = isCollegeCompared(match.id);
 
             return (
               <Col xs={24} sm={12} md={12} lg={6} key={match.id}>

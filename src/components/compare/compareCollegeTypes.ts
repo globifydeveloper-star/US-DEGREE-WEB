@@ -1,5 +1,3 @@
-import type { CompareDetail } from "@/components/search/compareStore";
-
 /** One row in the university dropdown / "Quick Add" list. */
 export type UniOption = {
   id: string;
@@ -24,7 +22,20 @@ export interface RawUniversity {
   control?: string;
 }
 
-// Same shape written to (and read from) the cross-app "compared_colleges_details"
-// localStorage mirror — see CompareDetail in components/search/compareStore.
-// `logo` is compare-page-specific, so it's added on top rather than shared.
-export type StoredDetail = CompareDetail & { logo?: string };
+// Historical shape of the (now-removed) cross-app "compared_colleges_details"
+// localStorage mirror. Nothing writes this key anymore — buildCollegeRow's
+// `storedDetails` lookups always resolve empty and fall back to backend data
+// — but the type is kept so those defensive fallback paths still compile.
+export interface StoredDetail {
+  id: string;
+  name?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  schoolType?: string;
+  cipCode?: string;
+  programName?: string;
+  schoolUrl?: string;
+  logo?: string;
+  logoColor?: string;
+}

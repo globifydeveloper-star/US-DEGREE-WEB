@@ -19,7 +19,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { clearAppJwt } from "@/lib/auth/tokenStore";
 import { signInWithApple } from "@/lib/appleAuth";
 import { exchangeAppleIdToken } from "@/lib/auth/api";
-import { syncCompareOwner } from "@/components/search/useCompareSelected";
+import { syncCompareMatrixOwner } from "@/components/compare/compareMatrixStore";
 import { syncFitStatsOwner } from "@/lib/fitScoreSync";
 
 export interface AuthUser {
@@ -404,9 +404,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // switching accounts, or re-registering under an old account's email never
   // inherits a previous account's data on this browser.
   useEffect(() => {
-    syncCompareOwner(user?.id ?? null);
+    // Wait for Firebase to actually resolve the session before treating this
+    // as "logged out" — `user` starts null while `loading` is still true, and
+    // syncing on that transient null (then again once the real id arrives)
+    // double-wipes the compare bucket, racing with anything that hydrates it
+    // (e.g. useCompareColleges) right after a fresh page load.
+    if (loading) return;
+    syncCompareMatrixOwner(user?.id ?? null);
     syncFitStatsOwner(user?.id ?? null);
-  }, [user?.id]);
+  }, [user?.id, loading]);
 
   // Cross-tab auth synchronization listener
   useEffect(() => {

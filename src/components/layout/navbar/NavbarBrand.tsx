@@ -10,10 +10,10 @@ export default function NavbarBrand() {
       <Image
         src="/images/logo2.png"
         alt="US Degrees"
-        width={185}
-        height={70}
+        width={200}
+        height={100}
         priority
-        className="h-[20px] sm:h-[32px] w-auto object-contain"
+        className="h-[30px] sm:h-[32px] w-auto object-contain"
       />
     </Link>
   );

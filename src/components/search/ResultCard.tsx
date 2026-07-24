@@ -8,9 +8,9 @@ import CompareIconAnimation from "./CompareIconAnimation";
 import { useSavedCollege, toggleSaved } from "./useSavedColleges";
 import {
   toggleCompare as toggleCompareStore,
-  useCompareSelectedItem,
+  useIsCollegeCompared,
   MAX_COMPARE,
-} from "./useCompareSelected";
+} from "../compare/compareMatrixStore";
 import {
   FIT_GPA_KEY,
   FIT_SAT_KEY,
@@ -26,6 +26,9 @@ export interface ResultCardProps {
   /** IPEDS UNITID — stable identifier used for saving the college. */
   unitid?: string;
   cipCode?: string;
+  /** IPEDS credential level (e.g. 5/7/17), disambiguating this program's
+   * cip_code from another credential level of the same course. */
+  credentialLevel?: number | null;
   university: string;
   location: string;
   degree: string;
@@ -136,6 +139,7 @@ export default function ResultCard({
   id = 1,
   unitid,
   cipCode,
+  credentialLevel,
   university,
   location,
   degree,
@@ -176,8 +180,8 @@ export default function ResultCard({
 
   // Canonical id for the comparison store (id and unitid are the same UNITID).
   const compareId = String(unitid ?? id ?? "");
-  // Selected-for-comparison state from the single shared store.
-  const isCompared = useCompareSelectedItem(compareId);
+  // Selected-for-comparison state from the single shared matrix store.
+  const isCompared = useIsCollegeCompared(compareId);
 
   const { user } = useAuth();
   const router = useRouter();
@@ -239,13 +243,12 @@ export default function ResultCard({
     }
     try {
       const result = await toggleCompareStore({
-        id: compareId,
-        name: university,
-        location,
+        unitid: compareId,
         cipCode: cipCode || "default",
         programName: cipCode ? degree : undefined,
-        schoolUrl: formattedSchoolUrl || "",
-        logoColor: logoColor || "bg-blue-600",
+        credentialLevel: cipCode ? credentialLevel ?? undefined : undefined,
+        credentialTitle:
+          cipCode && specializations !== "N/A" ? specializations : undefined,
       });
       if (result === "full") {
         message.warning(
@@ -695,7 +698,9 @@ export default function ResultCard({
                 {shouldShowFit ? "Tap to update" : "Tap to find"}
               </span>
             </div>
-            <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+            <div
+              className={`relative w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-500 ${!shouldShowFit ? "filter blur-[1.5px] opacity-80" : ""}`}
+            >
               <svg
                 className="w-full h-full transform -rotate-90"
                 viewBox="0 0 36 36"
@@ -745,13 +750,21 @@ export default function ResultCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-200/60 min-w-0">
+          <div className="grid grid-cols-5 gap-1 pt-1 border-t border-slate-200/60 min-w-0">
             <div className="min-w-0">
               <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
                 Admission
               </p>
               <p className="text-[10px] font-bold text-slate-800 truncate">
                 {admissionRate}
+              </p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider truncate">
+                SAT/ACT
+              </p>
+              <p className="text-[10px] font-bold text-slate-800 truncate">
+                {satAct}
               </p>
             </div>
             <div className="min-w-0">

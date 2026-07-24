@@ -30,6 +30,7 @@ export interface CollegeMatch {
   cipCode: string;
   programTitle: string; // the matched major/curriculum
   degreeLevel: string; // credential level for that program (e.g. "Bachelor's Degree")
+  credentialLevel: number | null; // IPEDS credential level code (e.g. 5/7/17), disambiguates cipCode + degreeLevel
   isPrivate: boolean;
   tuition: number | null; // in-state tuition, $/yr
   costOfAttendance: number | null; // sticker_price_by_api — avg annual cost, $/yr
@@ -241,6 +242,7 @@ export function useCollegeMatches(profile: StudentProfile): {
           cipCode: r.cip_code || "default",
           programTitle: r.program_title ?? "",
           degreeLevel: r.credential_title ?? "",
+          credentialLevel: r.credential_level ?? null,
           isPrivate: String(r.college_type ?? r.school_type ?? "")
             .toLowerCase()
             .includes("private"),

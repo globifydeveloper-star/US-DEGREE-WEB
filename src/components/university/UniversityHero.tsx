@@ -7,9 +7,9 @@ import { Button, message } from "antd";
 import CompareIconAnimation from "../search/CompareIconAnimation";
 import {
   toggleCompare as toggleCompareStore,
-  useCompareSelectedItem,
+  useIsCollegeCompared,
   MAX_COMPARE,
-} from "../search/useCompareSelected";
+} from "../compare/compareMatrixStore";
 import {
   toggleSaved,
   useSavedCollege,
@@ -31,25 +31,25 @@ export default function UniversityHero({
   accreditor,
   cipCode,
   degree,
+  credentialLevel,
+  credentialTitle,
 }: UniversityHeroProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Selected-for-comparison state from the single shared store.
+  // Selected-for-comparison state from the single shared matrix store.
   const compareId = String(id ?? "");
-  const isCompared = useCompareSelectedItem(compareId);
+  const isCompared = useIsCollegeCompared(compareId);
 
   const toggleCompare = async () => {
     if (!compareId) return;
     const hasCip = !!cipCode && cipCode !== "N/A" && cipCode !== "default";
     try {
       const result = await toggleCompareStore({
-        id: compareId,
-        name,
-        location,
+        unitid: compareId,
         cipCode: hasCip ? (cipCode as string) : "default",
         programName: hasCip ? degree || undefined : undefined,
-        schoolUrl: schoolUrl || "",
-        logoColor: logoColor || "bg-blue-600",
+        credentialLevel: hasCip ? credentialLevel ?? undefined : undefined,
+        credentialTitle: hasCip ? credentialTitle ?? undefined : undefined,
       });
       if (result === "full") {
         alert(
