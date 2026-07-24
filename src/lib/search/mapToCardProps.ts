@@ -9,6 +9,7 @@ export const mapToCardProps = (result: SearchResult) => ({
   id: result.unitid,
   unitid: result.unitid != null ? String(result.unitid) : undefined,
   cipCode: result.cip_code,
+  credentialLevel: result.credential_level,
   university: result.school_name || "Unknown University",
   location: `${result.city || "Unknown"}, ${result.state || "US"}`,
   degree: result.program_title || "Unknown Degree",

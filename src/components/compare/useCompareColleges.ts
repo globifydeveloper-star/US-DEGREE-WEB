@@ -2,31 +2,20 @@ import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { CollegeDetail } from "@/types/university/ComparisonTable";
 import {
-  addToCompare,
-  removeFromCompare,
+  MAX_COMPARE,
+  addCollegeToCompare,
+  removeCollegeFromCompare,
   clearCompare,
-  reloadCompareSelected,
-} from "@/components/search/useCompareSelected";
-import { fetchCompareMatrix, saveCompareMatrix } from "@/lib/auth/api";
-import {
-  makeEntryId,
-  parseEntryId,
-  mergeCompareEntryIds,
-  matrixEntryIdsToApi,
-  apiEntriesToMatrixIds,
-  apiEntriesToPrograms,
-  readEntryPrograms,
-  writeEntryPrograms,
-  writeMatrixEntries,
-} from "./compareEntryIds";
+  reloadMatrix,
+  getCompareEntryIds,
+} from "./compareMatrixStore";
+import { makeEntryId, parseEntryId } from "./compareEntryIds";
 import { useCollegeSearch, MIN_SEARCH_CHARS } from "./useCollegeSearch";
 import { useCompareDetailsFetch } from "./useCompareDetailsFetch";
 import { useCompareHighlights } from "./useCompareHighlights";
 
 export type { UniOption } from "./compareCollegeTypes";
-export { parseEntryId, mergeCompareEntryIds };
-
-const MAX_COMPARE_ENTRIES = 5;
+export { parseEntryId };
 
 export function useCompareColleges() {
   const router = useRouter();
@@ -79,9 +68,10 @@ export function useCompareColleges() {
   const { highlights, averages } = useCompareHighlights(comparedColleges);
 
   // Hydrate the URL on first mount (one-time). The backend's persisted
-  // matrix (/compare/matrix) is the durable source of truth for program info
-  // — localStorage is only a fast local mirror that can be empty/stale on a
-  // fresh device or after a fresh login, which is exactly when this matters.
+  // matrix (/compare/matrix, via compareMatrixStore) is the durable source of
+  // truth — localStorage is only a fast local mirror that can be empty/stale
+  // on a fresh device or after a fresh login, which is exactly when this
+  // matters.
   useEffect(() => {
     if (hydratedRef.current) return;
     hydratedRef.current = true;
@@ -91,86 +81,38 @@ export function useCompareColleges() {
     // effect once to surface exactly this class of bug. Without resetting the
     // ref here, the throwaway first mount permanently marks hydration "done"
     // before its own async work (which the cleanup below cancels) ever
-    // reaches reloadCompareSelected()/router.replace — so the real second
-    // mount sees hydratedRef already true and skips running entirely.
+    // reaches reloadMatrix()/router.replace — so the real second mount sees
+    // hydratedRef already true and skips running entirely.
     const resetHydratedRef = () => {
       hydratedRef.current = false;
     };
 
     if (idsParam) {
-      // Keep the badge's entry-level mirror in sync with whatever the URL
-      // says on load. Deliberately NOT written to the shared "compared_colleges"
-      // key — that one is college-level (bare unitids) and is exclusively
-      // maintained by the addToCompare/removeFromCompare calls in
-      // handleAddCollege/handleRemoveCollege below; writing composite entry
-      // ids into it would break other consumers (e.g. CompareDeck) that match
-      // on bare unitid.
-      writeMatrixEntries(idsParam.split(",").filter(Boolean));
-      // Backfill program names/cip codes from the backend in case this URL
-      // was opened on a device/session whose localStorage never saw them
-      // (e.g. a shared compare link, or login on a new browser).
-      fetchCompareMatrix()
-        .then((entries) => {
-          if (cancelled || entries.length === 0) return;
-          const backendPrograms = apiEntriesToPrograms(entries);
-          const localPrograms = readEntryPrograms();
-          writeEntryPrograms({ ...backendPrograms, ...localPrograms });
-        })
-        .catch((e) => console.error("Failed to backfill compare matrix:", e));
+      // A URL already names specific entries (e.g. a shared compare link, or
+      // returning from syncUrlParams below) — nothing to hydrate.
       return () => {
         cancelled = true;
         resetHydratedRef();
       };
     }
 
-    // No ids in the URL (e.g. the plain "/compare" nav link). Prefer the
-    // backend's persisted matrix so program info survives a fresh login;
-    // fall back to the local merge (bucket + localStorage matrix) if the
-    // backend has nothing yet, e.g. colleges added before this endpoint
-    // existed, or while offline.
+    // No ids in the URL (e.g. the plain "/compare" nav link). Reconcile with
+    // the backend's persisted matrix — reloadMatrix() forces a fresh fetch
+    // rather than trusting a `loaded` cache some other mounted component
+    // (e.g. a search card's useIsCollegeCompared) may have already set from
+    // an earlier, possibly-stale snapshot.
     (async () => {
       try {
-        const backendEntries = await fetchCompareMatrix();
+        await reloadMatrix();
         if (cancelled) return;
-        let ids: string[];
-        if (backendEntries.length > 0) {
-          ids = apiEntriesToMatrixIds(backendEntries);
-          writeMatrixEntries(ids);
-          writeEntryPrograms({
-            ...apiEntriesToPrograms(backendEntries),
-            ...readEntryPrograms(),
-          });
-        } else {
-          // The per-program matrix is empty (nothing was ever added through
-          // this page's own add flow). Before trusting the local merge, force
-          // a fresh reconciliation with the backend's college-level
-          // /compare/selected bucket via reloadCompareSelected() rather than
-          // ensureCompareLoaded() — the latter no-ops once any other mounted
-          // component (e.g. CollegeMatchesSection's useCompareIds()) has
-          // already loaded it once this session, which would otherwise leave
-          // this tab showing a stale/empty snapshot from before a college was
-          // added, forever, until a full page reload resets the module cache.
-          await reloadCompareSelected();
-          ids = mergeCompareEntryIds();
-        }
+        const ids = getCompareEntryIds();
         if (ids.length > 0) {
           const params = new URLSearchParams();
           params.set("ids", ids.join(","));
           router.replace(`/compare?${params.toString()}`);
         }
       } catch (e) {
-        console.error("Failed to load compare matrix, falling back to local:", e);
-        try {
-          await reloadCompareSelected();
-          const ids = mergeCompareEntryIds();
-          if (ids.length > 0) {
-            const params = new URLSearchParams();
-            params.set("ids", ids.join(","));
-            router.replace(`/compare?${params.toString()}`);
-          }
-        } catch (e2) {
-          console.error(e2);
-        }
+        console.error("Failed to load compare matrix:", e);
       }
     })();
 
@@ -180,9 +122,10 @@ export function useCompareColleges() {
     };
   }, [idsParam, router]);
 
-  // Keep URL query param synchronised with active compared IDs, mirror the
-  // entry-level list into the nav badge's local key, and persist the matrix
-  // (with program info) to the backend so it survives a fresh login.
+  // Keep the URL query param synchronised with the active compared IDs. The
+  // matrix itself (localStorage mirror + backend persistence) is already
+  // handled by compareMatrixStore's add/remove/clear calls below — this only
+  // owns the page's own shareable-link concern.
   const syncUrlParams = useCallback(
     (ids: string[]) => {
       const params = new URLSearchParams();
@@ -190,10 +133,6 @@ export function useCompareColleges() {
         params.set("ids", ids.join(","));
       }
       router.push(`/compare?${params.toString()}`);
-      writeMatrixEntries(ids);
-      saveCompareMatrix(matrixEntryIdsToApi(ids)).catch((err) =>
-        console.error("Failed to persist compare matrix:", err),
-      );
     },
     [router],
   );
@@ -207,54 +146,26 @@ export function useCompareColleges() {
       credentialLevel?: number | string;
     },
   ) => {
-    if (comparedIds.length >= MAX_COMPARE_ENTRIES) {
-      setIsLimitModalOpen(true);
-      return;
-    }
-
     const cipCode = program?.cipCode || "default";
-    // Same college + same course + same credential level → same entryId, so
-    // this naturally blocks an exact duplicate. Same course under a
-    // different credential level (e.g. Bachelor's vs Master's) gets a
-    // distinct entryId and is allowed.
-    const entryId = makeEntryId(id, cipCode, program?.credentialLevel);
-    if (comparedIds.includes(entryId)) return;
-
-    if (program?.programName) {
-      const map = readEntryPrograms();
-      map[entryId] = {
-        programName: program.programName,
-        credentialTitle: program.credentialTitle || "",
-      };
-      writeEntryPrograms(map);
-    }
-
-    const opt =
-      allUniversitiesRef.current.get(String(id)) ||
-      selectOptions.find((u) => u.id === id) ||
-      initialUniversities.find((u) => u.id === id);
-
-    // Update the matrix view (URL) and delegate the college-level selection
-    // to the shared store, which owns the backend set + localStorage mirror.
-    // The shared store is keyed by unitid alone (one row per college) — it's
-    // a no-op ("exists") when this college is already tracked there, e.g.
-    // because we're adding a second program for it.
-    syncUrlParams([...comparedIds, entryId]);
-    addToCompare({
-      id: String(id),
-      name: opt?.name,
-      city: opt?.city || "",
-      state: opt?.state || "",
-      schoolType: opt?.schoolType || "Public",
-      location:
-        opt?.city && opt?.state
-          ? `${opt.city}, ${opt.state}`
-          : opt?.city || opt?.state || "",
+    addCollegeToCompare({
+      unitid: id,
       cipCode,
-      programName: program?.programName || undefined,
+      credentialLevel: program?.credentialLevel,
+      programName: program?.programName,
+      credentialTitle: program?.credentialTitle,
     })
-      .then((res) => {
-        if (res === "full") setIsLimitModalOpen(true);
+      .then((result) => {
+        if (result === "full") {
+          setIsLimitModalOpen(true);
+          return;
+        }
+        if (result !== "added") return;
+        // Same college + same course + same credential level → same entryId,
+        // so an exact duplicate is already blocked ("exists") above. Same
+        // course under a different credential level (e.g. Bachelor's vs
+        // Master's) gets a distinct entryId and is allowed.
+        const entryId = makeEntryId(id, cipCode, program?.credentialLevel);
+        syncUrlParams([...comparedIds, entryId]);
       })
       .catch((err) =>
         console.error("Failed to sync comparison selection:", err),
@@ -262,35 +173,25 @@ export function useCompareColleges() {
   };
 
   const handleRemoveCollege = (entryId: string) => {
-    const remaining = comparedIds.filter((cid) => cid !== entryId);
-    syncUrlParams(remaining);
-
-    const map = readEntryPrograms();
-    if (entryId in map) {
-      delete map[entryId];
-      writeEntryPrograms(map);
-    }
-
-    // Only drop the college from the shared cross-app store once every entry
-    // for it has been removed from this matrix — another program for the
-    // same college may still be compared.
-    const { unitid } = parseEntryId(entryId);
-    const stillPresent = remaining.some(
-      (cid) => parseEntryId(cid).unitid === unitid,
-    );
-    if (!stillPresent) {
-      removeFromCompare(unitid).catch((err) =>
+    const { unitid, cipCode, credentialLevel } = parseEntryId(entryId);
+    removeCollegeFromCompare(
+      unitid,
+      cipCode !== "default" ? { cipCode, credentialLevel } : undefined,
+    )
+      .then(() => {
+        syncUrlParams(comparedIds.filter((cid) => cid !== entryId));
+      })
+      .catch((err) =>
         console.error("Failed to sync comparison selection:", err),
       );
-    }
   };
 
   const handleClearAll = () => {
-    syncUrlParams([]);
-    writeEntryPrograms({});
-    clearCompare().catch((err) =>
-      console.error("Failed to sync comparison selection:", err),
-    );
+    clearCompare()
+      .then(() => syncUrlParams([]))
+      .catch((err) =>
+        console.error("Failed to sync comparison selection:", err),
+      );
   };
 
   return {
@@ -313,5 +214,6 @@ export function useCompareColleges() {
     handleRemoveCollege,
     handleClearAll,
     MIN_SEARCH_CHARS,
+    MAX_COMPARE,
   };
 }

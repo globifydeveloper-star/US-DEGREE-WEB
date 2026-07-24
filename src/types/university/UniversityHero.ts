@@ -15,4 +15,10 @@ export interface UniversityHeroProps {
   accreditor?: string | null;
   cipCode?: string | null;
   degree?: string | null;
+  /** IPEDS credential level (e.g. 5/7/17), disambiguating this program's
+   * cip_code from another credential level of the same course. */
+  credentialLevel?: number | null;
+  /** Human-readable credential title (e.g. "Doctoral Degree"), shown as a
+   * badge on the compare page. */
+  credentialTitle?: string | null;
 }

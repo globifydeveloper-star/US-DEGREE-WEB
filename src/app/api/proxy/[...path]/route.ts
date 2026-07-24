@@ -68,13 +68,13 @@ export async function DELETE(
   return forwardNoBody(request, params, "DELETE");
 }
 
-// Shared handler for methods that carry a JSON body (POST, PATCH). The client's
-// Authorization header (app JWT) is forwarded untouched — never injected or
-// stripped here — per auth spec §4.9.
+// Shared handler for methods that carry a JSON body (POST, PATCH, PUT). The
+// client's Authorization header (app JWT) is forwarded untouched — never
+// injected or stripped here — per auth spec §4.9.
 async function forwardWithBody(
   request: NextRequest,
   params: Promise<{ path: string[] }>,
-  method: "POST" | "PATCH",
+  method: "POST" | "PATCH" | "PUT",
 ) {
   try {
     const { path } = await params;
@@ -147,4 +147,11 @@ export async function PATCH(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   return forwardWithBody(request, params, "PATCH");
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> },
+) {
+  return forwardWithBody(request, params, "PUT");
 }

@@ -19,7 +19,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { clearAppJwt } from "@/lib/auth/tokenStore";
 import { signInWithApple } from "@/lib/appleAuth";
 import { exchangeAppleIdToken } from "@/lib/auth/api";
-import { syncCompareOwner } from "@/components/search/useCompareSelected";
+import { syncCompareMatrixOwner } from "@/components/compare/compareMatrixStore";
 import { syncFitStatsOwner } from "@/lib/fitScoreSync";
 
 export interface AuthUser {
@@ -410,7 +410,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // double-wipes the compare bucket, racing with anything that hydrates it
     // (e.g. useCompareColleges) right after a fresh page load.
     if (loading) return;
-    syncCompareOwner(user?.id ?? null);
+    syncCompareMatrixOwner(user?.id ?? null);
     syncFitStatsOwner(user?.id ?? null);
   }, [user?.id, loading]);
 

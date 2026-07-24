@@ -4,13 +4,14 @@ import { Heart, MapPin } from "lucide-react";
 import { ResultCardProps } from "./ResultCard";
 import {
   toggleCompare as toggleCompareStore,
-  useCompareSelectedItem,
+  useIsCollegeCompared,
   MAX_COMPARE,
-} from "./useCompareSelected";
+} from "../compare/compareMatrixStore";
 
 export default function TileCard({
   id = 1,
   cipCode,
+  credentialLevel,
   university,
   location,
   degree,
@@ -22,7 +23,6 @@ export default function TileCard({
   estCost,
   roi,
   logoColor,
-  schoolUrl,
 }: ResultCardProps) {
   const universityHref = {
     pathname: `/university/${id}`,
@@ -44,26 +44,19 @@ export default function TileCard({
     },
   };
 
-  // Selected-for-comparison state from the single shared store.
+  // Selected-for-comparison state from the single shared matrix store.
   const compareId = String(id ?? "");
-  const isCompared = useCompareSelectedItem(compareId);
+  const isCompared = useIsCollegeCompared(compareId);
 
   const handleCompareChange = async () => {
-    const formattedSchoolUrl = schoolUrl
-      ? schoolUrl.trim().startsWith("http://") ||
-        schoolUrl.trim().startsWith("https://")
-        ? schoolUrl.trim()
-        : `https://${schoolUrl.trim()}`
-      : "";
     try {
       const result = await toggleCompareStore({
-        id: compareId,
-        name: university,
-        logoColor: logoColor || "bg-blue-600",
-        location: location,
+        unitid: compareId,
         cipCode: cipCode || "default",
         programName: cipCode ? degree : undefined,
-        schoolUrl: formattedSchoolUrl,
+        credentialLevel: cipCode ? credentialLevel ?? undefined : undefined,
+        credentialTitle:
+          cipCode && specializations !== "N/A" ? specializations : undefined,
       });
       if (result === "full") {
         alert(

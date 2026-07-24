@@ -1,5 +1,5 @@
 import type { College } from "@/types/university/ComparisonTable";
-import type { SelectedCompareCollege } from "@/lib/auth/api";
+import { resolveSalaryValue, type SelectedCompareCollege } from "@/lib/auth/api";
 import { parseEntryId } from "./compareEntryIds";
 import type { EntryProgramInfo } from "./compareEntryIds";
 import type { RawUniversity, StoredDetail, UniOption } from "./compareCollegeTypes";
@@ -22,11 +22,12 @@ function deriveLogo(schoolUrl: string | null): string {
 }
 
 interface BuildContext {
-  // Keyed by unitid (string). One row per college in the backend's set, from
-  // a single GET /compare/selected?programs=... call — `selectedProgram` is
-  // already resolved on each row against whichever program in the list
-  // matches that college.
-  baseByUnitid: Map<string, SelectedCompareCollege>;
+  // Keyed by entryId (bare unitid, or unitid~cipCode~credentialLevel) — one
+  // row per compare-matrix entry from a single GET /compare/matrix/details
+  // call. Each row's `selectedProgram` is already resolved from THAT entry's
+  // own cipCode/credentialLevel — no per-program round trip needed, and no
+  // ambiguity when the same college appears twice under different programs.
+  baseByEntryId: Map<string, SelectedCompareCollege>;
   storedDetails: StoredDetail[];
   entryProgramsMap: Record<string, EntryProgramInfo>;
   allUniversities: Map<string, UniOption>;
@@ -34,44 +35,31 @@ interface BuildContext {
 }
 
 /**
- * Build one comparison-table row from the already-fetched `/compare/selected`
- * data. Never throws and never returns null — if the backend's set hasn't
- * caught up with a just-added college yet, the row renders with cached
- * name/location and N/A metrics rather than disappearing, and self-heals on
- * the next fetch.
+ * Build one comparison-table row from the already-fetched
+ * `/compare/matrix/details` data. Never throws and never returns null — if
+ * the backend's set hasn't caught up with a just-added college yet, the row
+ * renders with cached name/location and N/A metrics rather than disappearing,
+ * and self-heals on the next fetch.
  */
 export function buildCollegeRow(entryId: string, ctx: BuildContext): College {
   const { unitid, cipCode: entryCipCode } = parseEntryId(entryId);
-  const base = ctx.baseByUnitid.get(unitid);
-
-  // Bare entries (no `~cipCode` suffix) stay resolved the historical way — via
-  // the shared cross-app details mirror — so links from other pages
-  // (Intelligent Matches, university page, CompareDeck) keep working
-  // unchanged. Suffixed entries carry their own cipCode; programName for
-  // those comes from the compare-page-local map, since the shared mirror
-  // only holds one program per unitid.
+  const base = ctx.baseByEntryId.get(entryId);
   const isBareEntry = entryId === unitid;
   const matchedStored = ctx.storedDetails.find(
     (d) => String(d.id) === unitid,
   );
+
   const cipCode = isBareEntry
     ? matchedStored?.cipCode || "default"
     : entryCipCode;
   const programInfo = ctx.entryProgramsMap[entryId];
+  const selectedProgram = base?.programs.selectedProgram ?? undefined;
   const programName =
     cipCode === "default"
       ? ""
-      : isBareEntry
-        ? matchedStored?.programName || ""
-        : programInfo?.programName || "";
+      : programInfo?.programName || selectedProgram?.title || "";
   const credentialTitle =
-    cipCode === "default" ? "" : isBareEntry ? "" : programInfo?.credentialTitle || "";
-
-  // If this entry names a specific program, prefer that program's own
-  // earnings figure (when the backend matched one) over the school-wide average.
-  const selectedProgram = programName
-    ? base?.programs.selectedProgram
-    : undefined;
+    cipCode === "default" ? "" : programInfo?.credentialTitle || "";
 
   const matchedUni =
     ctx.allUniversities.get(unitid) || matchedStored;
@@ -113,10 +101,11 @@ export function buildCollegeRow(entryId: string, ctx: BuildContext): College {
     satMin: base?.academics.satRangeLow ?? null,
     satMax: base?.academics.satRangeHigh ?? null,
     graduationRate: base ? toFraction(base.academics.graduationRate) : null,
-    medianSalary: selectedProgram?.earnings ?? base?.outcomes.avgSalary ?? null,
-    // Not provided by /compare/selected — the old per-college /overview call
-    // was the only source for this and is no longer fetched.
-    studentPopulation: null,
+    medianSalary:
+      resolveSalaryValue(selectedProgram?.earnings) ??
+      resolveSalaryValue(base?.outcomes.avgSalary) ??
+      null,
+    studentPopulation: base?.students.size ?? null,
     image:
       "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
     schoolUrl,

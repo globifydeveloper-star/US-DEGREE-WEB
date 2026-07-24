@@ -8,6 +8,7 @@ import { FileText, MapPin, Sparkles, X } from "lucide-react";
 import { authedFetch, fetchProfile } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
 import { useAuth } from "@/context/AuthContext";
+import { useCompareCount } from "@/hooks/useCompareCount";
 import { emptyProfile, mergeProfile } from "@/components/userprofile/ProfileDashboard";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
@@ -30,6 +31,7 @@ export default function CompareHeader({
   const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
+  const compareCount = useCompareCount();
 
   // Gate report generation on profile completeness, then open the
   // confirmation modal listing the selected colleges. The actual generation
@@ -158,6 +160,11 @@ export default function CompareHeader({
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
           Compare <span className="text-[#3F51B5]">U.S. Colleges</span>
+          {compareCount > 0 && (
+            <span className="ml-2 align-middle text-lg md:text-xl font-bold text-slate-400">
+              ({compareCount})
+            </span>
+          )}
         </h1>
         <p className="text-gray-500 font-medium text-lg mt-2 tracking-tight">
           Compare academic metrics, annual tuition fees, and career outcomes.
