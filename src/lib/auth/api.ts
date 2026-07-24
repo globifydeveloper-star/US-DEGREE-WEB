@@ -355,13 +355,17 @@ export type CompareSummary = Pick<
 
 /**
  * GET /compare/selected — the user's comparison set, enriched by the backend.
- * Pass `program` to also resolve `programs.selectedProgram` for whichever
- * college in the set offers a matching program.
+ * Pass `programs` to also resolve `programs.selectedProgram` for whichever
+ * program in the list matches each college in the set — one request
+ * resolves every compared college's program in a single round trip, rather
+ * than one request per distinct program.
  */
 export async function fetchCompareSelected(
-  program?: string,
+  programs?: string[],
 ): Promise<SelectedCompareCollege[]> {
-  const query = program ? `?program=${encodeURIComponent(program)}` : "";
+  const query = programs?.length
+    ? `?programs=${encodeURIComponent(programs.join(","))}`
+    : "";
   const res = await authedFetch(`/compare/selected${query}`);
   if (!res.ok) throw new Error(`Load comparison set failed (${res.status})`);
   const data = await res.json();

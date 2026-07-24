@@ -22,12 +22,11 @@ function deriveLogo(schoolUrl: string | null): string {
 }
 
 interface BuildContext {
-  // Keyed by unitid (string). One row per college in the backend's set,
-  // from a plain GET /compare/selected (no `program` filter).
+  // Keyed by unitid (string). One row per college in the backend's set, from
+  // a single GET /compare/selected?programs=... call — `selectedProgram` is
+  // already resolved on each row against whichever program in the list
+  // matches that college.
   baseByUnitid: Map<string, SelectedCompareCollege>;
-  // Keyed by program name. Each value is a GET /compare/selected?program=...
-  // response — only the row for the matching college has `selectedProgram` set.
-  programByName: Map<string, SelectedCompareCollege[]>;
   storedDetails: StoredDetail[];
   entryProgramsMap: Record<string, EntryProgramInfo>;
   allUniversities: Map<string, UniOption>;
@@ -70,10 +69,9 @@ export function buildCollegeRow(entryId: string, ctx: BuildContext): College {
 
   // If this entry names a specific program, prefer that program's own
   // earnings figure (when the backend matched one) over the school-wide average.
-  const programRows = programName ? ctx.programByName.get(programName) : undefined;
-  const selectedProgram = programRows
-    ?.find((c) => String(c.unitid) === unitid)
-    ?.programs.selectedProgram;
+  const selectedProgram = programName
+    ? base?.programs.selectedProgram
+    : undefined;
 
   const matchedUni =
     ctx.allUniversities.get(unitid) || matchedStored;

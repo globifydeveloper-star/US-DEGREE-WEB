@@ -92,9 +92,9 @@ export default function MyReportsSection() {
       width: 260,
       render: (_value, record) => (
         <div className="flex flex-wrap gap-1.5">
-          {record.colleges.map((college) => (
+          {record.colleges.map((college, index) => (
             <Tag
-              key={college.unitid}
+              key={`${college.unitid}-${index}`}
               className="rounded-full font-medium text-xs px-2.5 py-0.5"
             >
               {college.name}

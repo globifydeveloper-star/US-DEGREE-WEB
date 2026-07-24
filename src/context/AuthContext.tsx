@@ -404,9 +404,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // switching accounts, or re-registering under an old account's email never
   // inherits a previous account's data on this browser.
   useEffect(() => {
+    // Wait for Firebase to actually resolve the session before treating this
+    // as "logged out" — `user` starts null while `loading` is still true, and
+    // syncing on that transient null (then again once the real id arrives)
+    // double-wipes the compare bucket, racing with anything that hydrates it
+    // (e.g. useCompareColleges) right after a fresh page load.
+    if (loading) return;
     syncCompareOwner(user?.id ?? null);
     syncFitStatsOwner(user?.id ?? null);
-  }, [user?.id]);
+  }, [user?.id, loading]);
 
   // Cross-tab auth synchronization listener
   useEffect(() => {

@@ -14,6 +14,7 @@ import {
   COMPARE_SELECTED_EVENT,
   removeFromCompare,
   clearCompare,
+  ensureCompareLoaded,
   type CompareChangeDetail,
 } from "../../search/useCompareSelected";
 import {
@@ -256,7 +257,12 @@ export default function CompareListSection() {
   // Hand the queued entries to the live /compare page (same URL contract
   // CompareDeck uses) — mergeCompareEntryIds() carries over every
   // program-specific entry a college has, not just one id per college.
-  const handleCompareNow = () => {
+  // This section's own list (`items`) comes straight from the backend
+  // /compare/selected bucket, but mergeCompareEntryIds() only reads the
+  // localStorage mirror of that bucket — sync it first so colleges shown
+  // here (e.g. after a fresh login or on a new device) aren't dropped.
+  const handleCompareNow = async () => {
+    await ensureCompareLoaded();
     const ids = mergeCompareEntryIds();
     if (ids.length < 2) return;
     router.push(`/compare?ids=${ids.join(",")}`);

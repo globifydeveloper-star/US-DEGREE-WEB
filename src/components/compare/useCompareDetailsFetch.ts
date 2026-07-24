@@ -63,11 +63,12 @@ interface DetailsFetchDeps {
 }
 
 /**
- * Resolves every id in the compare matrix against GET /compare/selected —
- * once for the base (college-level) data, plus once per distinct program
- * name in use for program-specific earnings — and keeps the shared
- * cross-app details mirror in sync. Replaces what used to be 4-5 separate
- * backend calls (`/overview`, `/tuition`, `/outcomes`, `/colleges`) per entry.
+ * Resolves every id in the compare matrix against a single GET
+ * /compare/selected?programs=... call — the backend resolves each compared
+ * college's `programs.selectedProgram` against whichever program in the
+ * list matches it, in one round trip — and keeps the shared cross-app
+ * details mirror in sync. Replaces what used to be 4-5 separate backend
+ * calls (`/overview`, `/tuition`, `/outcomes`, `/colleges`) per entry.
  */
 export function useCompareDetailsFetch(
   comparedIds: string[],
@@ -97,25 +98,18 @@ export function useCompareDetailsFetch(
       );
 
       try {
-        const [baseList, ...programLists] = await Promise.all([
-          fetchCompareSelected(),
-          ...programNames.map((name) => fetchCompareSelected(name)),
-        ]);
+        const list = await fetchCompareSelected(programNames);
         if (cancelled) return;
 
         const baseByUnitid = new Map(
-          baseList
+          list
             .filter((c) => c.unitid != null)
             .map((c) => [String(c.unitid), c]),
-        );
-        const programByName = new Map(
-          programNames.map((name, i) => [name, programLists[i]]),
         );
 
         const rows = comparedIds.map((entryId) =>
           buildCollegeRow(entryId, {
             baseByUnitid,
-            programByName,
             storedDetails,
             entryProgramsMap,
             allUniversities: deps.allUniversitiesRef.current,

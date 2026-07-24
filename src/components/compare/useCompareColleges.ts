@@ -5,6 +5,7 @@ import {
   addToCompare,
   removeFromCompare,
   clearCompare,
+  reloadCompareSelected,
 } from "@/components/search/useCompareSelected";
 import { fetchCompareMatrix, saveCompareMatrix } from "@/lib/auth/api";
 import {
@@ -86,6 +87,16 @@ export function useCompareColleges() {
     hydratedRef.current = true;
     let cancelled = false;
 
+    // React 18 Strict Mode (dev only) mounts, cleans up, then re-mounts every
+    // effect once to surface exactly this class of bug. Without resetting the
+    // ref here, the throwaway first mount permanently marks hydration "done"
+    // before its own async work (which the cleanup below cancels) ever
+    // reaches reloadCompareSelected()/router.replace — so the real second
+    // mount sees hydratedRef already true and skips running entirely.
+    const resetHydratedRef = () => {
+      hydratedRef.current = false;
+    };
+
     if (idsParam) {
       // Keep the badge's entry-level mirror in sync with whatever the URL
       // says on load. Deliberately NOT written to the shared "compared_colleges"
@@ -108,6 +119,7 @@ export function useCompareColleges() {
         .catch((e) => console.error("Failed to backfill compare matrix:", e));
       return () => {
         cancelled = true;
+        resetHydratedRef();
       };
     }
 
@@ -129,6 +141,16 @@ export function useCompareColleges() {
             ...readEntryPrograms(),
           });
         } else {
+          // The per-program matrix is empty (nothing was ever added through
+          // this page's own add flow). Before trusting the local merge, force
+          // a fresh reconciliation with the backend's college-level
+          // /compare/selected bucket via reloadCompareSelected() rather than
+          // ensureCompareLoaded() — the latter no-ops once any other mounted
+          // component (e.g. CollegeMatchesSection's useCompareIds()) has
+          // already loaded it once this session, which would otherwise leave
+          // this tab showing a stale/empty snapshot from before a college was
+          // added, forever, until a full page reload resets the module cache.
+          await reloadCompareSelected();
           ids = mergeCompareEntryIds();
         }
         if (ids.length > 0) {
@@ -139,6 +161,7 @@ export function useCompareColleges() {
       } catch (e) {
         console.error("Failed to load compare matrix, falling back to local:", e);
         try {
+          await reloadCompareSelected();
           const ids = mergeCompareEntryIds();
           if (ids.length > 0) {
             const params = new URLSearchParams();
@@ -153,6 +176,7 @@ export function useCompareColleges() {
 
     return () => {
       cancelled = true;
+      resetHydratedRef();
     };
   }, [idsParam, router]);
 

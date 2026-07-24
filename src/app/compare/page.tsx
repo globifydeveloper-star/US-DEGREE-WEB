@@ -36,6 +36,8 @@ function CompareContent() {
     MIN_SEARCH_CHARS,
   } = useCompareColleges();
 
+  console.log("comparedColleges", comparedColleges);
+
   return (
     <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-6 lg:pb-20 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
