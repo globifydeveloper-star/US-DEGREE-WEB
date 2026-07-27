@@ -1,8 +1,6 @@
 import { PopularCategory } from "@/types/home/PopularCategory";
 
-// Static fallback shown to logged-out visitors instead of hitting
-// /popular-categories/personalized — there's no user to personalize for, so
-// this avoids a network round-trip and a loading skeleton on first paint.
+// Static "Popular Categories" list shown to all visitors, logged in or not.
 // Icon/color per slug comes from categoryStyle.ts via CategoryCard.
 export const DEFAULT_CATEGORIES: PopularCategory[] = [
   {
@@ -63,5 +61,25 @@ export const DEFAULT_CATEGORIES: PopularCategory[] = [
     credential_level: null,
     popularity_score: 0,
     sort_order: 5,
+  },
+  {
+    category_id: "nursing",
+    category_name: "Nursing",
+    slug: "nursing",
+    description:
+      "Registered Nursing, Nurse Practitioner, and Clinical Nursing specializations.",
+    credential_level: null,
+    popularity_score: 0,
+    sort_order: 6,
+  },
+  {
+    category_id: "education",
+    category_name: "Education",
+    slug: "education",
+    description:
+      "Elementary Education, Curriculum & Instruction, and Educational Leadership programs.",
+    credential_level: null,
+    popularity_score: 0,
+    sort_order: 7,
   },
 ];

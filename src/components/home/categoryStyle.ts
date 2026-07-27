@@ -5,12 +5,13 @@ import {
   Settings,
   HeartPulse,
   PenTool,
+  Stethoscope,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
-// The categories endpoint returns data, not presentation — icon/color per
-// slug stays a client-side lookup, with a neutral fallback for any slug the
-// API returns that isn't in this map yet.
+// Icon/color per slug is a client-side lookup, with a neutral fallback for
+// any slug not in this map yet.
 const CATEGORY_STYLE: Record<
   string,
   { icon: LucideIcon; iconColor: string; bg: string }
@@ -37,6 +38,12 @@ const CATEGORY_STYLE: Record<
     bg: "bg-emerald-50",
   },
   design: { icon: PenTool, iconColor: "text-yellow-600", bg: "bg-yellow-50" },
+  nursing: { icon: Stethoscope, iconColor: "text-red-600", bg: "bg-red-50" },
+  education: {
+    icon: GraduationCap,
+    iconColor: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
 };
 
 const DEFAULT_CATEGORY_STYLE = {
@@ -45,29 +52,14 @@ const DEFAULT_CATEGORY_STYLE = {
   bg: "bg-slate-50",
 };
 
-// The personalized endpoint doesn't return a slug (see PopularCategory.slug),
-// so styling for it falls back to matching on category_name against the
-// same six categories the static logged-out list uses — keeps personalized
-// cards from all landing on the neutral default style.
-const NAME_TO_SLUG: Record<string, string> = {
-  business: "business",
-  "computer science": "computer-science",
-  psychology: "psychology",
-  "mechanical engineering": "mechanical-engineering",
-  "public health": "public-health",
-  design: "design",
-};
-
 export function getCategoryStyle(
   slug: string | undefined,
   categoryName?: string,
 ) {
   if (slug && CATEGORY_STYLE[slug]) return CATEGORY_STYLE[slug];
 
-  const nameSlug = categoryName
-    ? NAME_TO_SLUG[categoryName.trim().toLowerCase()]
-    : undefined;
-  if (nameSlug) return CATEGORY_STYLE[nameSlug];
+  const nameSlug = categoryName?.trim().toLowerCase().replace(/\s+/g, "-");
+  if (nameSlug && CATEGORY_STYLE[nameSlug]) return CATEGORY_STYLE[nameSlug];
 
   return DEFAULT_CATEGORY_STYLE;
 }

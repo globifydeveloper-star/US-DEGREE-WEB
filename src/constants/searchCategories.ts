@@ -19,6 +19,8 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
   "mechanical-engineering": ["mechanical engineering", "robotics", "aerospace"],
   "public-health": ["public health", "epidemiology", "health policy"],
   design: ["Design"],
+  nursing: ["nursing"],
+  education: ["education"],
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -28,6 +30,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "mechanical-engineering": "Mechanical Engineering",
   "public-health": "Public Health",
   design: "Design",
+  nursing: "Nursing",
+  education: "Education",
 };
 
 // Resolve a human-readable label for a category slug, falling back to a
