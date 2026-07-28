@@ -11,10 +11,14 @@ import {
   LockOutlined,
   BookOutlined,
   SettingOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
   // SecurityScanOutlined,
 } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 import { calculateProfileCompletion } from "../../../lib/profileCompletion";
+import { useAuth } from "../../../context/AuthContext";
+import { useEmailVerification } from "../../../hooks/useEmailVerification";
 
 interface ProfileInfoCardProps {
   profile: StudentProfile;
@@ -33,6 +37,9 @@ export default function ProfileInfoCard({
   onChangeEmail,
 }: ProfileInfoCardProps) {
   const profileCompletion = calculateProfileCompletion(profile);
+  const { user } = useAuth();
+  const { resending, resent, handleResendEmail } = useEmailVerification();
+  const isEmailVerified = !!user?.emailVerified;
 
   return (
     <Card
@@ -112,9 +119,44 @@ export default function ProfileInfoCard({
             </span>
           }
         >
-          <span className="font-medium text-neutral-700">
-            {profile.email || "Not provided"}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-neutral-700">
+              {profile.email || "Not provided"}
+            </span>
+            {profile.email &&
+              (isEmailVerified ? (
+                <Tag
+                  color="success"
+                  icon={<CheckCircleOutlined />}
+                  style={{ borderRadius: "6px" }}
+                >
+                  Verified
+                </Tag>
+              ) : (
+                <>
+                  <Tag
+                    color="error"
+                    icon={<ExclamationCircleOutlined />}
+                    style={{ borderRadius: "6px" }}
+                  >
+                    Not Verified
+                  </Tag>
+                  <Button
+                    size="small"
+                    onClick={handleResendEmail}
+                    loading={resending}
+                    disabled={resent}
+                    style={{
+                      borderRadius: "6px",
+                      borderColor: BRAND_BLUE,
+                      color: BRAND_BLUE,
+                    }}
+                  >
+                    {resent ? "Link Sent" : "Verify Now"}
+                  </Button>
+                </>
+              ))}
+          </div>
         </Descriptions.Item>
         <Descriptions.Item
           label={

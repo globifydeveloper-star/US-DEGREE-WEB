@@ -486,15 +486,33 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
   // Action: Email change — Firebase sends a verification link; the change takes
   // effect after the user clicks it, and the backend mirrors it on next login.
-  const handleEmailSubmit = async (values: { newEmail: string }) => {
+  const handleEmailSubmit = async (values: {
+    newEmail: string;
+    currentPassword: string;
+  }) => {
     const current = auth.currentUser;
-    if (!current) {
+    if (!current || !current.email) {
       message.error("You must be signed in to change your email.");
       return;
     }
 
     try {
-      await verifyBeforeUpdateEmail(current, values.newEmail);
+      try {
+        await verifyBeforeUpdateEmail(current, values.newEmail);
+      } catch (err) {
+        // Firebase requires a recent login for sensitive changes — reauth then retry.
+        if ((err as { code?: string }).code === "auth/requires-recent-login") {
+          const credential = EmailAuthProvider.credential(
+            current.email,
+            values.currentPassword,
+          );
+          await reauthenticateWithCredential(current, credential);
+          await verifyBeforeUpdateEmail(current, values.newEmail);
+        } else {
+          throw err;
+        }
+      }
+
       setIsChangeEmailOpen(false);
       notification.success({
         message: "Verification link sent",

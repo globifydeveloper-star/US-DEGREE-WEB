@@ -2,13 +2,16 @@
 
 import React from "react";
 import { Modal, Form, Input, Button, Space, Alert } from "antd";
-import { MailOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined } from "@ant-design/icons";
 
 interface ChangeEmailModalProps {
   open: boolean;
   onClose: () => void;
   currentEmail: string;
-  onSubmit: (values: { newEmail: string }) => void | Promise<void>;
+  onSubmit: (values: {
+    newEmail: string;
+    currentPassword: string;
+  }) => void | Promise<void>;
 }
 
 export default function ChangeEmailModal({
@@ -25,7 +28,10 @@ export default function ChangeEmailModal({
     onClose();
   };
 
-  const handleFinish = async (values: { newEmail: string }) => {
+  const handleFinish = async (values: {
+    newEmail: string;
+    currentPassword: string;
+  }) => {
     setSubmitting(true);
     try {
       await onSubmit(values);
@@ -74,6 +80,16 @@ export default function ChangeEmailModal({
           ]}
         >
           <Input prefix={<MailOutlined />} placeholder="you@example.com" />
+        </Form.Item>
+
+        <Form.Item
+          name="currentPassword"
+          label="Current Password"
+          rules={[
+            { required: true, message: "Please enter your current password" },
+          ]}
+        >
+          <Input.Password prefix={<LockOutlined />} />
         </Form.Item>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-neutral-100">
