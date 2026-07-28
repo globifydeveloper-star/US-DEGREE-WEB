@@ -306,21 +306,9 @@ export default function CompareHeader({
                 className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 bg-[#FAFBFD]"
               >
                 <div className="w-9 h-9 bg-white border border-gray-100 rounded-lg p-1 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
-                  {college.logo ? (
-                    <Image
-                      src={college.logo}
-                      alt={college.name}
-                      width={28}
-                      height={28}
-                      className="object-contain max-h-full max-w-full"
-                      referrerPolicy="no-referrer"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm">
-                      {college.name ? college.name.charAt(0) : "U"}
+                    <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-sm select-none">
+                      {college.name ? college.name.trim().charAt(0).toUpperCase() : "U"}
                     </div>
-                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800 truncate leading-snug">

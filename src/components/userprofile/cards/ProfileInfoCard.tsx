@@ -164,20 +164,28 @@ export default function ProfileInfoCard({
       </Descriptions>
 
       {/* Account security actions — full width on mobile, side by side on larger screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
         <Button
           onClick={onChangePassword}
           icon={<LockOutlined />}
-          className="w-full"
-          style={{ borderRadius: "8px" }}
+          className="w-full font-semibold"
+          style={{
+            borderRadius: "8px",
+            borderColor: BRAND_BLUE,
+            color: BRAND_BLUE,
+          }}
         >
           Change Password
         </Button>
         <Button
           onClick={onChangeEmail}
           icon={<MailOutlined />}
-          className="w-full"
-          style={{ borderRadius: "8px" }}
+          className="w-full font-semibold"
+          style={{
+            borderRadius: "8px",
+            borderColor: BRAND_BLUE,
+            color: BRAND_BLUE,
+          }}
         >
           Change Email Address
         </Button>

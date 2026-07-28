@@ -41,8 +41,7 @@ export default function DesktopComparisonTable({
       <table className="w-full text-left border-collapse table-fixed min-w-[768px] md:min-w-[1000px]">
         <thead>
           <tr className="border-b border-gray-100 bg-[#FAFBFD]/90 backdrop-blur sticky z-20">
-            <th className="w-36 md:w-80 p-4 md:p-8 font-black text-slate-900 text-xs md:text-lg sticky left-0 bg-[#FAFBFD] z-30 border-r border-gray-100">
-              Institutional Criteria
+<th className="w-32 md:w-60 p-4 md:p-6 font-black text-slate-900 text-xs md:text-lg sticky left-0 bg-[#FAFBFD] z-30 border-r border-gray-100">              Institutional Criteria
             </th>
             {comparedColleges.map((college) => (
               <DesktopCollegeHeader
