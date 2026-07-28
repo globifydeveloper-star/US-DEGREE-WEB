@@ -471,7 +471,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
       setIsChangePasswordOpen(false);
       notification.success({
-        message: "Password Updated",
+        title: "Password Updated",
         description:
           "Your account security credentials have been updated successfully.",
         icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
@@ -515,7 +515,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
 
       setIsChangeEmailOpen(false);
       notification.success({
-        message: "Verification link sent",
+        title: "Verification link sent",
         description: `We sent a confirmation link to ${values.newEmail}. Your email updates after you click it.`,
         icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
       });
