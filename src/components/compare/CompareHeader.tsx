@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button, message, Modal } from "antd";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FileText, MapPin, Sparkles, X } from "lucide-react";
+import { Check, FileText, MapPin, Sparkles, X } from "lucide-react";
 import { authedFetch, fetchProfile } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +15,14 @@ import { calculateProfileCompletion } from "@/lib/profileCompletion";
 // Below this, we ask the user to finish their profile before generating a
 // report so the AI has enough signal (academics + preferences) to personalize it.
 const MIN_PROFILE_COMPLETION_FOR_REPORT = 90;
+
+const GENERATION_STEPS = [
+  "analyzing the profile...",
+  "Gathering college data...",
+  "Generating AI insights...",
+  "Building your report...",
+  "Finalizing PDF...",
+];
 
 interface CompareHeaderProps {
   comparedIds: string[];
@@ -29,9 +37,25 @@ export default function CompareHeader({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
+  const [generationStep, setGenerationStep] = useState<number>(-1);
+  const [isGenerated, setIsGenerated] = useState(false);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMounted = useRef(true);
+
   const router = useRouter();
   const { user } = useAuth();
   const compareCount = useCompareCount();
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   // Gate report generation on profile completeness, then open the
   // confirmation modal listing the selected colleges. The actual generation
@@ -72,7 +96,22 @@ export default function CompareHeader({
     }
 
     setIsConfirmOpen(false);
+    setIsGenerated(false);
     setIsGenerating(true);
+    setGenerationStep(0);
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    intervalRef.current = setInterval(() => {
+      setGenerationStep((prev) => {
+        if (prev < GENERATION_STEPS.length - 1) {
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 2000);
+
     const key = "generate-report";
     message.open({
       key,
@@ -122,6 +161,16 @@ export default function CompareHeader({
         pdfUrl: string;
       };
 
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      if (isMounted.current) {
+        setIsGenerating(false);
+        setIsGenerated(true);
+      }
+
       message.open({
         key,
         type: "success",
@@ -129,26 +178,49 @@ export default function CompareHeader({
         duration: 2,
       });
 
-      // Send the user to the "My Reports" section of their profile, where the
-      // new report now shows up with a download button, instead of only
-      // handing them a one-time link.
-      if (result.reportId) {
-        router.push("/profile#reports_section");
-      } else if (result.pdfUrl) {
-        window.open(result.pdfUrl, "_blank");
+      // Show "Generated" green button state for 1.5s
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      if (isMounted.current) {
+        if (result.reportId) {
+          router.push("/profile#reports_section");
+        } else if (result.pdfUrl) {
+          window.open(result.pdfUrl, "_blank");
+        }
       }
     } catch (err) {
       console.error("Report generation error:", err);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (isMounted.current) {
+        setIsGenerating(false);
+        setGenerationStep(-1);
+      }
       message.open({
         key,
         type: "error",
         content: "Failed to generate the report. Please try again.",
         duration: 3,
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
+
+  const getButtonText = () => {
+    if (isGenerated) return "Generated";
+    if (isGenerating && generationStep >= 0 && generationStep < GENERATION_STEPS.length) {
+      return GENERATION_STEPS[generationStep];
+    }
+    if (isCheckingProfile) return "Checking Profile...";
+    return "Generate AI Report";
+  };
+
+  const buttonBgClass = isGenerated
+    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+    : isGenerating
+      ? "animate-gradient-flow"
+      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700";
 
   return (
     <div className="mb-10 text-center lg:text-left flex flex-col lg:flex-row justify-between items-center gap-6">
@@ -160,11 +232,11 @@ export default function CompareHeader({
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
           Compare <span className="text-[#3F51B5]">U.S. Colleges</span>
-          {compareCount > 0 && (
+          {/* {compareCount > 0 && (
             <span className="ml-2 align-middle text-lg md:text-xl font-bold text-slate-400">
               ({compareCount})
             </span>
-          )}
+          )} */}
         </h1>
         <p className="text-gray-500 font-medium text-lg mt-2 tracking-tight">
           Compare academic metrics, annual tuition fees, and career outcomes.
@@ -174,17 +246,15 @@ export default function CompareHeader({
       <div className="shrink-0">
         <Button
           type="primary"
-          icon={<Sparkles className="w-4 h-4" />}
+          icon={isGenerated ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
           loading={isGenerating || isCheckingProfile}
           disabled={comparedIds.length === 0}
-          onClick={handleOpenConfirm}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer"
+          onClick={isGenerating || isGenerated ? undefined : handleOpenConfirm}
+          className={`${buttonBgClass} border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer`}
         >
-          {isGenerating
-            ? "Generating Report..."
-            : isCheckingProfile
-              ? "Checking Profile..."
-              : "Generate AI Report"}
+          <span key={getButtonText()} className={isGenerating ? "animate-text-change" : ""}>
+            {getButtonText()}
+          </span>
         </Button>
       </div>
 
