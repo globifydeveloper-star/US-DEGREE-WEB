@@ -284,6 +284,11 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
     emptyProfile(authUser),
   );
 
+  // True until GET /profile resolves (success or failure) — drives the
+  // skeleton state on the identity/academics/preferences cards so they don't
+  // flash "Not provided" placeholders before the real data arrives.
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+
   // Latest profile, readable from event handlers without re-subscribing.
   const profileRef = useRef(profile);
   useEffect(() => {
@@ -338,6 +343,8 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
         }
       } catch (err) {
         console.error("Failed to load profile:", err);
+      } finally {
+        if (active) setIsProfileLoading(false);
       }
     })();
     return () => {
@@ -592,6 +599,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
         <Col xs={24} lg={14}>
           <ProfileInfoCard
             profile={profile}
+            loading={isProfileLoading}
             onEdit={() => setIsEditProfileOpen(true)}
             onChangePassword={() => setIsChangePasswordOpen(true)}
             onChangeEmail={() => setIsChangeEmailOpen(true)}
@@ -602,10 +610,12 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
           <div className="flex flex-col gap-6 h-full justify-between">
             <AcademicInfoCard
               profile={profile}
+              loading={isProfileLoading}
               onEdit={() => setIsEditProfileOpen(true)}
             />
             <PreferencesCard
               profile={profile}
+              loading={isProfileLoading}
               onEdit={() => setIsEditProfileOpen(true)}
             />
           </div>

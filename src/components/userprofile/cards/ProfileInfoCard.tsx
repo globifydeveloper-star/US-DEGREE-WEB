@@ -1,7 +1,15 @@
 "use client";
 
 import React from "react";
-import { Card, Avatar, Descriptions, Button, Tag, Progress } from "antd";
+import {
+  Card,
+  Avatar,
+  Descriptions,
+  Button,
+  Tag,
+  Progress,
+  Skeleton,
+} from "antd";
 import {
   UserOutlined,
   MailOutlined,
@@ -22,6 +30,7 @@ import { useEmailVerification } from "../../../hooks/useEmailVerification";
 
 interface ProfileInfoCardProps {
   profile: StudentProfile;
+  loading?: boolean;
   onEdit: () => void;
   onChangePassword: () => void;
   onChangeEmail: () => void;
@@ -32,6 +41,7 @@ const BRAND_BLUE = "#3b5bdb";
 
 export default function ProfileInfoCard({
   profile,
+  loading = false,
   onEdit,
   onChangePassword,
   onChangeEmail,
@@ -41,29 +51,52 @@ export default function ProfileInfoCard({
   const { resending, resent, handleResendEmail } = useEmailVerification();
   const isEmailVerified = !!user?.emailVerified;
 
+  const cardTitle = (
+    <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-center gap-2 font-bold">
+        <UserOutlined className="text-blue-600" />
+        Student Profile Information
+      </span>
+      <Button
+        icon={<SettingOutlined />}
+        onClick={onEdit}
+        disabled={loading}
+        className="w-full sm:w-auto"
+        style={{
+          borderRadius: "8px",
+          borderColor: BRAND_BLUE,
+          color: BRAND_BLUE,
+        }}
+      >
+        Edit Academic Info
+      </Button>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <Card
+        id="profile_info_card"
+        title={cardTitle}
+        variant="borderless"
+        className="shadow-md rounded-2xl h-full border border-neutral-100"
+      >
+        <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
+          <Skeleton.Avatar active size={80} shape="circle" />
+          <div className="w-full space-y-2">
+            <Skeleton.Input active size="small" style={{ width: 160 }} />
+            <Skeleton.Input active size="small" block />
+          </div>
+        </div>
+        <Skeleton active title={false} paragraph={{ rows: 5 }} />
+      </Card>
+    );
+  }
+
   return (
     <Card
       id="profile_info_card"
-      title={
-        <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2 font-bold">
-            <UserOutlined className="text-blue-600" />
-            Student Profile Information
-          </span>
-          <Button
-            icon={<SettingOutlined />}
-            onClick={onEdit}
-            className="w-full sm:w-auto"
-            style={{
-              borderRadius: "8px",
-              borderColor: BRAND_BLUE,
-              color: BRAND_BLUE,
-            }}
-          >
-            Edit Academic Info
-          </Button>
-        </div>
-      }
+      title={cardTitle}
       variant="borderless"
       className="shadow-md rounded-2xl h-full border border-neutral-100"
     >

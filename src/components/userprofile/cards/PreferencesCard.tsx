@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { Card, Button, Tag } from "antd";
+import { Card, Button, Tag, Skeleton } from "antd";
 import { CompassOutlined, EditOutlined } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 import { useStates } from "../../../lib/referenceData";
 
 interface PreferencesCardProps {
   profile: StudentProfile;
+  loading?: boolean;
   onEdit: () => void;
 }
 
@@ -15,6 +16,7 @@ const BRAND_BLUE = "#3b5bdb";
 
 export default function PreferencesCard({
   profile,
+  loading = false,
   onEdit,
 }: PreferencesCardProps) {
   // Map stored 2-letter codes to full names using the canonical backend list.
@@ -22,30 +24,46 @@ export default function PreferencesCard({
   const stateName = (code: string) =>
     states.find((s) => s.code === code)?.name || code;
 
+  const cardTitle = (
+    <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-center gap-2 font-bold">
+        <CompassOutlined className="text-indigo-600" />
+        Match Preferences Board
+      </span>
+      <Button
+        size="small"
+        icon={<EditOutlined />}
+        onClick={onEdit}
+        disabled={loading}
+        className="w-full sm:w-auto"
+        style={{
+          borderRadius: "8px",
+          borderColor: BRAND_BLUE,
+          color: BRAND_BLUE,
+        }}
+      >
+        Edit
+      </Button>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <Card
+        id="preferences_summary_card"
+        title={cardTitle}
+        variant="borderless"
+        className="shadow-md rounded-2xl border border-neutral-100"
+      >
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </Card>
+    );
+  }
+
   return (
     <Card
       id="preferences_summary_card"
-      title={
-        <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2 font-bold">
-            <CompassOutlined className="text-indigo-600" />
-            Match Preferences Board
-          </span>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={onEdit}
-            className="w-full sm:w-auto"
-            style={{
-              borderRadius: "8px",
-              borderColor: BRAND_BLUE,
-              color: BRAND_BLUE,
-            }}
-          >
-            Edit
-          </Button>
-        </div>
-      }
+      title={cardTitle}
       variant="borderless"
       className="shadow-md rounded-2xl border border-neutral-100"
     >

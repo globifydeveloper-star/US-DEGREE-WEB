@@ -13,17 +13,18 @@ import { SidebarSkeleton } from "./SearchSkeletons";
  */
 export const OPEN_FILTERS_EVENT = "open-filter-sidebar";
 
-
 export default function SearchSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [states, setStates] =
-    useState<{ state_code: string; state_title: string }[]>([]);
-  const [credentials, setCredentials] =
-    useState<{ id: number; name: string }[]>([]);
+  const [states, setStates] = useState<
+    { state_code: string; state_title: string }[]
+  >([]);
+  const [credentials, setCredentials] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [searchState, setSearchState] = useState("");
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
 
@@ -277,7 +278,8 @@ export default function SearchSidebar() {
       </div>
 
       {/* Tuition & Fees */}
-      <div>
+
+      {/* <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
             Tuition & Fees
@@ -293,7 +295,7 @@ export default function SearchSidebar() {
           onChangeComplete={handleTuitionAfterChange}
           tooltip={{ formatter: (val) => `$${(val || 0) * 2}K` }}
         />
-      </div>
+      </div> */}
     </>
   );
 
