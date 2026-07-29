@@ -90,6 +90,12 @@ export default function HeroSearchCard({
     searchType === "programs" ? styles.gridPrograms : styles.gridUniversities
   }`;
 
+  const hasSelection = Boolean(
+    selectedLevel ||
+    selectedState ||
+    (searchType === "programs" && selectedCourse),
+  );
+
   return (
     <div className={styles.container}>
       {/* Toggle */}
@@ -163,8 +169,8 @@ export default function HeroSearchCard({
       <div className={styles.buttonWrap}>
         <button
           onClick={handleSearch}
-          disabled={isLoading}
-          className={styles.button}
+          disabled={isLoading || !hasSelection}
+          className={`${styles.button} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#2563eb]`}
         >
           <Search className="h-4 w-4" />
           {isLoading

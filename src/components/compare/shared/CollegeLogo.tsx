@@ -19,21 +19,9 @@ export default function CollegeLogo({ name, logo, size = 24 }: CollegeLogoProps)
       className="bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0"
       style={{ width: size, height: size }}
     >
-      {logo ? (
-        <Image
-          src={logo}
-          alt={name}
-          width={size}
-          height={size}
-          className="object-contain"
-          referrerPolicy="no-referrer"
-          unoptimized
-        />
-      ) : (
-        <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[9px]">
-          {name ? name.charAt(0) : "U"}
-        </div>
-      )}
+      <div className="w-full h-full rounded bg-blue-50 flex items-center justify-center font-bold text-[#3F51B5] text-[10px] select-none">
+        {name ? name.trim().charAt(0).toUpperCase() : "U"}
+      </div>
     </div>
   );
 }

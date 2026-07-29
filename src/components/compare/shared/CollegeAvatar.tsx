@@ -34,23 +34,11 @@ export default function CollegeAvatar({ name, logo, size = "lg" }: CollegeAvatar
     <div
       className={`bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${SIZE_CLASSES[size]}`}
     >
-      {logo ? (
-        <Image
-          src={logo}
-          alt={name}
-          width={IMAGE_SIZE[size]}
-          height={IMAGE_SIZE[size]}
-          className="object-contain max-h-full max-w-full"
-          referrerPolicy="no-referrer"
-          unoptimized
-        />
-      ) : (
-        <div
-          className={`w-full h-full rounded-lg bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] ${FALLBACK_TEXT_SIZE[size]}`}
-        >
-          {name ? name.charAt(0) : "U"}
-        </div>
-      )}
+      <div
+        className={`w-full h-full rounded-lg bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] ${FALLBACK_TEXT_SIZE[size]} select-none`}
+      >
+        {name ? name.trim().charAt(0).toUpperCase() : "U"}
+      </div>
     </div>
   );
 }

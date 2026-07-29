@@ -48,8 +48,8 @@ export default function UniversityHero({
         unitid: compareId,
         cipCode: hasCip ? (cipCode as string) : "default",
         programName: hasCip ? degree || undefined : undefined,
-        credentialLevel: hasCip ? credentialLevel ?? undefined : undefined,
-        credentialTitle: hasCip ? credentialTitle ?? undefined : undefined,
+        credentialLevel: hasCip ? (credentialLevel ?? undefined) : undefined,
+        credentialTitle: hasCip ? (credentialTitle ?? undefined) : undefined,
       });
       if (result === "full") {
         alert(
@@ -60,7 +60,7 @@ export default function UniversityHero({
       console.error("Failed to update comparison selection:", err);
     }
   };
-  const isStanford = name.toLowerCase().includes("stanford");
+
 
   const formattedSchoolUrl = schoolUrl
     ? schoolUrl.trim().startsWith("http://") ||
@@ -145,29 +145,13 @@ export default function UniversityHero({
       <div className="w-full max-w-[2380px] mx-auto px-4 sm:px-6 md:px-10 lg:px-[86px] relative">
         <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 -mt-12 md:-mt-20 relative z-10">
           {/* Logo Card */}
-          {isStanford ? (
-            <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-40 md:h-40 mt-0 md:mt-12 bg-white border border-gray-100 rounded-2xl shadow-xl p-2 md:p-3.5 flex items-center justify-center shrink-0">
-              <Image
-                src="/images/stanford_logo.png"
-                alt={`${name} logo`}
-                width={160}
-                height={160}
-                className="w-full h-full object-contain rounded-[16px]"
-              />
-            </div>
-          ) : (
-            <div
-              className={`w-32 h-32 md:w-40 md:h-40 md:mt-12 rounded-[28px] ${logoColor} border-4 border-white shadow-xl flex flex-col items-center justify-center text-white shrink-0 overflow-hidden`}
-            >
-              <Image
-                src="/images/Colleges_105154_logo.png"
-                alt={`${name} logo`}
-                width={160}
-                height={160}
-                className="w-full h-full object-contain p-2"
-              />{" "}
-            </div>
-          )}
+          <div
+            className={`w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 md:mt-12 rounded-[24px] sm:rounded-[28px] ${logoColor || "bg-[#3F51B5]"} border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 select-none font-sans`}
+          >
+            <span className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight drop-shadow-md">
+              {name ? name.trim().charAt(0).toUpperCase() : "U"}
+            </span>
+          </div>
 
           {/* Name & Badges */}
           <div className="flex-1 pb-2">

@@ -159,7 +159,8 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
     <div
       ref={wrapperRef}
       aria-hidden={!visible}
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-[90] w-[92%] max-w-[420px] lg:hidden select-none animate-fade-in transition-transform duration-300 ease-out ${
+      style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+      className={`fixed left-1/2 -translate-x-1/2 z-[90] w-[92%] max-w-[420px] lg:hidden select-none animate-fade-in transition-transform duration-300 ease-out ${
         visible
           ? "translate-y-0 pointer-events-auto"
           : "translate-y-[150%] pointer-events-none"
@@ -173,56 +174,101 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
         />
       </div>
 
-      {/* Floating iOS Whitish Liquid Glass Dock Container */}
-      <div className="relative bg-white/75 backdrop-blur-2xl backdrop-saturate-200 border border-white/90 shadow-[0_12px_40px_rgba(31,38,135,0.15)] rounded-full px-2.5 py-2 flex items-center justify-between overflow-hidden ring-1 ring-black/5">
-        {/* Subtle Ambient Gloss Rim */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
-
-        {/* Sliding Whitish iOS Liquid Glass Highlight Bubble */}
-        <div
-          className="absolute top-1.5 bottom-1.5 w-[18%] bg-blue-600/10 border border-blue-600/25 rounded-full transition-all duration-300 ease-out backdrop-blur-md shadow-sm ring-1 ring-blue-500/10"
-          style={{
-            left: `calc(${activeIndex * 20}% + 1%)`,
-          }}
-        />
-
-        {/* Navigation Tabs */}
+      {/* Floating Liquid Pill Dock */}
+      <nav
+        aria-label="Primary"
+        className="relative flex items-center justify-between gap-1 bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_-8px_rgba(15,23,42,0.25)] rounded-full px-1.5 py-1.5"
+      >
         {navItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = activeIndex === index;
+          const isProfile = item.id === "profile";
+          const showBadge =
+            !isActive && item.badge !== undefined && item.badge > 0;
+          const showDot = !isActive && item.hasNotification;
 
           return (
             <Link
               key={item.id}
               href={item.href}
               onClick={(e) => handleItemClick(e, item)}
-              className={`relative z-10 flex-1 flex flex-col items-center justify-center py-2 transition-all active:scale-90 cursor-pointer ${
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
+              style={{
+                transition:
+                  "background-color 300ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 300ms cubic-bezier(0.34,1.56,0.64,1), padding 300ms cubic-bezier(0.34,1.56,0.64,1), transform 150ms ease-out",
+              }}
+              className={`relative flex h-11 flex-none items-center justify-center rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-90 ${
                 isActive
-                  ? "text-blue-600 drop-shadow-sm font-bold"
-                  : "text-slate-400 hover:text-slate-700"
+                  ? "bg-blue-600 px-3.5 shadow-[0_4px_16px_-2px_rgba(37,99,235,0.55)]"
+                  : "w-11 px-0 hover:bg-slate-900/[0.04]"
               }`}
             >
-              <div className="relative flex items-center justify-center">
-                <Icon
-                  className={`w-6 h-6 transition-all duration-200 ${isActive ? "stroke-[2.5px] scale-110" : "stroke-[1.8px]"}`}
-                />
+              <div className="relative flex items-center justify-center shrink-0">
+                {isProfile ? (
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full overflow-hidden ${
+                      isActive ? "bg-white" : "bg-slate-200"
+                    }`}
+                  >
+                    {user?.photoURL ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={user.photoURL}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Icon
+                        className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-slate-400"}`}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                  </span>
+                ) : (
+                  <Icon
+                    className={`w-5 h-5 transition-all duration-200 ${
+                      isActive
+                        ? "text-white stroke-[2.5px]"
+                        : "text-slate-400 stroke-[1.8px]"
+                    }`}
+                  />
+                )}
 
-                {/* Compare Count Badge */}
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full min-w-[16px] text-center leading-tight shadow-md border border-white/40 animate-scale-up">
+                {/* Compare Count Badge — only when this tab isn't the active one */}
+                {showBadge && (
+                  <span className="absolute -top-1.5 -right-2 flex items-center justify-center min-w-[15px] h-[15px] px-1 rounded-full bg-blue-600 text-white text-[9px] font-bold ring-2 ring-white leading-none">
                     {item.badge}
                   </span>
                 )}
 
-                {/* Red Notification Dot - Only shown when saved colleges exist */}
-                {item.hasNotification && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-md animate-pulse" />
+                {/* Red Notification Dot - only when this tab isn't the active one */}
+                {showDot && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white" />
                 )}
               </div>
+
+              {/* Label reveal — width driven by grid-template-columns so each
+                  tab's expanded width tracks its own label length. */}
+              <span
+                className={`grid overflow-hidden transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                  isActive ? "grid-cols-[1fr]" : "grid-cols-[0fr]"
+                }`}
+              >
+                <span className="overflow-hidden whitespace-nowrap">
+                  <span
+                    className={`inline-block pl-1.5 text-[13px] font-semibold text-white transition-opacity duration-200 ${
+                      isActive ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </span>
+              </span>
             </Link>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 }

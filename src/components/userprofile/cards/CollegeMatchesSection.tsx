@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -11,8 +11,6 @@ import {
   Tooltip,
   Empty,
   Spin,
-  Avatar,
-  Segmented,
   message,
 } from "antd";
 import {
@@ -23,8 +21,6 @@ import {
   CompassOutlined,
   ReadOutlined,
   TrophyOutlined,
-  AppstoreOutlined,
-  UnorderedListOutlined,
 } from "@ant-design/icons";
 import { CollegeMatch } from "../matchEngine";
 import {
@@ -58,8 +54,6 @@ export default function CollegeMatchesSection({
 }: CollegeMatchesSectionProps) {
   const router = useRouter();
 
-  const [view, setView] = useState<"Grid" | "List">("Grid");
-
   // Selected-for-comparison entries, from the single shared matrix store. Kept
   // in sync with selections made anywhere (search cards, university page,
   // /compare page).
@@ -80,7 +74,9 @@ export default function CollegeMatchesSection({
         unitid: match.id,
         cipCode: match.cipCode || "default",
         programName: hasCip ? match.programTitle || undefined : undefined,
-        credentialLevel: hasCip ? match.credentialLevel ?? undefined : undefined,
+        credentialLevel: hasCip
+          ? (match.credentialLevel ?? undefined)
+          : undefined,
         credentialTitle: hasCip ? match.degreeLevel || undefined : undefined,
       });
       if (result === "removed") {
@@ -164,27 +160,11 @@ export default function CollegeMatchesSection({
               </span>
             </div>
           </Space>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-neutral-500 font-semibold tracking-wide uppercase">
-                Realtime Engine active
-              </span>
-            </div>
-            {matches.length > 0 && (
-              <Segmented
-                options={[
-                  { label: "Grid", value: "Grid", icon: <AppstoreOutlined /> },
-                  {
-                    label: "List",
-                    value: "List",
-                    icon: <UnorderedListOutlined />,
-                  },
-                ]}
-                value={view}
-                onChange={(val: string) => setView(val as "Grid" | "List")}
-              />
-            )}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs text-neutral-500 font-semibold tracking-wide uppercase">
+              Realtime Engine active
+            </span>
           </div>
         </div>
       }
@@ -201,183 +181,6 @@ export default function CollegeMatchesSection({
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description="Add your target states and majors to see matched colleges."
         />
-      ) : view === "List" ? (
-        <div className="flex flex-col gap-3">
-          {matches.map((match) => {
-            const isSaved = savedIds.includes(match.unitid);
-            const isCompared = isCollegeCompared(match.id);
-            const location =
-              match.city && match.state
-                ? `${match.city}, ${match.state}`
-                : match.city || match.state || "—";
-            const hasTuition = match.tuition !== null;
-            const costValue = hasTuition
-              ? match.tuition
-              : match.costOfAttendance;
-            const costLabel = hasTuition ? "Tuition" : "Avg. Annual Cost";
-
-            return (
-              <div
-                key={match.id}
-                className="rounded-2xl border border-neutral-150 bg-white p-4 hover:shadow-sm transition-shadow"
-              >
-                {/* Top row: identity + quick actions */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <Avatar
-                      shape="square"
-                      size={40}
-                      style={{
-                        backgroundColor: "#3b5bdb",
-                        fontWeight: "bold",
-                        borderRadius: 10,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {match.name.substring(0, 2)}
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-extrabold text-neutral-800 leading-snug">
-                          {match.name}
-                        </h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-50 border border-neutral-200 px-1.5 py-0.5 rounded-md shrink-0">
-                          {match.isPrivate ? "Private" : "Public"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-neutral-500 flex items-center gap-1.5 mt-0.5 font-medium">
-                        <GlobalOutlined className="text-[#3b5bdb]" />
-                        {location}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Tooltip
-                      title={
-                        isCompared
-                          ? "Remove from comparison"
-                          : "Add to comparison block"
-                      }
-                    >
-                      <Button
-                        type={isCompared ? "primary" : "default"}
-                        ghost={isCompared}
-                        icon={<SyncOutlined spin={isCompared} />}
-                        onClick={() => toggleCompare(match)}
-                        className={
-                          isCompared
-                            ? ""
-                            : "border-neutral-200 text-neutral-400"
-                        }
-                        size="small"
-                        shape="circle"
-                      />
-                    </Tooltip>
-                    <Tooltip
-                      title={
-                        isSaved
-                          ? "Already in saved colleges"
-                          : "Save this college"
-                      }
-                    >
-                      <Button
-                        danger={isSaved}
-                        icon={isSaved ? <HeartFilled /> : <HeartOutlined />}
-                        onClick={() => toggleSave(match)}
-                        className={
-                          isSaved ? "" : "border-neutral-200 text-neutral-400"
-                        }
-                        size="small"
-                        shape="circle"
-                      />
-                    </Tooltip>
-                  </div>
-                </div>
-
-                {/* Matched program + degree level pills */}
-                {(match.programTitle || match.degreeLevel) && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {match.programTitle && (
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-md px-2 py-1">
-                        <ReadOutlined />
-                        <span>{match.programTitle}</span>
-                      </div>
-                    )}
-                    {match.degreeLevel && (
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-2 py-1">
-                        <TrophyOutlined />
-                        <span>{match.degreeLevel}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Stat boxes — same tile style as Grid view, laid out in a row */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-xs mt-3">
-                  <div className="bg-emerald-50 rounded-lg px-2.5 py-2">
-                    <span className="text-[10px] text-emerald-600/80 font-semibold block">
-                      {costLabel}
-                    </span>
-                    <span className="font-bold text-emerald-700">
-                      {fmtMoney(costValue)}
-                      {costValue !== null && "/yr"}
-                    </span>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg px-2.5 py-2">
-                    <span className="text-[10px] text-blue-600/80 font-semibold block">
-                      Acceptance Rate
-                    </span>
-                    <span className="font-bold text-blue-700">
-                      {fmtPercent(match.acceptanceRate)}
-                    </span>
-                  </div>
-                  <div className="bg-violet-50 rounded-lg px-2.5 py-2">
-                    <span className="text-[10px] text-violet-600/80 font-semibold block">
-                      Graduation Rate
-                    </span>
-                    <span className="font-bold text-violet-700">
-                      {fmtPercent(match.graduationRate)}
-                    </span>
-                  </div>
-                  <div className="bg-amber-50 rounded-lg px-2.5 py-2">
-                    <span className="text-[10px] text-amber-600/80 font-semibold block">
-                      Employment Rate
-                    </span>
-                    <span className="font-bold text-amber-700">
-                      {fmtPercent(match.employmentRate)}
-                    </span>
-                  </div>
-                  <div className="bg-teal-50 rounded-lg px-2.5 py-2 col-span-2 sm:col-span-1">
-                    <span className="flex items-center gap-1 text-[10px] text-teal-600/80 font-semibold">
-                      1-Yr Median Salary
-                      {match.medianSalary1yrMethod && (
-                        <EarningsMethodBadge
-                          method={match.medianSalary1yrMethod}
-                        />
-                      )}
-                    </span>
-                    <span className="font-bold text-teal-700">
-                      {fmtMoney(match.medianSalary1yr)}
-                      {match.medianSalary1yr !== null && "/yr"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Quick review link */}
-                <div className="mt-3 pt-3 border-t border-neutral-100">
-                  <Button
-                    type="text"
-                    onClick={() => goToDetails(match)}
-                    className="text-xs font-semibold hover:text-blue-600 px-0 flex items-center gap-1"
-                  >
-                    Quick Review Detail →
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       ) : (
         <Row gutter={[20, 20]}>
           {matches.map((match) => {

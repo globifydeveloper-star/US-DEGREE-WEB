@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { Card, Button, Row, Col } from "antd";
+import { Card, Button, Row, Col, Skeleton } from "antd";
 import { BookOutlined, HomeOutlined, EditOutlined } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 
 interface AcademicInfoCardProps {
   profile: StudentProfile;
+  loading?: boolean;
   onEdit: () => void;
 }
 
@@ -14,32 +15,49 @@ const BRAND_BLUE = "#3b5bdb";
 
 export default function AcademicInfoCard({
   profile,
+  loading = false,
   onEdit,
 }: AcademicInfoCardProps) {
+  const cardTitle = (
+    <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-center gap-2 font-bold">
+        <BookOutlined className="text-emerald-600" />
+        High School &amp; Test Performance
+      </span>
+      <Button
+        size="small"
+        icon={<EditOutlined />}
+        onClick={onEdit}
+        disabled={loading}
+        className="w-full sm:w-auto"
+        style={{
+          borderRadius: "8px",
+          borderColor: BRAND_BLUE,
+          color: BRAND_BLUE,
+        }}
+      >
+        Edit
+      </Button>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <Card
+        id="academics_summary_card"
+        title={cardTitle}
+        variant="borderless"
+        className="shadow-md rounded-2xl flex-1 border border-neutral-100"
+      >
+        <Skeleton active paragraph={{ rows: 5 }} />
+      </Card>
+    );
+  }
+
   return (
     <Card
       id="academics_summary_card"
-      title={
-        <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2 font-bold">
-            <BookOutlined className="text-emerald-600" />
-            High School &amp; Test Performance
-          </span>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={onEdit}
-            className="w-full sm:w-auto"
-            style={{
-              borderRadius: "8px",
-              borderColor: BRAND_BLUE,
-              color: BRAND_BLUE,
-            }}
-          >
-            Edit
-          </Button>
-        </div>
-      }
+      title={cardTitle}
       variant="borderless"
       className="shadow-md rounded-2xl flex-1 border border-neutral-100"
     >

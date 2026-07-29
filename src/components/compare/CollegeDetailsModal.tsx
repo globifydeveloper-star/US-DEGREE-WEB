@@ -572,21 +572,9 @@ export default function CollegeDetailsModal({
             <div className="py-2 flex items-center gap-4">
               {/* Logo */}
               <div className="w-12 h-12 md:w-16 md:h-16 bg-white border border-slate-100 rounded-xl p-1.5 flex items-center justify-center shadow-sm overflow-hidden shrink-0">
-                {data.logo ? (
-                  <Image
-                    src={data.logo}
-                    alt={data.name}
-                    width={48}
-                    height={48}
-                    className="object-contain max-h-full max-w-full w-8 h-8 md:w-12 md:h-12"
-                    referrerPolicy="no-referrer"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-xs md:text-base">
-                    {data.name ? data.name.charAt(0) : "U"}
+                  <div className="w-full h-full rounded bg-blue-100 flex items-center justify-center font-bold text-[#3F51B5] text-xs md:text-base select-none">
+                    {data.name ? data.name.trim().charAt(0).toUpperCase() : "U"}
                   </div>
-                )}
               </div>
               <div>
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 leading-tight">

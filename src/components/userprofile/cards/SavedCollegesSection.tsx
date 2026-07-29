@@ -6,7 +6,6 @@ import {
   Avatar,
   Button,
   Segmented,
-  List,
   Empty,
   Row,
   Col,
@@ -299,18 +298,51 @@ export default function SavedCollegesSection({
           })}
         </Row>
       ) : (
-        /* List View mode matching standard AntD List */
-        <List
-          itemLayout="horizontal"
-          dataSource={colleges}
-          renderItem={(uni: SavedCollege) => {
+        /* List View mode — plain rows (antd's List component is deprecated) */
+        <div className="flex flex-col">
+          {colleges.map((uni) => {
             const websiteUrl = normalizeUrl(uni.schoolUrl);
             return (
-              <List.Item
-                actions={[
+              <div
+                key={uni.unitid}
+                className="flex flex-col sm:flex-row sm:items-center gap-3 py-4 px-4 hover:bg-neutral-50 rounded-xl border-b border-neutral-100 transition-colors"
+              >
+                <Avatar
+                  style={{ backgroundColor: "#1890ff", fontWeight: "bold" }}
+                  className="shrink-0"
+                >
+                  {uni.name.substring(0, 2)}
+                </Avatar>
+
+                <div className="min-w-0 flex-1">
+                  <span className="font-extrabold text-neutral-800 block">
+                    {uni.name}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 pt-0.5">
+                    <span className="flex items-center gap-1">
+                      <GlobalOutlined />
+                      {uni.location}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Avg. Annual Cost:{" "}
+                      <b className="text-neutral-700">
+                        {formatTuition(uni.tuitionFee)}
+                      </b>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Acceptance Rate:{" "}
+                      <b className="text-neutral-700">
+                        {formatRate(uni.acceptanceRate)}
+                      </b>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                   <Button
                     type="link"
-                    key="view"
                     disabled={!websiteUrl}
                     href={websiteUrl ?? undefined}
                     target="_blank"
@@ -318,60 +350,21 @@ export default function SavedCollegesSection({
                     style={{ fontWeight: 600 }}
                   >
                     Visit website
-                  </Button>,
+                  </Button>
                   <Button
                     type="text"
                     danger
-                    key="remove"
                     loading={removing === String(uni.unitid)}
                     icon={<DeleteOutlined />}
                     onClick={() => handleRemove(uni.unitid, uni.name)}
                   >
                     Remove From list
-                  </Button>,
-                ]}
-                className="hover:bg-neutral-50 px-4 rounded-xl border-b border-neutral-100 transition-colors"
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar
-                      style={{ backgroundColor: "#1890ff", fontWeight: "bold" }}
-                    >
-                      {uni.name.substring(0, 2)}
-                    </Avatar>
-                  }
-                  title={
-                    <span className="font-extrabold text-neutral-800">
-                      {uni.name}
-                    </span>
-                  }
-                  description={
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 pt-0.5">
-                      <span className="flex items-center gap-1">
-                        <GlobalOutlined />
-                        {uni.location}
-                      </span>
-                      <span>•</span>
-                      <span>
-                        Avg. Annual Cost:{" "}
-                        <b className="text-neutral-700">
-                          {formatTuition(uni.tuitionFee)}
-                        </b>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        Acceptance Rate:{" "}
-                        <b className="text-neutral-700">
-                          {formatRate(uni.acceptanceRate)}
-                        </b>
-                      </span>
-                    </div>
-                  }
-                />
-              </List.Item>
+                  </Button>
+                </div>
+              </div>
             );
-          }}
-        />
+          })}
+        </div>
       )}
     </Card>
   );
