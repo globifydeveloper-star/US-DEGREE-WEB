@@ -19,6 +19,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "US Degrees",
   description: "Search universities in the US",
+  icons: {
+    icon: '/images/cap.png',
+  },
 };
 
 export default function RootLayout({
