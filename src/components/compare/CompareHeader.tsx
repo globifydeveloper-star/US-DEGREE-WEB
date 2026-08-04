@@ -134,10 +134,25 @@ export default function CompareHeader({
 
     const invalidEntry = selectedColleges.find((c) => Number.isNaN(c.unitid));
     if (invalidEntry) {
-      console.warn("comparedColleges contains an unresolved unitid", {
+      console.error("comparedColleges contains an unresolved unitid", {
         raw: comparedColleges,
         resolved: selectedColleges,
       });
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (isMounted.current) {
+        setIsGenerating(false);
+        setGenerationStep(-1);
+      }
+      message.open({
+        key,
+        type: "error",
+        content: "One of the selected colleges couldn't be identified. Please remove and re-add it, then try again.",
+        duration: 3,
+      });
+      return;
     }
 
     try {
@@ -185,7 +200,7 @@ export default function CompareHeader({
         if (result.reportId) {
           router.push("/profile#reports_section");
         } else if (result.pdfUrl) {
-          window.open(result.pdfUrl, "_blank");
+          window.open(result.pdfUrl, "_blank", "noopener,noreferrer");
         }
       }
     } catch (err) {

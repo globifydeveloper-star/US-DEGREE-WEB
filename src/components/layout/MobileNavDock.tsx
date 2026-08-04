@@ -111,7 +111,12 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
       icon: Scale,
       badge: user ? compareCount : 0,
     },
-    { id: "search", label: "Search", href: "/search", icon: Search },
+    {
+      id: "search",
+      label: "Search",
+      href: "/#search-programs-section-mobile",
+      icon: Search,
+    },
     {
       id: "saved",
       label: "Saved",
@@ -141,7 +146,16 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   const handleItemClick = (e: React.MouseEvent, item: (typeof navItems)[0]) => {
     if (item.id === "search") {
       e.preventDefault();
-      router.push("/search");
+      // Open the home page's own search dropdown instead of the search
+      // results page — scroll to it directly if already home, otherwise
+      // navigate home and let the hash land on it.
+      if (pathname === "/") {
+        document
+          .getElementById("search-programs-section-mobile")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        router.push("/#search-programs-section-mobile");
+      }
       return;
     }
 

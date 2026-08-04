@@ -61,6 +61,36 @@ interface AuthContextType {
   sendPasswordReset: (email: string) => Promise<void>;
 }
 
+// POST /user now requires a verified Firebase identity — the backend derives
+// email/role/verification status from the token itself (via
+// firebaseAuth.verifyIdToken(), including revocation checks) rather than
+// trusting those fields in the body, so callers must attach a Firebase ID
+// token and must NOT send `email` in the body. On a 401 (expired/invalid/
+// revoked token) we force a fresh token from Firebase and retry once, same
+// as any other Firebase-auth expiry.
+async function syncUserRecord(
+  firebaseUser: FirebaseUser,
+  fields: Record<string, unknown>,
+): Promise<Response> {
+  const run = async (forceRefresh: boolean) => {
+    const idToken = await firebaseUser.getIdToken(forceRefresh);
+    return fetch("/api/proxy/user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(fields),
+    });
+  };
+
+  let res = await run(false);
+  if (res.status === 401) {
+    res = await run(true);
+  }
+  return res;
+}
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
@@ -177,18 +207,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Sync/load user from Postgres DB via proxy /user
-      const res = await fetch("/api/proxy/user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: credential.user.email,
-          display_name: credential.user.displayName,
-          auth_provider: "credentials",
-          email_verified: credential.user.emailVerified,
-          provider_user_id: credential.user.uid,
-        }),
+      const res = await syncUserRecord(credential.user, {
+        display_name: credential.user.displayName,
+        auth_provider: "credentials",
+        email_verified: credential.user.emailVerified,
+        provider_user_id: credential.user.uid,
       });
 
       if (!res.ok) {
@@ -242,20 +265,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await sendEmailVerification(credential.user, getActionCodeSettings());
 
         try {
-          await fetch("/api/proxy/user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: email.toLowerCase().trim(),
-              display_name: displayName.trim(),
-              auth_provider: "credentials",
-              role: role || "student",
-              email_verified: false,
-              provider_user_id: credential.user.uid,
-              age_consent: !!ageConsent,
-            }),
+          await syncUserRecord(credential.user, {
+            display_name: displayName.trim(),
+            auth_provider: "credentials",
+            role: role || "student",
+            email_verified: false,
+            provider_user_id: credential.user.uid,
+            age_consent: !!ageConsent,
           });
         } catch (err) {
           console.error("Postgres user creation error during signup:", err);
@@ -330,23 +346,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (verified) {
         let dbUser = null;
         try {
-          const res = await fetch("/api/proxy/user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: auth.currentUser.email,
-              display_name: auth.currentUser.displayName,
-              profile_image: auth.currentUser.photoURL,
-              auth_provider: auth.currentUser.providerData.some(
-                (p) => p.providerId === "password",
-              )
-                ? "credentials"
-                : "google",
-              email_verified: true,
-              provider_user_id: auth.currentUser.uid,
-            }),
+          const res = await syncUserRecord(auth.currentUser, {
+            display_name: auth.currentUser.displayName,
+            profile_image: auth.currentUser.photoURL,
+            auth_provider: auth.currentUser.providerData.some(
+              (p) => p.providerId === "password",
+            )
+              ? "credentials"
+              : "google",
+            email_verified: true,
+            provider_user_id: auth.currentUser.uid,
           });
           if (res.ok) {
             dbUser = await res.json();
@@ -472,19 +481,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             );
 
             try {
-              const res = await fetch("/api/proxy/user", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  email: firebaseUser.email,
-                  display_name: firebaseUser.displayName,
-                  profile_image: firebaseUser.photoURL,
-                  auth_provider: isPasswordAuth ? "credentials" : "google",
-                  email_verified: firebaseUser.emailVerified,
-                  provider_user_id: firebaseUser.uid,
-                }),
+              const res = await syncUserRecord(firebaseUser, {
+                display_name: firebaseUser.displayName,
+                profile_image: firebaseUser.photoURL,
+                auth_provider: isPasswordAuth ? "credentials" : "google",
+                email_verified: firebaseUser.emailVerified,
+                provider_user_id: firebaseUser.uid,
               });
               if (res.ok && active) {
                 const dbUser = await res.json();
