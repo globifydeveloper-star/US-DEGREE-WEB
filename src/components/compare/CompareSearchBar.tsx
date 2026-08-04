@@ -48,7 +48,10 @@ export default function CompareSearchBar({
 
   // Step 2: program search, scoped to the chosen credential level (global
   // across every school, not any one college).
-  const [programQuery, setProgramQuery] = useState("");
+  //
+  // The query value itself is never read — the input is uncontrolled and the
+  // debounced fetch closes over its argument — so only the setter is bound.
+  const [, setProgramQuery] = useState("");
   const [programResults, setProgramResults] = useState<ProgramByCredential[]>(
     [],
   );
@@ -61,7 +64,7 @@ export default function CompareSearchBar({
 
   // Step 3: college search, scoped to the chosen program's cip_code + the
   // credential level — the reverse of the compare page's old college-first flow.
-  const [collegeQuery, setCollegeQuery] = useState("");
+  const [, setCollegeQuery] = useState("");
   const [collegeResults, setCollegeResults] = useState<SchoolForProgram[]>([]);
   const [isSearchingColleges, setIsSearchingColleges] = useState(false);
   const [selectedCollege, setSelectedCollege] =

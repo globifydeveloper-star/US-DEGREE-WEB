@@ -1,19 +1,16 @@
 "use client";
 
-import Image from "next/image";
-
 interface CollegeLogoProps {
   name: string;
-  logo?: string;
   /** Pixel size of the square logo box. Defaults to 24 (used in mobile rows). */
   size?: number;
 }
 
 /**
- * Shows a college's logo image, or a colored circle with the first letter
- * of the college's name when there is no logo.
+ * Shows a colored square with the first letter of the college's name. Logo
+ * images are not displayed here.
  */
-export default function CollegeLogo({ name, logo, size = 24 }: CollegeLogoProps) {
+export default function CollegeLogo({ name, size = 24 }: CollegeLogoProps) {
   return (
     <div
       className="bg-white border border-gray-100 rounded p-0.5 flex items-center justify-center shrink-0"

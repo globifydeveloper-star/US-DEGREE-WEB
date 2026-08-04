@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button, message, Modal } from "antd";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Check, FileText, MapPin, Sparkles, X } from "lucide-react";
 import { authedFetch, fetchProfile } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
 import { useAuth } from "@/context/AuthContext";
-import { useCompareCount } from "@/hooks/useCompareCount";
 import { emptyProfile, mergeProfile } from "@/components/userprofile/ProfileDashboard";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
@@ -45,7 +43,6 @@ export default function CompareHeader({
 
   const router = useRouter();
   const { user } = useAuth();
-  const compareCount = useCompareCount();
 
   useEffect(() => {
     isMounted.current = true;
@@ -134,10 +131,25 @@ export default function CompareHeader({
 
     const invalidEntry = selectedColleges.find((c) => Number.isNaN(c.unitid));
     if (invalidEntry) {
-      console.warn("comparedColleges contains an unresolved unitid", {
+      console.error("comparedColleges contains an unresolved unitid", {
         raw: comparedColleges,
         resolved: selectedColleges,
       });
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (isMounted.current) {
+        setIsGenerating(false);
+        setGenerationStep(-1);
+      }
+      message.open({
+        key,
+        type: "error",
+        content: "One of the selected colleges couldn't be identified. Please remove and re-add it, then try again.",
+        duration: 3,
+      });
+      return;
     }
 
     try {
@@ -185,7 +197,7 @@ export default function CompareHeader({
         if (result.reportId) {
           router.push("/profile#reports_section");
         } else if (result.pdfUrl) {
-          window.open(result.pdfUrl, "_blank");
+          window.open(result.pdfUrl, "_blank", "noopener,noreferrer");
         }
       }
     } catch (err) {
@@ -232,11 +244,6 @@ export default function CompareHeader({
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
           Compare <span className="text-[#3F51B5]">U.S. Colleges</span>
-          {/* {compareCount > 0 && (
-            <span className="ml-2 align-middle text-lg md:text-xl font-bold text-slate-400">
-              ({compareCount})
-            </span>
-          )} */}
         </h1>
         <p className="text-gray-500 font-medium text-lg mt-2 tracking-tight">
           Compare academic metrics, annual tuition fees, and career outcomes.

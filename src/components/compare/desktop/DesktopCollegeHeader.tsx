@@ -39,7 +39,7 @@ export default function DesktopCollegeHeader({
       </div>
 
       <div className="flex flex-col items-center text-center pt-2">
-        <CollegeAvatar name={college.name} logo={college.logo} size="lg" />
+        <CollegeAvatar name={college.name} size="lg" />
 
         <h3
           className="text-xs md:text-lg font-black text-slate-900 line-clamp-1 hover:text-[#3F51B5] cursor-pointer transition-colors"

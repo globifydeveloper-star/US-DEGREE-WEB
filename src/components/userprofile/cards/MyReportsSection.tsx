@@ -60,7 +60,7 @@ export default function MyReportsSection() {
     setDownloadingId(reportId);
     try {
       const detail = await fetchReport(reportId);
-      const win = window.open(detail.downloadUrl, "_blank");
+      const win = window.open(detail.downloadUrl, "_blank", "noopener,noreferrer");
       if (!win) message.error("Please allow pop-ups to download the report.");
     } catch (err) {
       console.error("Failed to get download link:", err);

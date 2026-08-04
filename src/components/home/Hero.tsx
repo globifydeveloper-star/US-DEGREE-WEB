@@ -34,14 +34,20 @@ export default function Hero() {
                     src="/images/collage.webp"
                     alt="Students sitting under a tree"
                     fill
+                    priority
+                    loading="eager"
                     sizes="100vw"
                     className="object-cover object-center"
                   />
                 </div>
               </div>
 
-              {/* Search Card (Mobile/Tablet only) */}
-              <HeroSearchCard variant="mobile" search={search} />
+              {/* Search Card (Mobile/Tablet only) — id lets the mobile nav
+                  dock's search tab scroll straight to this instead of
+                  navigating to the search results page. */}
+              <div id="search-programs-section-mobile">
+                <HeroSearchCard variant="mobile" search={search} />
+              </div>
             </div>
           </div>
 
@@ -52,6 +58,8 @@ export default function Hero() {
                 src="/images/collage.webp"
                 alt="Students sitting under a tree"
                 fill
+                priority
+                loading="eager"
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover object-center"
               />

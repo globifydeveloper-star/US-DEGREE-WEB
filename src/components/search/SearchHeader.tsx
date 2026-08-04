@@ -173,14 +173,13 @@ export default function SearchHeader({
   const activeFilters = getActiveFilters();
 
   // Count of active filter groups, mirrors the drawer badge in SearchSidebar
-  // (state, credential, institution type, tuition range).
+  // (state, credential, institution type). Tuition is deliberately excluded:
+  // the filter was removed, so a tuition_min/max lingering in the URL would
+  // count toward a badge the user has no control to see or clear.
   const mobileFilterCount =
     (stateCodes.length > 0 ? 1 : 0) +
     (credentialTitles.length > 0 ? 1 : 0) +
-    (searchParams.get("school_type") ? 1 : 0) +
-    (searchParams.get("tuition_min") || searchParams.get("tuition_max")
-      ? 1
-      : 0);
+    (searchParams.get("school_type") ? 1 : 0);
 
   const openMobileFilters = () => {
     window.dispatchEvent(new Event(OPEN_FILTERS_EVENT));

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { X, DollarSign, Percent, Info, Users, BookOpen } from "lucide-react";
 import StatsGrid from "@/components/university/StatsGrid";
 import EarningsMethodBadge from "@/components/common/EarningsMethodBadge";
