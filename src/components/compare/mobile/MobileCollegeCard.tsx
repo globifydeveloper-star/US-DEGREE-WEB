@@ -30,7 +30,7 @@ export default function MobileCollegeCard({
       <div>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <CollegeAvatar name={college.name} logo={college.logo} size="md" />
+            <CollegeAvatar name={college.name} size="md" />
             <div className="min-w-0">
               <h4
                 className="font-black text-slate-900 text-sm truncate leading-snug hover:text-[#3F51B5] cursor-pointer transition-colors"

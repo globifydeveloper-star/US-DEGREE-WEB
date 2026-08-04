@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Filter, X } from "lucide-react";
-import { Slider } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SidebarSkeleton } from "./SearchSkeletons";
 
@@ -34,36 +33,13 @@ export default function SearchSidebar() {
     searchParams.get("credential_title")?.split(",").filter(Boolean) ?? [];
   const selectedCollegeType = searchParams.get("school_type");
 
-  const initialTuitionMin = searchParams.get("tuition_min")
-    ? Number(searchParams.get("tuition_min")) / 2000
-    : 0;
-  const initialTuitionMax = searchParams.get("tuition_max")
-    ? Number(searchParams.get("tuition_max")) / 2000
-    : 25;
-  const [tuitionRange, setTuitionRange] = useState<[number, number]>([
-    initialTuitionMin,
-    initialTuitionMax,
-  ]);
-
-  // Count active filters for the badge
+  // Count active filters for the badge. Tuition is deliberately not counted:
+  // its control was removed, so a tuition_min/max left in the URL would show a
+  // filter the user has no way to see or clear.
   const activeFilterCount =
     (selectedStates.length > 0 ? 1 : 0) +
     (selectedCredentials.length > 0 ? 1 : 0) +
-    (selectedCollegeType ? 1 : 0) +
-    (tuitionRange[0] !== 0 || tuitionRange[1] !== 25 ? 1 : 0);
-
-  const handleTuitionChange = (val: number | number[]) => {
-    if (Array.isArray(val)) setTuitionRange([val[0], val[1]]);
-  };
-
-  const handleTuitionAfterChange = (val: number | number[]) => {
-    if (Array.isArray(val)) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tuition_min", (val[0] * 2000).toString());
-      params.set("tuition_max", (val[1] * 2000).toString());
-      router.push(`${pathname}?${params.toString()}`);
-    }
-  };
+    (selectedCollegeType ? 1 : 0);
 
   // Open the mobile drawer when the top-of-page Filters button asks us to.
   useEffect(() => {
@@ -277,25 +253,6 @@ export default function SearchSidebar() {
         </div>
       </div>
 
-      {/* Tuition & Fees */}
-
-      {/* <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Tuition & Fees
-          </h3>
-          <span className="text-[13px] font-medium text-gray-900">
-            ${tuitionRange[0] * 2}K-${tuitionRange[1] * 2}K
-          </span>
-        </div>
-        <Slider
-          range
-          value={tuitionRange}
-          onChange={handleTuitionChange}
-          onChangeComplete={handleTuitionAfterChange}
-          tooltip={{ formatter: (val) => `$${(val || 0) * 2}K` }}
-        />
-      </div> */}
     </>
   );
 

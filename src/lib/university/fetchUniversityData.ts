@@ -67,13 +67,11 @@ export async function fetchUniversityData(
       `${apiUrl}/overview/${id}/${cip}${credentialQuery}`,
       "Error fetching overview details:",
     );
-    if (apiData) console.log("API Data:", apiData);
   } else {
     apiData = await fetchJson<ApiOverview>(
       `${apiUrl}/overview/${id}/default${credentialQuery}`,
       "Error fetching overview details with default cip:",
     );
-    if (apiData) console.log("API Data:", apiData);
   }
 
   // 2. Fetch outcomes details using resolved cip

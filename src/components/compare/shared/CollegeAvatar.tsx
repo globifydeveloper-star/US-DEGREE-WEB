@@ -1,10 +1,7 @@
 "use client";
 
-import Image from "next/image";
-
 interface CollegeAvatarProps {
   name: string;
-  logo?: string;
   /** "lg" is used in the desktop table header, "md" in the mobile top card. */
   size?: "lg" | "md";
 }
@@ -14,22 +11,17 @@ const SIZE_CLASSES = {
   md: "w-12 h-12 rounded-xl p-2",
 };
 
-const IMAGE_SIZE = {
-  lg: 56,
-  md: 40,
-};
-
 const FALLBACK_TEXT_SIZE = {
   lg: "text-sm md:text-lg",
   md: "text-sm",
 };
 
 /**
- * The larger college logo shown in the desktop table header and the
- * mobile "school directory" cards. Falls back to a colored initial
- * when the college has no logo image.
+ * The college marker shown in the desktop table header and the mobile
+ * "school directory" cards. Renders a colored initial — logo images are not
+ * displayed here.
  */
-export default function CollegeAvatar({ name, logo, size = "lg" }: CollegeAvatarProps) {
+export default function CollegeAvatar({ name, size = "lg" }: CollegeAvatarProps) {
   return (
     <div
       className={`bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${SIZE_CLASSES[size]}`}

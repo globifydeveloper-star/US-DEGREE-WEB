@@ -18,5 +18,4 @@ export interface OutcomesSectionProps {
   debtIncomeRatio?: number | string | null;
   loanPrincipal?: number | string | null;
   avgSalary?: number | string | null;
-  programTitle?: string;
 }

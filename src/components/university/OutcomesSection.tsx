@@ -23,7 +23,6 @@ export default function OutcomesSection({
   debtIncomeRatio,
   loanPrincipal,
   avgSalary,
-  programTitle,
 }: OutcomesSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartGradientId = useId();
@@ -201,16 +200,6 @@ export default function OutcomesSection({
 
   // Path for gradient fill underneath
   const fillD = `${pathD} L ${coords[coords.length - 1].x} ${height - paddingBottom} L ${coords[0].x} ${height - paddingBottom} Z`;
-
-  // 5. In-Demand Roles lists tailored to program titles
-  const isBusiness =
-    programTitle?.toLowerCase().includes("bus") ||
-    programTitle?.toLowerCase().includes("fin") ||
-    programTitle?.toLowerCase().includes("econ");
-  const isHealth =
-    programTitle?.toLowerCase().includes("health") ||
-    programTitle?.toLowerCase().includes("bio") ||
-    programTitle?.toLowerCase().includes("nurs");
 
   return (
     <div ref={containerRef} className="flex flex-col gap-10 py-6 max-w-4xl">

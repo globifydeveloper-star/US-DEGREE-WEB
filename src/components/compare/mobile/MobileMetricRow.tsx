@@ -18,7 +18,7 @@ export default function MobileMetricRow({ college, onViewDetails, children }: Mo
   return (
     <div className="py-2.5 flex items-center justify-between gap-2 text-xs">
       <div className="flex items-center gap-2 min-w-0">
-        <CollegeLogo name={college.name} logo={college.logo} />
+        <CollegeLogo name={college.name} />
         <span
           className="font-bold text-slate-700 truncate hover:text-[#3F51B5] cursor-pointer transition-colors"
           onClick={() => onViewDetails(college.id)}
