@@ -6,6 +6,7 @@ import StickerPrice from "./StickerPrice";
 import { Button, message } from "antd";
 import CompareIconAnimation from "./CompareIconAnimation";
 import { useSavedCollege, toggleSaved } from "./useSavedColleges";
+import type { SavedCollege } from "@/lib/auth/api";
 import {
   toggleCompare as toggleCompareStore,
   useIsCollegeCompared,
@@ -223,7 +224,21 @@ export default function ResultCard({
     }
     setIsSaving(true);
     try {
-      const nowSaved = await toggleSaved(unitid);
+      const record: SavedCollege = {
+        unitid,
+        name: university,
+        location,
+        tuitionFee: null,
+        acceptanceRate: parseAdmissionRate(admissionRate),
+        createdAt: new Date().toISOString(),
+        schoolUrl: schoolUrl ?? null,
+        cipCode: cipCode || null,
+        programName: cipCode ? degree : null,
+        credentialLevel: cipCode ? (credentialLevel ?? null) : null,
+        credentialTitle:
+          cipCode && specializations !== "N/A" ? specializations : null,
+      };
+      const nowSaved = await toggleSaved(unitid, record);
       message.success(
         nowSaved
           ? `Saved ${university} to your colleges.`

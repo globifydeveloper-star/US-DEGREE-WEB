@@ -251,6 +251,13 @@ export interface SavedCollege {
   acceptanceRate: number | string | null;
   createdAt: string;
   schoolUrl?: string | null;
+  /** CIP code of the program the college was saved under, if any (disambiguates
+   * which program/credential this save refers to when linking to its details
+   * page). Absent for a plain college-level save. */
+  cipCode?: string | null;
+  programName?: string | null;
+  credentialLevel?: string | number | null;
+  credentialTitle?: string | null;
 }
 
 /** GET /saved-colleges — the user's saved colleges, enriched by the backend. */

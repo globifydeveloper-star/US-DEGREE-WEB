@@ -83,6 +83,7 @@ export default function UniversityHero({
       // Enriched optimistic record so the Saved Colleges grid shows the card
       // instantly with a working "Visit website" link and formatted metrics.
       const admissionNum = parseFloat(admissionRate.replace(/[^0-9.]/g, ""));
+      const hasCip = !!cipCode && cipCode !== "N/A" && cipCode !== "default";
       const record: SavedCollege = {
         unitid: compareId,
         name,
@@ -91,6 +92,10 @@ export default function UniversityHero({
         acceptanceRate: Number.isNaN(admissionNum) ? null : admissionNum,
         createdAt: new Date().toISOString(),
         schoolUrl: formattedSchoolUrl || schoolUrl || null,
+        cipCode: hasCip ? cipCode : null,
+        programName: hasCip ? degree || null : null,
+        credentialLevel: hasCip ? (credentialLevel ?? null) : null,
+        credentialTitle: hasCip ? credentialTitle || null : null,
       };
       const nowSaved = await toggleSaved(compareId, record);
       if (nowSaved) {

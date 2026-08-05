@@ -29,7 +29,7 @@ interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
   profile: StudentProfile;
-  onSave: (values: ProfileFormValues) => void;
+  onSave: (values: ProfileFormValues) => void | Promise<void>;
 }
 
 // The three steps and the field names each one is responsible for. Field
@@ -56,6 +56,7 @@ export default function EditProfileModal({
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
   const [validating, setValidating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const lastStepIndex = STEP_FIELDS.length - 1;
 
   // Timestamp of the last step change. The "Next Step" and "Save Changes"
@@ -75,6 +76,7 @@ export default function EditProfileModal({
   // back at 0 next time it opens. Resetting it here instead would flash step
   // 1 on screen while the close animation is still playing.
   const handleClose = () => {
+    if (saving) return; // don't let the mask/X-button close mid-save
     onClose();
   };
 
@@ -101,12 +103,18 @@ export default function EditProfileModal({
   const handleBack = () =>
     setCurrentStep((step) => Math.max(step - 1, 0));
 
-  const handleFinish = (values: ProfileFormValues) => {
+  const handleFinish = async (values: ProfileFormValues) => {
     // Ignore a submit that fires within the ghost-click window right after
     // the button swapped from "Next Step" to "Save Changes" (see the ref's
     // comment above).
     if (Date.now() - lastStepChangeAt.current < 400) return;
-    onSave(values);
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onSave(values);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -346,17 +354,21 @@ export default function EditProfileModal({
         <div className="flex justify-between items-center pt-4 border-t border-neutral-100">
           <div>
             {currentStep > 0 && (
-              <Button onClick={handleBack}>Back</Button>
+              <Button onClick={handleBack} disabled={saving}>
+                Back
+              </Button>
             )}
           </div>
           <Space>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose} disabled={saving}>
+              Cancel
+            </Button>
             {currentStep < lastStepIndex ? (
               <Button type="primary" loading={validating} onClick={handleNext}>
                 Next Step
               </Button>
             ) : (
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={saving}>
                 Save Changes
               </Button>
             )}

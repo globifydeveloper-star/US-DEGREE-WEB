@@ -99,6 +99,7 @@ export default function CollegeMatchesSection({
   // broadcast so the Saved Colleges grid shows (or drops) the card instantly,
   // and the same call persists to the backend (/saved-colleges).
   const toggleSave = async (match: CollegeMatch) => {
+    const hasCip = !!match.cipCode && match.cipCode !== "default";
     const record: SavedCollege = {
       unitid: match.unitid,
       name: match.name,
@@ -110,6 +111,10 @@ export default function CollegeMatchesSection({
       acceptanceRate: match.acceptanceRate,
       createdAt: new Date().toISOString(),
       schoolUrl: match.schoolUrl,
+      cipCode: hasCip ? match.cipCode : null,
+      programName: hasCip ? match.programTitle || null : null,
+      credentialLevel: hasCip ? (match.credentialLevel ?? null) : null,
+      credentialTitle: hasCip ? match.degreeLevel || null : null,
     };
     try {
       const nowSaved = await toggleSaved(match.unitid, record);

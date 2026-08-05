@@ -20,6 +20,72 @@ import {
 
 export const SAVED_EVENT = "saved-colleges-updated";
 
+// ---- Program/credential cache ---------------------------------------------
+//
+// POST /saved-colleges only persists `{ unitid }` — the backend has no notion
+// of *which* program a college was saved under, so GET /saved-colleges can
+// never return programName/credentialLevel/credentialTitle. To still show
+// that context on the Saved Colleges grid after a reload (not just in the
+// instant right after clicking Save), stash it client-side in localStorage,
+// keyed by unitid, and merge it back onto whatever the backend returns.
+
+const PROGRAM_CACHE_KEY = "usd-saved-college-programs";
+
+type CachedProgramInfo = Pick<
+  SavedCollege,
+  "cipCode" | "programName" | "credentialLevel" | "credentialTitle"
+>;
+
+function readProgramCache(): Record<string, CachedProgramInfo> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PROGRAM_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeProgramCache(cache: Record<string, CachedProgramInfo>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PROGRAM_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Storage unavailable/full — the cache is best-effort only.
+  }
+}
+
+/** Remember which program a college was saved under, so it survives a reload. */
+function rememberProgramInfo(unitid: string, info: CachedProgramInfo) {
+  const cache = readProgramCache();
+  cache[String(unitid)] = info;
+  writeProgramCache(cache);
+}
+
+/** Forget a college's cached program info (call on unsave). */
+export function forgetProgramInfo(unitid: string) {
+  const cache = readProgramCache();
+  if (!(String(unitid) in cache)) return;
+  delete cache[String(unitid)];
+  writeProgramCache(cache);
+}
+
+/**
+ * Merge cached program info onto backend-fetched records that came back
+ * without it (every record, currently — see the comment above). Records that
+ * already carry a cipCode (e.g. the optimistic record just broadcast on save)
+ * are left untouched.
+ */
+export function applyProgramCache(list: SavedCollege[]): SavedCollege[] {
+  const cache = readProgramCache();
+  if (Object.keys(cache).length === 0) return list;
+  return list.map((c) => {
+    if (c.cipCode) return c;
+    const cached = cache[String(c.unitid)];
+    return cached ? { ...c, ...cached } : c;
+  });
+}
+
 /**
  * Optional payload carried on the SAVED_EVENT so listeners (e.g. the profile's
  * Saved Colleges grid) can update instantly from the in-memory record instead
@@ -96,6 +162,19 @@ export async function toggleSaved(
   else savedSet.delete(key);
   dispatch(next ? addDetail : removeDetail);
 
+  // Cache the program context client-side (see the note above) so it
+  // survives the reload that follows a save, or forget it on unsave.
+  if (next && optimistic?.cipCode) {
+    rememberProgramInfo(key, {
+      cipCode: optimistic.cipCode,
+      programName: optimistic.programName ?? null,
+      credentialLevel: optimistic.credentialLevel ?? null,
+      credentialTitle: optimistic.credentialTitle ?? null,
+    });
+  } else if (!next) {
+    forgetProgramInfo(key);
+  }
+
   try {
     if (next) await saveCollege(key);
     else await unsaveCollege(key);
@@ -105,6 +184,7 @@ export async function toggleSaved(
     if (next) savedSet.delete(key);
     else savedSet.add(key);
     dispatch(next ? removeDetail : addDetail);
+    if (next && optimistic?.cipCode) forgetProgramInfo(key);
     throw err;
   }
 }

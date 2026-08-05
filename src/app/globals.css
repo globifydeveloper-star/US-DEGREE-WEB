@@ -62,12 +62,14 @@ body {
    scrollable tab strips etc. that already show an active-state indicator,
    so the browser scrollbar is just visual noise. */
 .scrollbar-none {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 .scrollbar-none::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Auth Modal Entry Animations */
