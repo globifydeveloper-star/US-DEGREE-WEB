@@ -20,10 +20,6 @@ export default function ProBanner() {
           <span className="text-blue-200 text-[10px] sm:text-xs font-bold tracking-wider mb-2">
             ANNUAL PLAN
           </span>
-          {/* <div className="text-white mb-4">
-            <span className="text-3xl font-extrabold">$39</span>
-            <span className="text-sm text-blue-200"> / year</span>
-          </div> */}
           <button className="bg-white text-blue-600 font-bold py-2.5 px-6 sm:py-3 sm:px-8 rounded-full text-xs sm:text-sm w-full hover:bg-gray-50 transition-colors shadow-lg cursor-pointer">
             Go Pro Today
           </button>

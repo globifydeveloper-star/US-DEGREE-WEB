@@ -130,6 +130,7 @@ export function useCollegeMatches(profile: StudentProfile): {
   const states = profile.preferredStates;
   const programs = profile.preferredPrograms;
   const collegeType = profile.preferredCollegeType;
+  const degreeLevel = profile.preferredDegreeLevel;
   // Primitive deps so the effect only re-runs on actual preference changes.
   const statesKey = states.join(",");
   const programsKey = programs.join(",");
@@ -155,6 +156,7 @@ export function useCollegeMatches(profile: StudentProfile): {
             const params = new URLSearchParams();
             if (major) params.set("title", major);
             if (states.length > 0) params.set("state", states[0]);
+            if (degreeLevel) params.set("credential_title", degreeLevel);
             try {
               const res = await authedFetch(`/search?${params.toString()}`);
               if (!res.ok) return [];
@@ -188,6 +190,16 @@ export function useCollegeMatches(profile: StudentProfile): {
               .toLowerCase()
               .includes("private");
             if (isPrivate !== wantPrivate) return false;
+          }
+          // The credential_title query param narrows /search server-side, but
+          // isn't guaranteed authoritative for every row, so also enforce it
+          // client-side to keep mismatched degree levels out of the matches.
+          if (
+            degreeLevel &&
+            (r.credential_title ?? "").toLowerCase() !==
+              degreeLevel.toLowerCase()
+          ) {
+            return false;
           }
           return true;
         };
@@ -332,7 +344,7 @@ export function useCollegeMatches(profile: StudentProfile): {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statesKey, programsKey, collegeType]);
+  }, [statesKey, programsKey, collegeType, degreeLevel]);
 
   return { matches, loading };
 }

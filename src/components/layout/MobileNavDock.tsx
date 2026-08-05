@@ -24,13 +24,13 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   const [savedCount, setSavedCount] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Visibility: hidden on scroll-down (shown again on scroll-up), hidden
-  // while any modal/drawer/bottom-sheet is open, and hidden on /search while
-  // the Compare Deck occupies the same bottom-of-screen space.
+  // Visibility: hidden on scroll-down (shown again on scroll-up) and hidden
+  // while any modal/drawer/bottom-sheet is open. The Compare Deck (see
+  // CompareDeck.tsx) stacks above this dock via --mobile-nav-height rather
+  // than sharing its space, so no special-casing is needed here.
   const scrollVisible = useScrollAwareVisibility();
   const overlayOpen = useAnyOverlayOpen();
-  const hiddenForCompareDeck = pathname === "/search" && compareCount > 0;
-  const visible = scrollVisible && !overlayOpen && !hiddenForCompareDeck;
+  const visible = scrollVisible && !overlayOpen;
 
   // Measure the dock's own footprint (height + its offset from the viewport
   // bottom) and publish it as `--mobile-nav-height` so pages can reserve

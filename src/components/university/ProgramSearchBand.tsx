@@ -50,6 +50,7 @@ export default function ProgramSearchBand({
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
   const [errored, setErrored] = useState(false);
+  const [navigatingKey, setNavigatingKey] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
@@ -132,6 +133,7 @@ export default function ProgramSearchBand({
   // (see ResultCard's `universityHref`) so the program detail page renders with
   // the same full context instead of just the bare CIP code.
   const handleResultClick = (program: ProgramResult) => {
+    setNavigatingKey(`${program.title}-${program.credential_title}`);
     const [city = "", state = ""] = (location || "").split(", ");
     const params = new URLSearchParams();
     params.set("cip", program.cip_code);
@@ -207,25 +209,34 @@ export default function ProgramSearchBand({
         </p>
       )}
 
-      {results.map((program) => (
-        <button
-          key={`${program.title}-${program.credential_title}`}
-          onClick={() => handleResultClick(program)}
-          className="group flex min-h-[58px] items-center justify-between rounded-[8px] bg-white px-4 text-left shadow-sm transition hover:shadow-md"
-        >
-          <span>
-            <span className="block text-[11px] font-black leading-tight text-gray-950">
-              {program.title}
+      {results.map((program) => {
+        const key = `${program.title}-${program.credential_title}`;
+        const isNavigating = navigatingKey === key;
+        return (
+          <button
+            key={key}
+            onClick={() => handleResultClick(program)}
+            disabled={navigatingKey !== null}
+            className="group flex min-h-[58px] items-center justify-between rounded-[8px] bg-white px-4 text-left shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span>
+              <span className="block text-[11px] font-black leading-tight text-gray-950">
+                {program.title}
+              </span>
+              <span className="mt-1 block text-[9px] font-semibold text-gray-400">
+                {program.credential_title}
+              </span>
             </span>
-            <span className="mt-1 block text-[9px] font-semibold text-gray-400">
-              {program.credential_title}
-            </span>
-          </span>
-          <span className="text-sm font-black text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-blue-600">
-            &gt;
-          </span>
-        </button>
-      ))}
+            {isNavigating ? (
+              <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+            ) : (
+              <span className="text-sm font-black text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-blue-600">
+                &gt;
+              </span>
+            )}
+          </button>
+        );
+      })}
     </>
   );
 

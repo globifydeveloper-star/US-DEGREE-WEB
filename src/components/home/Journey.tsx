@@ -59,15 +59,13 @@ px-5 sm:px-8 lg:px-[86px]"
           className="
             grid
             grid-cols-2
-            md:flex
-            md:flex-wrap
-            justify-center
+            xl:grid-cols-4
             gap-y-10
             sm:gap-y-14
-            gap-x-4
-            sm:gap-x-8
-            lg:gap-x-12
-            xl:gap-x-16
+            gap-x-6
+            sm:gap-x-10
+            lg:gap-x-16
+            justify-items-center
           "
         >
           {steps.map((step) => (
@@ -75,9 +73,11 @@ px-5 sm:px-8 lg:px-[86px]"
               key={step.num}
               className="
                 w-full
-                md:w-[240px]
-                lg:w-[260px]
-                xl:w-[280px]
+                max-w-[280px]
+                flex
+                flex-col
+                items-center
+                sm:items-start
               "
             >
               {/* Number + Icon */}
@@ -91,7 +91,8 @@ px-5 sm:px-8 lg:px-[86px]"
                   mb-4
                   sm:mb-6
                   justify-center
-                  md:justify-start
+                  sm:justify-start
+                  w-full
                 "
               >
                 {/* Number Circle */}
@@ -160,7 +161,8 @@ px-5 sm:px-8 lg:px-[86px]"
                   mb-2
                   sm:mb-4
                   text-center
-                  md:text-left
+                  sm:text-left
+                  w-full
                 "
               >
                 {step.title}
@@ -179,7 +181,7 @@ px-5 sm:px-8 lg:px-[86px]"
                   max-w-full
                   sm:max-w-[240px]
                   text-center
-                  md:text-left
+                  sm:text-left
                 "
               >
                 {step.desc}

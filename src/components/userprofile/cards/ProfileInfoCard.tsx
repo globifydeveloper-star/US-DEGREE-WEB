@@ -52,23 +52,25 @@ export default function ProfileInfoCard({
   const isEmailVerified = !!user?.emailVerified;
 
   const cardTitle = (
-    <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-      <span className="flex items-center gap-2 font-bold">
-        <UserOutlined className="text-blue-600" />
-        Student Profile Information
+    <div className="flex items-center justify-between gap-2 py-1">
+      <span className="flex items-center gap-2 font-bold text-sm sm:text-base min-w-0">
+        <UserOutlined className="text-blue-600 shrink-0" />
+        <span className="truncate">Student Profile Information</span>
       </span>
       <Button
+        size="small"
         icon={<SettingOutlined />}
         onClick={onEdit}
         disabled={loading}
-        className="w-full sm:w-auto"
+        className="shrink-0"
         style={{
           borderRadius: "8px",
           borderColor: BRAND_BLUE,
           color: BRAND_BLUE,
         }}
       >
-        Edit Academic Info
+        <span className="hidden sm:inline">Edit Academic Info</span>
+        <span className="sm:hidden">Edit</span>
       </Button>
     </div>
   );
@@ -238,8 +240,8 @@ export default function ProfileInfoCard({
         </Descriptions.Item>
       </Descriptions>
 
-      {/* Account security actions — full width on mobile, side by side on larger screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+      {/* Account security actions — evenly split in a single row at every size */}
+      <div className="grid grid-cols-2 gap-3 mt-6">
         <Button
           onClick={onChangePassword}
           icon={<LockOutlined />}

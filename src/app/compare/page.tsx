@@ -17,9 +17,9 @@ function CompareContent() {
   const {
     comparedIds,
     comparedColleges,
-    initialUniversities,
     isDetailsLoading,
     isLimitModalOpen,
+    isClearingAll,
     setIsLimitModalOpen,
     activeModalId,
     setActiveModalId,
@@ -47,6 +47,7 @@ function CompareContent() {
           comparedIds={comparedIds}
           onAdd={handleAddCollege}
           onClearAll={handleClearAll}
+          isClearingAll={isClearingAll}
         />
 
         {/* 3. Main canvas (Loading spinner, Comparison table, or Empty state) */}
@@ -60,10 +61,7 @@ function CompareContent() {
             </div>
           </div>
         ) : comparedColleges.length === 0 ? (
-          <EmptyComparisonState
-            initialUniversities={initialUniversities}
-            onAdd={handleAddCollege}
-          />
+          <EmptyComparisonState />
         ) : (
           <ComparisonTable
             comparedColleges={comparedColleges}
