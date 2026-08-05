@@ -60,7 +60,7 @@ export default function TileCard({
       });
       if (result === "full") {
         alert(
-          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+          `You can compare a maximum of ${MAX_COMPARE} programs simultaneously.`,
         );
       }
     } catch (err) {

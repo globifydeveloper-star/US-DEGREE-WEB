@@ -267,7 +267,7 @@ export default function ResultCard({
       });
       if (result === "full") {
         message.warning(
-          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+          `You can compare a maximum of ${MAX_COMPARE} programs simultaneously.`,
         );
       }
     } catch (err) {

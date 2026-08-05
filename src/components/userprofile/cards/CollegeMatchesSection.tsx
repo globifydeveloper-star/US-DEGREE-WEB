@@ -86,7 +86,7 @@ export default function CollegeMatchesSection({
         message.success(`Added ${match.name} to comparison.`);
       } else if (result === "full") {
         message.warning(
-          `You can compare a maximum of ${MAX_COMPARE} colleges simultaneously.`,
+          `You can compare a maximum of ${MAX_COMPARE} programs simultaneously.`,
         );
       }
     } catch (err) {
