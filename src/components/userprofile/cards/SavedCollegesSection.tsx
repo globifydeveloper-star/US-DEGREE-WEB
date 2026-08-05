@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   Avatar,
@@ -29,6 +30,8 @@ import {
 import {
   SAVED_EVENT,
   reloadSaved,
+  applyProgramCache,
+  forgetProgramInfo,
   type SavedChangeDetail,
 } from "../../search/useSavedColleges";
 
@@ -93,25 +96,40 @@ function formatRate(value: SavedCollege["acceptanceRate"]): string {
   return `${pct.toFixed(1)}%`;
 }
 
-// Normalize the school URL to an absolute https link, or null if missing/empty
-// (so we never render a dead link or fabricate a URL).
-function normalizeUrl(url: SavedCollege["schoolUrl"]): string | null {
-  const trimmed = url?.trim();
-  if (!trimmed) return null;
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+// Builds the /university/:id href, prefilling the program/credential query
+// params when this save carries them (see UniversityHero/ResultCard/
+// CollegeMatchesSection) so the details page resolves the same program
+// instead of just the school's default listing.
+function buildDetailsHref(uni: SavedCollege): string {
+  if (!uni.cipCode) return `/university/${uni.unitid}`;
+  const params = new URLSearchParams({ cip: uni.cipCode });
+  if (uni.programName) params.set("degree", uni.programName);
+  if (uni.credentialTitle) params.set("credentialTitle", uni.credentialTitle);
+  return `/university/${uni.unitid}?${params.toString()}`;
 }
 
 export default function SavedCollegesSection({
   view,
   onViewChange,
 }: SavedCollegesSectionProps) {
+  const router = useRouter();
   const [colleges, setColleges] = useState<SavedCollege[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+
+  // Navigate to the college's overview page. The route is a server component
+  // that fetches its own data, so there's a beat between click and the new
+  // page painting — show a per-card loading state for that window instead of
+  // leaving the button looking unresponsive.
+  const handleViewDetails = (uni: SavedCollege) => {
+    setNavigatingId(uni.unitid);
+    router.push(buildDetailsHref(uni));
+  };
 
   const load = useCallback(async () => {
     try {
-      const list = await fetchSavedColleges();
+      const list = applyProgramCache(await fetchSavedColleges());
       setColleges(list); // paint immediately
       const enriched = await enrichWithAnnualCost(list);
       if (enriched !== list) setColleges(enriched);
@@ -126,7 +144,7 @@ export default function SavedCollegesSection({
     let active = true;
     (async () => {
       try {
-        const list = await fetchSavedColleges();
+        const list = applyProgramCache(await fetchSavedColleges());
         if (active) setColleges(list);
         const enriched = await enrichWithAnnualCost(list);
         if (active && enriched !== list) setColleges(enriched);
@@ -167,6 +185,7 @@ export default function SavedCollegesSection({
     setRemoving(unitid);
     try {
       await unsaveCollege(unitid);
+      forgetProgramInfo(unitid);
       setColleges((prev) =>
         prev.filter((c) => String(c.unitid) !== String(unitid)),
       );
@@ -223,7 +242,6 @@ export default function SavedCollegesSection({
         /* Grid View mode matching college style */
         <Row gutter={[20, 20]}>
           {colleges.map((uni) => {
-            const websiteUrl = normalizeUrl(uni.schoolUrl);
             return (
               <Col xs={24} sm={12} md={8} lg={6} key={uni.unitid}>
                 <Card
@@ -248,6 +266,17 @@ export default function SavedCollegesSection({
                       <GlobalOutlined />
                       {uni.location}
                     </p>
+                    {uni.programName && (
+                      <p className="text-xs text-neutral-500 mt-1 font-semibold line-clamp-1">
+                        {uni.programName}
+                        {uni.credentialTitle && (
+                          <span className="text-neutral-400 font-medium">
+                            {" "}
+                            &middot; {uni.credentialTitle}
+                          </span>
+                        )}
+                      </p>
+                    )}
 
                     <div className="bg-neutral-50 rounded-xl p-2.5 mt-3 space-y-1.5 text-xs text-neutral-600">
                       <div className="flex justify-between">
@@ -274,13 +303,11 @@ export default function SavedCollegesSection({
                       type="primary"
                       ghost
                       size="small"
-                      disabled={!websiteUrl}
-                      href={websiteUrl ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      loading={navigatingId === String(uni.unitid)}
+                      onClick={() => handleViewDetails(uni)}
                       style={{ flex: "1", borderRadius: "6px" }}
                     >
-                      Visit website
+                      View details
                     </Button>
                     <Button
                       danger
@@ -301,7 +328,6 @@ export default function SavedCollegesSection({
         /* List View mode — plain rows (antd's List component is deprecated) */
         <div className="flex flex-col">
           {colleges.map((uni) => {
-            const websiteUrl = normalizeUrl(uni.schoolUrl);
             return (
               <div
                 key={uni.unitid}
@@ -318,6 +344,17 @@ export default function SavedCollegesSection({
                   <span className="font-extrabold text-neutral-800 block">
                     {uni.name}
                   </span>
+                  {uni.programName && (
+                    <span className="text-xs text-neutral-500 font-semibold block">
+                      {uni.programName}
+                      {uni.credentialTitle && (
+                        <span className="text-neutral-400 font-medium">
+                          {" "}
+                          &middot; {uni.credentialTitle}
+                        </span>
+                      )}
+                    </span>
+                  )}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 pt-0.5">
                     <span className="flex items-center gap-1">
                       <GlobalOutlined />
@@ -343,13 +380,11 @@ export default function SavedCollegesSection({
                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                   <Button
                     type="link"
-                    disabled={!websiteUrl}
-                    href={websiteUrl ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    loading={navigatingId === String(uni.unitid)}
+                    onClick={() => handleViewDetails(uni)}
                     style={{ fontWeight: 600 }}
                   >
-                    Visit website
+                    View details
                   </Button>
                   <Button
                     type="text"

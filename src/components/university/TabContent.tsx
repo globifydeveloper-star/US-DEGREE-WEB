@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AboutSection from "./AboutSection";
 import StatsGrid from "./StatsGrid";
 import ProgramDetail from "./ProgramDetail";
@@ -37,6 +37,18 @@ export default function TabContent({ data }: { data: any }) {
     "in_state",
   );
 
+  // Keep the active tab centered in the scrollable strip on mobile. Browsers
+  // clamp `inline: "center"` at the scroll edges, so the first/last tabs
+  // naturally end up flush against their end instead of centered.
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  useEffect(() => {
+    tabRefs.current[activeTab]?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [activeTab]);
+
   return (
     <>
       <UniversityHero
@@ -65,6 +77,9 @@ export default function TabContent({ data }: { data: any }) {
             {tabs.map((tab) => (
               <button
                 key={tab}
+                ref={(el) => {
+                  tabRefs.current[tab] = el;
+                }}
                 onClick={() => setActiveTab(tab)}
                 className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${
                   activeTab === tab

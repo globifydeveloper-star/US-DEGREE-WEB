@@ -29,6 +29,7 @@ export function useCompareColleges() {
   );
 
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
   const [collegeDetailsCache, setCollegeDetailsCache] = useState<
     Record<string, CollegeDetail>
@@ -187,11 +188,13 @@ export function useCompareColleges() {
   };
 
   const handleClearAll = () => {
+    setIsClearingAll(true);
     clearCompare()
       .then(() => syncUrlParams([]))
       .catch((err) =>
         console.error("Failed to sync comparison selection:", err),
-      );
+      )
+      .finally(() => setIsClearingAll(false));
   };
 
   return {
@@ -202,6 +205,7 @@ export function useCompareColleges() {
     isSearching,
     isDetailsLoading,
     isLimitModalOpen,
+    isClearingAll,
     setIsLimitModalOpen,
     activeModalId,
     setActiveModalId,

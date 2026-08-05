@@ -28,6 +28,7 @@ interface CompareSearchBarProps {
     },
   ) => void;
   onClearAll: () => void;
+  isClearingAll?: boolean;
 }
 
 const CREDENTIAL_LEVEL_OPTIONS = Object.entries(CREDENTIAL_LEVEL_INFO).map(
@@ -42,6 +43,7 @@ export default function CompareSearchBar({
   comparedIds,
   onAdd,
   onClearAll,
+  isClearingAll = false,
 }: CompareSearchBarProps) {
   // Step 1: credential level — a fixed, static list (no backend call).
   const [credentialLevel, setCredentialLevel] = useState<number | null>(null);
@@ -231,6 +233,8 @@ export default function CompareSearchBar({
               danger
               icon={<Trash2 className="w-3.5 h-3.5" />}
               onClick={onClearAll}
+              loading={isClearingAll}
+              disabled={isClearingAll}
               className="font-bold flex items-center gap-1.5 shrink-0 rounded-lg border-red-200 text-red-500 hover:!text-red-600 hover:!border-red-400"
             >
               Clear All

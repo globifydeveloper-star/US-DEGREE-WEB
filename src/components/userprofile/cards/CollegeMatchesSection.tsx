@@ -8,6 +8,7 @@ import {
   Row,
   Col,
   Space,
+  Tag,
   Tooltip,
   Empty,
   Spin,
@@ -98,6 +99,7 @@ export default function CollegeMatchesSection({
   // broadcast so the Saved Colleges grid shows (or drops) the card instantly,
   // and the same call persists to the backend (/saved-colleges).
   const toggleSave = async (match: CollegeMatch) => {
+    const hasCip = !!match.cipCode && match.cipCode !== "default";
     const record: SavedCollege = {
       unitid: match.unitid,
       name: match.name,
@@ -109,6 +111,10 @@ export default function CollegeMatchesSection({
       acceptanceRate: match.acceptanceRate,
       createdAt: new Date().toISOString(),
       schoolUrl: match.schoolUrl,
+      cipCode: hasCip ? match.cipCode : null,
+      programName: hasCip ? match.programTitle || null : null,
+      credentialLevel: hasCip ? (match.credentialLevel ?? null) : null,
+      credentialTitle: hasCip ? match.degreeLevel || null : null,
     };
     try {
       const nowSaved = await toggleSaved(match.unitid, record);
@@ -214,9 +220,13 @@ export default function CollegeMatchesSection({
                           <h4 className="text-sm font-extrabold text-neutral-800 line-clamp-2 leading-snug flex-1">
                             {match.name}
                           </h4>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-50 border border-neutral-200 px-1.5 py-0.5 rounded-md shrink-0 self-start">
+                          <Tag
+                            color={match.isPrivate ? "purple" : "blue"}
+                            style={{ borderRadius: "6px", margin: 0 }}
+                            className="text-[10px] font-bold uppercase tracking-wider shrink-0 self-start"
+                          >
                             {match.isPrivate ? "Private" : "Public"}
-                          </span>
+                          </Tag>
                         </div>
                         <p className="text-xs text-neutral-500 flex items-center gap-1.5 mt-0.5 font-medium">
                           <GlobalOutlined className="text-[#3b5bdb]" />

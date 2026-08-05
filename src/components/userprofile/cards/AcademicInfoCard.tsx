@@ -19,17 +19,17 @@ export default function AcademicInfoCard({
   onEdit,
 }: AcademicInfoCardProps) {
   const cardTitle = (
-    <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
-      <span className="flex items-center gap-2 font-bold">
-        <BookOutlined className="text-emerald-600" />
-        High School &amp; Test Performance
+    <div className="flex items-center justify-between gap-2 py-1">
+      <span className="flex items-center gap-2 font-bold text-sm sm:text-base min-w-0">
+        <BookOutlined className="text-emerald-600 shrink-0" />
+        <span className="truncate">High School &amp; Test Performance</span>
       </span>
       <Button
         size="small"
         icon={<EditOutlined />}
         onClick={onEdit}
         disabled={loading}
-        className="w-full sm:w-auto"
+        className="shrink-0"
         style={{
           borderRadius: "8px",
           borderColor: BRAND_BLUE,

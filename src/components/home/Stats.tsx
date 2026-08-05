@@ -33,7 +33,6 @@ const stats = [
       <>
         Graduate Salary Range
         <br />
-        The #1 Parent Concern
       </>
     ),
     bg: "#F2E9C8",

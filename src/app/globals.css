@@ -58,6 +58,20 @@ body {
   background: #9e9e9e;
 }
 
+/* Fully hides the scrollbar (not just thinned) — used for horizontally
+   scrollable tab strips etc. that already show an active-state indicator,
+   so the browser scrollbar is just visual noise. */
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Auth Modal Entry Animations */
 @keyframes fadeIn {
   from {
