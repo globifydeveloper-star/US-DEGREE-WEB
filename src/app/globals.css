@@ -36,6 +36,19 @@ body {
   background: #9e9e9e;
 }
 
+.hamburger-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 40;
+  stroke-linecap: round;
+  stroke-dasharray: 240 950;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.hamburger-icon.open path {
+  stroke-dashoffset: -650;
+}
+
 .main-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #c8c6c6 transparent;

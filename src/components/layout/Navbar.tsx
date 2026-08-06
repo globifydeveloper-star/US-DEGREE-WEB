@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { useCompareCount } from "@/hooks/useCompareCount";
@@ -17,6 +16,7 @@ import DesktopNavLinks from "./navbar/DesktopNavLinks";
 import AuthButtons from "./navbar/AuthButtons";
 import UserMenu from "./navbar/UserMenu";
 import MobileNavMenu from "./navbar/MobileNavMenu";
+import HamburgerIcon from "./navbar/HamburgerIcon";
 import EmailVerificationBanner from "./navbar/EmailVerificationBanner";
 import { buildUserMenuItems } from "./navbar/userMenuItems";
 
@@ -98,23 +98,23 @@ const Navbar = () => {
             <button
               className="lg:hidden text-[#4b5563] p-1 cursor-pointer"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              <HamburgerIcon isOpen={isMobileMenuOpen} />
             </button>
           </div>
         </div>
 
-        {isMobileMenuOpen && (
-          <MobileNavMenu
-            isLoggedIn={isLoggedIn}
-            compareCount={compareCount}
-            firstName={firstName}
-            onClose={() => setIsMobileMenuOpen(false)}
-            onSignIn={handleMobileSignIn}
-            onSignUp={handleMobileSignUp}
-            onSignOut={handleSignOut}
-          />
-        )}
+        <MobileNavMenu
+          isOpen={isMobileMenuOpen}
+          isLoggedIn={isLoggedIn}
+          compareCount={compareCount}
+          firstName={firstName}
+          onClose={() => setIsMobileMenuOpen(false)}
+          onSignIn={handleMobileSignIn}
+          onSignUp={handleMobileSignUp}
+          onSignOut={handleSignOut}
+        />
       </nav>
 
       <LoginModal
