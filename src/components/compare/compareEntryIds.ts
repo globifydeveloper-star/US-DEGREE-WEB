@@ -21,6 +21,14 @@ const ENTRY_SEP = "~";
 export interface EntryProgramInfo {
   programName: string;
   credentialTitle: string;
+  // College fields, present only for entries added locally by an anonymous
+  // visitor (compare is public) — the calling card already has these in
+  // hand, so we stash them here rather than showing "Unknown University"
+  // until the visitor signs in and the backend can enrich the row itself.
+  name?: string;
+  location?: string;
+  schoolType?: string;
+  schoolUrl?: string;
 }
 
 export function makeEntryId(

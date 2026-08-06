@@ -1,6 +1,10 @@
 import { useEffect, useState, type RefObject } from "react";
 import type { College } from "@/types/university/ComparisonTable";
-import { fetchCompareMatrixDetails, type SelectedCompareCollege } from "@/lib/auth/api";
+import {
+  fetchCompareMatrixDetails,
+  hasAuthenticatedUser,
+  type SelectedCompareCollege,
+} from "@/lib/auth/api";
 import { parseEntryId, readEntryPrograms } from "./compareEntryIds";
 import { buildCollegeRow } from "./buildCollegeRow";
 import type { RawUniversity, StoredDetail, UniOption } from "./compareCollegeTypes";
@@ -78,17 +82,218 @@ function matchDetailsToEntries(
   return map;
 }
 
+async function fetchPublicCompareDetail(
+  entryId: string,
+  entryProgramInfo?: { programName?: string; credentialTitle?: string },
+): Promise<SelectedCompareCollege | null> {
+  const { unitid, cipCode, credentialLevel } = parseEntryId(entryId);
+  if (!unitid) return null;
+
+  const apiUrl = "/api/proxy";
+  const cipParam = cipCode && cipCode !== "default" ? cipCode : "default";
+
+  try {
+    const promises: [
+      Promise<Response>,
+      Promise<Response>,
+      Promise<Response>,
+      Promise<Response | null>,
+    ] = [
+      fetch(`${apiUrl}/overview/${unitid}/${cipParam}`),
+      fetch(`${apiUrl}/tuition/${unitid}`),
+      fetch(`${apiUrl}/colleges/${unitid}`),
+      cipParam !== "default"
+        ? fetch(`${apiUrl}/outcomes/${unitid}/${cipParam}`)
+        : Promise.resolve(null),
+    ];
+
+    const [overviewRes, tuitionRes, collegeRes, outcomesRes] =
+      await Promise.all(promises);
+
+    let overviewData: any = {};
+    let tuitionData: any = {};
+    let collegeData: any = {};
+    let outcomesData: any = {};
+
+    if (overviewRes && overviewRes.ok) overviewData = await overviewRes.json();
+    if (tuitionRes && tuitionRes.ok) tuitionData = await tuitionRes.json();
+    if (collegeRes && collegeRes.ok) collegeData = await collegeRes.json();
+    if (outcomesRes && outcomesRes.ok) outcomesData = await outcomesRes.json();
+
+    const name =
+      collegeData?.school_name ||
+      collegeData?.name ||
+      overviewData?.school_name ||
+      overviewData?.school?.school_name ||
+      overviewData?.school?.name ||
+      null;
+
+    const city = collegeData?.city || overviewData?.school?.city || "";
+    const state = collegeData?.state || overviewData?.school?.state || "";
+    const location =
+      city && state ? `${city}, ${state}` : city || state || null;
+
+    const schoolType =
+      collegeData?.control || overviewData?.school?.control || null;
+    const schoolUrl =
+      collegeData?.school_url || overviewData?.school?.school_url || null;
+    const accreditor = collegeData?.accreditor || null;
+
+    const tuitionInState =
+      tuitionData?.tuition?.tuition_in_state !== null &&
+      tuitionData?.tuition?.tuition_in_state !== undefined
+        ? Number(tuitionData.tuition.tuition_in_state)
+        : null;
+
+    const tuitionOutState =
+      tuitionData?.tuition?.tuition_out_state !== null &&
+      tuitionData?.tuition?.tuition_out_state !== undefined
+        ? Number(tuitionData.tuition.tuition_out_state)
+        : null;
+
+    const stickerPrice =
+      tuitionData?.tuition?.sticker_price !== null &&
+      tuitionData?.tuition?.sticker_price !== undefined
+        ? Number(tuitionData.tuition.sticker_price)
+        : null;
+
+    const avgDebt =
+      tuitionData?.tuition?.avg_debt !== null &&
+      tuitionData?.tuition?.avg_debt !== undefined
+        ? Number(tuitionData.tuition.avg_debt)
+        : null;
+
+    const debtIncomeRatio =
+      tuitionData?.tuition?.debt_income_ratio !== null &&
+      tuitionData?.tuition?.debt_income_ratio !== undefined
+        ? Number(tuitionData.tuition.debt_income_ratio)
+        : null;
+
+    const acceptanceRate =
+      overviewData?.admissions?.admission_rate !== null &&
+      overviewData?.admissions?.admission_rate !== undefined
+        ? Number(overviewData.admissions.admission_rate)
+        : null;
+
+    const satRwMin = overviewData?.admissions?.sat_rw_min;
+    const satMathMin = overviewData?.admissions?.sat_math_min;
+    const satRwMax = overviewData?.admissions?.sat_rw_max;
+    const satMathMax = overviewData?.admissions?.sat_math_max;
+    const satAvgOverall = overviewData?.admissions?.sat_avg_overall;
+
+    let satRangeLow: number | null = null;
+    let satRangeHigh: number | null = null;
+    if (satRwMin != null && satMathMin != null) {
+      satRangeLow = Number(satRwMin) + Number(satMathMin);
+    } else if (satAvgOverall != null) {
+      satRangeLow = Math.max(400, Number(satAvgOverall) - 100);
+    }
+
+    if (satRwMax != null && satMathMax != null) {
+      satRangeHigh = Number(satRwMax) + Number(satMathMax);
+    } else if (satAvgOverall != null) {
+      satRangeHigh = Math.min(1600, Number(satAvgOverall) + 100);
+    }
+
+    const rawGraduation = overviewData?.completion?.completion_rate;
+    const graduationRate =
+      rawGraduation !== null && rawGraduation !== undefined
+        ? Number(rawGraduation) < 2
+          ? Number(rawGraduation) * 100
+          : Number(rawGraduation)
+        : null;
+
+    const resolvedEarnings =
+      outcomesData?.earnings_resolved ?? overviewData?.earnings_resolved;
+    const avgSalary =
+      resolvedEarnings?.year_1 ??
+      outcomesData?.earnings?.year_1 ??
+      overviewData?.earnings?.year_1 ??
+      null;
+
+    const size =
+      overviewData?.students?.size !== null &&
+      overviewData?.students?.size !== undefined
+        ? Number(overviewData.students.size)
+        : null;
+
+    const studentFacultyRatio = overviewData?.students?.student_faculty_ratio
+      ? String(overviewData.students.student_faculty_ratio)
+      : null;
+
+    const programTitle =
+      entryProgramInfo?.programName ||
+      overviewData?.program?.title ||
+      overviewData?.program?.program_name ||
+      "";
+
+    const selectedProgram =
+      cipParam !== "default"
+        ? {
+            title: programTitle,
+            cipCode,
+            degreeLevelCategory: null,
+            credentialLevel: credentialLevel ? Number(credentialLevel) : null,
+            earnings: avgSalary,
+          }
+        : null;
+
+    return {
+      unitid: Number(unitid),
+      name,
+      location,
+      tuitionInState,
+      acceptanceRate,
+      addedAt: null,
+      schoolUrl,
+      schoolType,
+      accreditor,
+      academics: {
+        satRangeLow,
+        satRangeHigh,
+        graduationRate,
+      },
+      cost: {
+        tuitionOutState,
+        stickerPrice,
+        avgDebt,
+        debtIncomeRatio,
+      },
+      outcomes: {
+        programEarnings:
+          typeof avgSalary === "number"
+            ? avgSalary
+            : avgSalary?.value ?? null,
+        avgSalary,
+        roi20Yr: null,
+      },
+      students: {
+        size,
+      },
+      programs: {
+        studentFacultyRatio,
+        repaymentSuccess: null,
+        popularFields: [],
+        degreeLevels: [],
+        selectedProgram,
+      },
+    };
+  } catch (err) {
+    console.error(`Failed to fetch public details for ${entryId}:`, err);
+    return null;
+  }
+}
+
 interface DetailsFetchDeps {
   allUniversitiesRef: RefObject<Map<string, UniOption>>;
   cacheUniversity: (uni: RawUniversity) => UniOption | null;
 }
 
 /**
- * Resolves every id in the compare matrix against a single GET
- * /compare/matrix/details call — each row's `programs.selectedProgram` is
- * already resolved from that row's own cipCode/credentialLevel, no
- * per-program round trip needed — and keeps the shared cross-app details
- * mirror in sync.
+ * Resolves every id in the compare matrix against GET /compare/matrix/details
+ * when logged in, or against public API endpoints when logged out / missing —
+ * each row's `programs.selectedProgram` is resolved, and keeps the shared cross-app
+ * details mirror in sync.
  */
 export function useCompareDetailsFetch(
   comparedIds: string[],
@@ -111,10 +316,43 @@ export function useCompareDetailsFetch(
       const entryProgramsMap = readEntryPrograms();
 
       try {
-        const list = await fetchCompareMatrixDetails();
+        let list: SelectedCompareCollege[] = [];
+        if (await hasAuthenticatedUser()) {
+          try {
+            list = await fetchCompareMatrixDetails();
+          } catch (e) {
+            console.error(
+              "fetchCompareMatrixDetails failed, falling back to public fetch:",
+              e,
+            );
+          }
+        }
         if (cancelled) return;
 
         const baseByEntryId = matchDetailsToEntries(comparedIds, list);
+
+        // For any entryId missing from baseByEntryId (unauthenticated visitor or
+        // newly added local entry), fetch public details so every entry has full
+        // metric coverage.
+        const missingEntryIds = comparedIds.filter(
+          (id) => !baseByEntryId.has(id),
+        );
+
+        if (missingEntryIds.length > 0) {
+          const publicDetails = await Promise.all(
+            missingEntryIds.map((id) =>
+              fetchPublicCompareDetail(id, entryProgramsMap[id]),
+            ),
+          );
+          if (cancelled) return;
+
+          missingEntryIds.forEach((id, index) => {
+            const detail = publicDetails[index];
+            if (detail) {
+              baseByEntryId.set(id, detail);
+            }
+          });
+        }
 
         const rows = comparedIds.map((entryId) =>
           buildCollegeRow(entryId, {
@@ -144,3 +382,5 @@ export function useCompareDetailsFetch(
 
   return { comparedColleges, isDetailsLoading };
 }
+
+

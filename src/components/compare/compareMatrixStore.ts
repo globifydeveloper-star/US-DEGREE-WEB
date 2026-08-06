@@ -45,7 +45,11 @@ import {
   writeEntryPrograms,
   writeMatrixEntries,
 } from "./compareEntryIds";
-import { MATRIX_ENTRIES_KEY, MATRIX_UPDATED_EVENT } from "@/hooks/useCompareCount";
+import {
+  MATRIX_ENTRIES_KEY,
+  MATRIX_UPDATED_EVENT,
+  MATRIX_OWNER_CHANGED_EVENT,
+} from "@/hooks/useCompareCount";
 
 export const MAX_COMPARE = 5;
 const OWNER_KEY = "compare_matrix_owner";
@@ -58,6 +62,12 @@ export interface CollegeProgramDetail {
   credentialLevel?: number | string;
   programName?: string;
   credentialTitle?: string;
+  // College fields — only consumed for the anonymous local-storage path (see
+  // addEntryLocally); the backend enriches signed-in adds by unitid itself.
+  name?: string;
+  location?: string;
+  schoolType?: string;
+  schoolUrl?: string;
 }
 
 let loaded = false;
@@ -102,15 +112,31 @@ export function isCollegeCompared(unitid: string): boolean {
 
 // Tag the mirror with the signed-in user's id, dropping it whenever that id
 // changes — otherwise the browser-scoped mirror leaks one account's picks
-// into whichever account signs in next on the same browser.
+// into whichever account signs in next on the same browser. This also
+// applies to an anonymous visitor (owner "") signing in: /compare is public
+// now, so a visitor can build up a local-only selection before logging in,
+// but on login the page should show that ACCOUNT's own already-saved
+// comparison, not silently merge in whatever was picked while signed out —
+// so the local-only picks are dropped here rather than pushed to the backend.
 export function syncCompareMatrixOwner(ownerId: string | number | null): void {
   if (typeof window === "undefined") return;
   const key = ownerId != null ? String(ownerId) : "";
-  if (localStorage.getItem(OWNER_KEY) === key) return;
+  const previousKey = localStorage.getItem(OWNER_KEY);
+  if (previousKey === key) return;
+
   loaded = false;
   writeMatrixEntries([]);
   writeEntryPrograms({});
   localStorage.setItem(OWNER_KEY, key);
+
+  // Only an actual transition (not this browser's very first visit, when
+  // there's no previous owner to switch away from) should blow away a
+  // compare-page URL — otherwise a brand-new visitor opening a shared
+  // /compare?ids=... link would immediately have it wiped out from under
+  // them. See useCompareColleges.ts's listener for the URL-reset side.
+  if (previousKey !== null) {
+    window.dispatchEvent(new Event(MATRIX_OWNER_CHANGED_EVENT));
+  }
 }
 
 // Load the backend matrix once (authoritative), reconciling the mirror.
@@ -148,10 +174,52 @@ export async function reloadMatrix(): Promise<void> {
   return ensureMatrixLoaded();
 }
 
+// Write one entry into the local-only mirror (no backend call) — used for
+// anonymous visitors on the now-public /compare page. Kept in the same
+// MATRIX_ENTRIES_KEY/ENTRY_PROGRAMS_KEY shape as the backend-backed path so
+// everything downstream (URL sync, badge count, detail rendering) works the
+// same regardless of auth state. Dropped (not replayed) on sign-in — see
+// syncCompareMatrixOwner.
+function addEntryLocally(
+  unitid: string,
+  cipCode: string,
+  entryId: string,
+  detail: CollegeProgramDetail,
+): AddResult {
+  const entries = readEntries();
+  if (entries.includes(entryId)) return "exists";
+  if (entries.length >= MAX_COMPARE) return "full";
+
+  writeMatrixEntries([...entries, entryId]);
+
+  // Persist whatever college/program info the caller had on hand — search
+  // cards, Intelligent Matches, and the university page all know the
+  // college's name/location even though there's no backend matrix to fetch
+  // it back from yet (see buildCollegeRow's use of entryProgramsMap).
+  const hasProgramInfo = cipCode !== "default" && !!detail.programName;
+  const hasCollegeInfo =
+    !!detail.name || !!detail.location || !!detail.schoolType || !!detail.schoolUrl;
+  if (hasProgramInfo || hasCollegeInfo) {
+    writeEntryPrograms({
+      ...readEntryPrograms(),
+      [entryId]: {
+        programName: hasProgramInfo ? detail.programName! : "",
+        credentialTitle: hasProgramInfo ? detail.credentialTitle || "" : "",
+        name: detail.name,
+        location: detail.location,
+        schoolType: detail.schoolType,
+        schoolUrl: detail.schoolUrl,
+      },
+    });
+  }
+  return "added";
+}
+
 // Add a college (optionally scoped to a specific program) to the comparison
-// matrix. Returns "full" once the 5-entry cap is hit (enforced server-side),
-// "exists" for an exact duplicate (same college + same course + same
-// credential level) caught locally before ever hitting the network.
+// matrix. Returns "full" once the 5-entry cap is hit (enforced server-side
+// when signed in, mirrored client-side for anonymous visitors), "exists" for
+// an exact duplicate (same college + same course + same credential level)
+// caught locally before ever hitting the network.
 export function addCollegeToCompare(
   detail: CollegeProgramDetail,
 ): Promise<AddResult> {
@@ -162,6 +230,12 @@ export function addCollegeToCompare(
     const entryId = makeEntryId(unitid, cipCode, detail.credentialLevel);
 
     if (readEntries().includes(entryId)) return "exists";
+
+    // Anonymous visitor (compare is public): keep the selection local until
+    // they sign in — there is no backend matrix to write to yet.
+    if (!(await hasAuthenticatedUser())) {
+      return addEntryLocally(unitid, cipCode, entryId, detail);
+    }
 
     try {
       const backendEntries = await addCompareMatrixEntry({
@@ -192,6 +266,31 @@ export function removeCollegeFromCompare(
 ): Promise<void> {
   return enqueueMutation(async () => {
     const id = String(unitid);
+
+    if (!(await hasAuthenticatedUser())) {
+      const remaining = readEntries().filter((entryId) => {
+        const parsed = parseEntryId(entryId);
+        if (parsed.unitid !== id) return true;
+        if (!opts?.cipCode) return false;
+        return (
+          parsed.cipCode !== opts.cipCode ||
+          String(parsed.credentialLevel ?? "") !==
+            String(opts.credentialLevel ?? "")
+        );
+      });
+      writeMatrixEntries(remaining);
+      const programs = readEntryPrograms();
+      const remainingSet = new Set(remaining);
+      writeEntryPrograms(
+        Object.fromEntries(
+          Object.entries(programs).filter(([entryId]) =>
+            remainingSet.has(entryId),
+          ),
+        ),
+      );
+      return;
+    }
+
     const backendEntries = await removeCompareMatrixEntry(
       id,
       opts?.cipCode
@@ -212,6 +311,9 @@ export function clearCompare(): Promise<void> {
     const prevIds = readEntries();
     writeMatrixEntries([]);
     writeEntryPrograms({});
+
+    if (!(await hasAuthenticatedUser())) return;
+
     try {
       await saveCompareMatrix([]);
     } catch (err) {

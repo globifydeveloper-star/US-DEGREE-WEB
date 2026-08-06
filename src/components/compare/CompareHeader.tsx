@@ -65,6 +65,16 @@ export default function CompareHeader({
       return;
     }
 
+    // Compare is public — generating a report is not. Send signed-out
+    // visitors to login instead; their compared colleges (kept locally,
+    // synced to the backend on login) are still there once they're back.
+    if (!user) {
+      window.dispatchEvent(
+        new CustomEvent("open-auth-modal", { detail: { mode: "login" } }),
+      );
+      return;
+    }
+
     setIsCheckingProfile(true);
     try {
       const data = await fetchProfile<Record<string, unknown>>();

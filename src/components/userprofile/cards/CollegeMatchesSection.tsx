@@ -79,6 +79,10 @@ export default function CollegeMatchesSection({
           ? (match.credentialLevel ?? undefined)
           : undefined,
         credentialTitle: hasCip ? match.degreeLevel || undefined : undefined,
+        name: match.name,
+        location: [match.city, match.state].filter(Boolean).join(", "),
+        schoolType: match.isPrivate ? "Private" : "Public",
+        schoolUrl: match.schoolUrl ?? undefined,
       });
       if (result === "removed") {
         message.info(`Removed ${match.name} from comparison.`);

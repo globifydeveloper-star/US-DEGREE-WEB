@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { authedFetch } from "@/lib/auth/api";
+import { authedFetch, hasAuthenticatedUser } from "@/lib/auth/api";
 import type { RawUniversity, UniOption } from "./compareCollegeTypes";
 
 const INITIAL_LIST_SIZE = 20;
@@ -49,6 +49,10 @@ export function useCollegeSearch(handle401: (status: number) => boolean) {
   // Preload the initial dropdown list from /compare/colleges (returns up to 50).
   useEffect(() => {
     const fetchUniversities = async () => {
+      // /compare/colleges is user-scoped and requires a signed-in session —
+      // compare itself is public now, so an anonymous visitor simply skips
+      // this preload rather than getting bounced to login by its 401.
+      if (!(await hasAuthenticatedUser())) return;
       try {
         // Authed call: attaches Authorization: Bearer <app JWT> and self-heals
         // a 401 via refresh + retry inside the wrapper.
@@ -91,6 +95,10 @@ export function useCollegeSearch(handle401: (status: number) => boolean) {
       setIsSearching(true);
 
       searchTimerRef.current = setTimeout(async () => {
+        if (!(await hasAuthenticatedUser())) {
+          setIsSearching(false);
+          return;
+        }
         try {
           const res = await authedFetch(
             `/compare/colleges?search=${encodeURIComponent(trimmed)}&limit=50`,

@@ -57,6 +57,9 @@ export default function TileCard({
         credentialLevel: cipCode ? credentialLevel ?? undefined : undefined,
         credentialTitle:
           cipCode && specializations !== "N/A" ? specializations : undefined,
+        name: university,
+        location,
+        schoolType,
       });
       if (result === "full") {
         alert(

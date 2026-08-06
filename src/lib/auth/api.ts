@@ -14,6 +14,8 @@
 
 import { auth } from "@/lib/firebase";
 import { getAppJwt, setAppJwt, clearAppJwt } from "./tokenStore";
+import { getCredentialLevelInfo } from "@/constants/credentialLevel";
+import type { SearchResult } from "@/types/search-details";
 
 // All backend traffic goes through the Next.js proxy route, which forwards the
 const PROXY_BASE = "/api/proxy";
@@ -149,6 +151,15 @@ export async function authedFetch(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
+  // No signed-in Firebase user (e.g. an anonymous visitor on a now-public
+  // page like /compare) — fall back to a plain, unauthenticated request
+  // instead of throwing, so public/browsable endpoints still work. Callers
+  // hitting a genuinely user-scoped endpoint just see a non-ok response and
+  // handle it themselves (see hasAuthenticatedUser() gates elsewhere).
+  if (!(await hasAuthenticatedUser())) {
+    return fetch(`${PROXY_BASE}${path}`, options);
+  }
+
   let token = getAppJwt();
   if (!token) {
     // No app JWT in memory (e.g. first call after a page reload) — mint one.
@@ -288,6 +299,14 @@ export async function unsaveCollege(unitid: string): Promise<void> {
 }
 
 // ---- Reversed compare-bar lookups: Credential -> Program -> College -------
+//
+// GET /programs and GET /programs/:cip_code/schools both require a signed-in
+// session on the backend, which broke these once /compare went public (401
+// for anonymous visitors). GET /search does the same underlying lookup and
+// is already public (it powers the whole /search results page for anonymous
+// visitors), so both helpers below are built on it instead — deduped
+// client-side down to the distinct-program / distinct-school shape the
+// compare search bar needs.
 
 /** One row from GET /programs — a distinct program offered at a credential level. */
 export interface ProgramByCredential {
@@ -298,24 +317,40 @@ export interface ProgramByCredential {
 }
 
 /**
- * GET /programs?credential_level=&q=&limit= — distinct programs offered at
- * that credential level across every school (not scoped to one college),
- * optionally keyword-searched by title. Powers the compare page's own
- * search bar's "Program" step once a credential level has been chosen.
+ * Distinct programs (by cip_code) offered at `credentialLevel` across every
+ * school, optionally keyword-searched by title, derived from GET /search.
+ * Powers the compare page's own search bar's "Program" step once a
+ * credential level has been chosen.
  */
 export async function fetchProgramsByCredential(
   credentialLevel: number,
   q?: string,
   limit = 20,
 ): Promise<ProgramByCredential[]> {
+  const credentialTitle = getCredentialLevelInfo(credentialLevel)?.title;
+  if (!credentialTitle) return [];
+
   const params = new URLSearchParams();
-  params.set("credential_level", String(credentialLevel));
-  if (q) params.set("q", q);
-  params.set("limit", String(limit));
-  const res = await authedFetch(`/programs?${params.toString()}`);
+  params.set("credential_title", credentialTitle);
+  if (q) params.set("title", q);
+  const res = await fetch(`${PROXY_BASE}/search?${params.toString()}`);
   if (!res.ok) throw new Error(`Load programs failed (${res.status})`);
   const data = await res.json();
-  return Array.isArray(data) ? (data as ProgramByCredential[]) : [];
+  if (!Array.isArray(data)) return [];
+
+  const byCip = new Map<string, ProgramByCredential>();
+  for (const row of data as SearchResult[]) {
+    if (row.credential_level !== credentialLevel) continue;
+    if (!row.cip_code || byCip.has(row.cip_code)) continue;
+    byCip.set(row.cip_code, {
+      title: row.program_title,
+      cip_code: row.cip_code,
+      credential_level: credentialLevel,
+      credential_title: row.credential_title,
+    });
+    if (byCip.size >= limit) break;
+  }
+  return Array.from(byCip.values());
 }
 
 /** One row from GET /programs/:cip_code/schools. */
@@ -327,27 +362,48 @@ export interface SchoolForProgram {
 }
 
 /**
- * GET /programs/:cip_code/schools?credential_level=&q=&limit= — schools
- * offering that specific program at that specific credential level (the
- * reverse of GET /schools/:id/programs). Powers the compare page's own
- * search bar's "College" step once a program has been chosen.
+ * Distinct schools (by unitid) offering `cipCode` at `credentialLevel`,
+ * optionally keyword-searched by school name, derived from GET /search
+ * (narrowed server-side by `programTitle` first, then filtered client-side
+ * to the exact cip_code — `/search`'s title match is fuzzy). Powers the
+ * compare page's own search bar's "College" step once a program has been
+ * chosen.
  */
 export async function fetchSchoolsForProgram(
   cipCode: string,
   credentialLevel: number,
+  programTitle: string,
   q?: string,
   limit = 20,
 ): Promise<SchoolForProgram[]> {
+  const credentialTitle = getCredentialLevelInfo(credentialLevel)?.title;
+  if (!credentialTitle) return [];
+
   const params = new URLSearchParams();
-  params.set("credential_level", String(credentialLevel));
-  if (q) params.set("q", q);
-  params.set("limit", String(limit));
-  const res = await authedFetch(
-    `/programs/${encodeURIComponent(cipCode)}/schools?${params.toString()}`,
-  );
+  params.set("credential_title", credentialTitle);
+  if (programTitle) params.set("title", programTitle);
+  const res = await fetch(`${PROXY_BASE}/search?${params.toString()}`);
   if (!res.ok) throw new Error(`Load schools for program failed (${res.status})`);
   const data = await res.json();
-  return Array.isArray(data) ? (data as SchoolForProgram[]) : [];
+  if (!Array.isArray(data)) return [];
+
+  const qLower = q?.trim().toLowerCase();
+  const byUnitid = new Map<string, SchoolForProgram>();
+  for (const row of data as SearchResult[]) {
+    if (String(row.cip_code) !== cipCode) continue;
+    if (row.credential_level !== credentialLevel) continue;
+    if (qLower && !row.school_name?.toLowerCase().includes(qLower)) continue;
+    const key = String(row.unitid);
+    if (byUnitid.has(key)) continue;
+    byUnitid.set(key, {
+      unitid: Number(row.unitid),
+      school_name: row.school_name,
+      city: row.city,
+      state: row.state,
+    });
+    if (byUnitid.size >= limit) break;
+  }
+  return Array.from(byUnitid.values());
 }
 
 // ---- Colleges selected for comparison -------------------------------------

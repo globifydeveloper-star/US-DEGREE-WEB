@@ -10,6 +10,13 @@ import { useSyncExternalStore } from "react";
  */
 export const MATRIX_ENTRIES_KEY = "compare_matrix_entries";
 export const MATRIX_UPDATED_EVENT = "compare-matrix-updated";
+// Fired specifically when the signed-in owner of the matrix changes (login,
+// logout, or switching accounts) — see compareMatrixStore's
+// syncCompareMatrixOwner. Distinct from MATRIX_UPDATED_EVENT (which also
+// fires on every plain add/remove) because the compare page needs to react
+// to an owner change by dropping whatever entryIds are in its URL, not just
+// re-reading the local mirror.
+export const MATRIX_OWNER_CHANGED_EVENT = "compare-matrix-owner-changed";
 // Local-only map of entryId -> {programName, credentialTitle}; also exported
 // here (rather than from compareEntryIds.ts) so compareMatrixStore.ts can
 // clear it on account switch without an import cycle.

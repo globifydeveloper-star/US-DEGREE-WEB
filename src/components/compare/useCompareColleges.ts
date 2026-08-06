@@ -13,6 +13,7 @@ import { makeEntryId, parseEntryId } from "./compareEntryIds";
 import { useCollegeSearch, MIN_SEARCH_CHARS } from "./useCollegeSearch";
 import { useCompareDetailsFetch } from "./useCompareDetailsFetch";
 import { useCompareHighlights } from "./useCompareHighlights";
+import { MATRIX_OWNER_CHANGED_EVENT } from "@/hooks/useCompareCount";
 
 export type { UniOption } from "./compareCollegeTypes";
 export { parseEntryId };
@@ -123,6 +124,32 @@ export function useCompareColleges() {
     };
   }, [idsParam, router]);
 
+  // React to a sign-in/sign-out/account-switch (compareMatrixStore's
+  // syncCompareMatrixOwner). The URL's `ids` param can still be naming
+  // entries picked while signed out on the now-public /compare page — e.g.
+  // login happens via a modal with no navigation, so that URL survives the
+  // login untouched. On an owner change, re-derive `ids` from the backend's
+  // matrix for whoever is signed in now (empty if signed out), discarding
+  // whatever was in the URL rather than merging it in.
+  useEffect(() => {
+    const handleOwnerChanged = () => {
+      (async () => {
+        try {
+          await reloadMatrix();
+          const ids = getCompareEntryIds();
+          const params = new URLSearchParams();
+          if (ids.length > 0) params.set("ids", ids.join(","));
+          router.replace(`/compare${ids.length > 0 ? `?${params.toString()}` : ""}`);
+        } catch (e) {
+          console.error("Failed to reload compare matrix after sign-in:", e);
+        }
+      })();
+    };
+    window.addEventListener(MATRIX_OWNER_CHANGED_EVENT, handleOwnerChanged);
+    return () =>
+      window.removeEventListener(MATRIX_OWNER_CHANGED_EVENT, handleOwnerChanged);
+  }, [router]);
+
   // Keep the URL query param synchronised with the active compared IDs. The
   // matrix itself (localStorage mirror + backend persistence) is already
   // handled by compareMatrixStore's add/remove/clear calls below — this only
@@ -145,6 +172,8 @@ export function useCompareColleges() {
       programName: string;
       credentialTitle?: string;
       credentialLevel?: number | string;
+      name?: string;
+      location?: string;
     },
   ) => {
     const cipCode = program?.cipCode || "default";
@@ -154,6 +183,8 @@ export function useCompareColleges() {
       credentialLevel: program?.credentialLevel,
       programName: program?.programName,
       credentialTitle: program?.credentialTitle,
+      name: program?.name,
+      location: program?.location,
     })
       .then((result) => {
         if (result === "full") {

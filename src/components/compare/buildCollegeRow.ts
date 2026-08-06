@@ -63,17 +63,21 @@ export function buildCollegeRow(entryId: string, ctx: BuildContext): College {
 
   const matchedUni =
     ctx.allUniversities.get(unitid) || matchedStored;
-  const name = base?.name || matchedUni?.name || "Unknown University";
+  const name =
+    base?.name || matchedUni?.name || programInfo?.name || "Unknown University";
   const location =
     base?.location ||
     (matchedStored?.city && matchedStored?.state
       ? `${matchedStored.city}, ${matchedStored.state}`
       : matchedStored?.location) ||
+    programInfo?.location ||
     "Unknown";
   const [city = "", state = ""] = location.split(",").map((s) => s.trim());
-  const schoolType = base?.schoolType || matchedStored?.schoolType || "Public";
+  const schoolType =
+    base?.schoolType || matchedStored?.schoolType || programInfo?.schoolType || "Public";
   const isPrivate = schoolType.toLowerCase().includes("private");
-  const schoolUrl = base?.schoolUrl || matchedStored?.schoolUrl || undefined;
+  const schoolUrl =
+    base?.schoolUrl || matchedStored?.schoolUrl || programInfo?.schoolUrl || undefined;
 
   ctx.cacheUniversity({
     unitid,

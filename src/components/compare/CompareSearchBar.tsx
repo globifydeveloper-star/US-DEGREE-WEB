@@ -25,6 +25,8 @@ interface CompareSearchBarProps {
       programName: string;
       credentialTitle?: string;
       credentialLevel?: number | string;
+      name?: string;
+      location?: string;
     },
   ) => void;
   onClearAll: () => void;
@@ -156,7 +158,11 @@ export default function CompareSearchBar({
     const trimmed = text.trim();
     if (trimmed.length < MIN_SEARCH_CHARS) {
       setIsSearchingColleges(true);
-      fetchSchoolsForProgram(selectedProgram.cip_code, credentialLevel)
+      fetchSchoolsForProgram(
+        selectedProgram.cip_code,
+        credentialLevel,
+        selectedProgram.title,
+      )
         .then((items) => setCollegeResults(items))
         .catch((err) => console.error("Failed to load default colleges:", err))
         .finally(() => setIsSearchingColleges(false));
@@ -169,6 +175,7 @@ export default function CompareSearchBar({
         const items = await fetchSchoolsForProgram(
           selectedProgram.cip_code,
           credentialLevel,
+          selectedProgram.title,
           trimmed,
         );
         setCollegeResults(items);
@@ -190,7 +197,7 @@ export default function CompareSearchBar({
     setSelectedCollege(null);
     if (!prog || credentialLevel === null) return;
     setIsSearchingColleges(true);
-    fetchSchoolsForProgram(prog.cip_code, credentialLevel)
+    fetchSchoolsForProgram(prog.cip_code, credentialLevel, prog.title)
       .then((items) => setCollegeResults(items))
       .catch((err) => console.error("Failed to load default colleges:", err))
       .finally(() => setIsSearchingColleges(false));
@@ -203,6 +210,11 @@ export default function CompareSearchBar({
       programName: selectedProgram.title,
       credentialTitle: selectedProgram.credential_title,
       credentialLevel: selectedProgram.credential_level,
+      name: selectedCollege.school_name,
+      location:
+        selectedCollege.city && selectedCollege.state
+          ? `${selectedCollege.city}, ${selectedCollege.state}`
+          : undefined,
     });
     resetFlow();
   };
@@ -306,7 +318,7 @@ export default function CompareSearchBar({
           <Select
             showSearch
             className="w-full h-11"
-            placeholder="Select program"
+            placeholder="Type a program to search"
             disabled={!programEnabled}
             value={selectedProgram?.title ?? null}
             filterOption={false}

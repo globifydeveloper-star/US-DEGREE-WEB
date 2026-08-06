@@ -50,6 +50,10 @@ export default function UniversityHero({
         programName: hasCip ? degree || undefined : undefined,
         credentialLevel: hasCip ? (credentialLevel ?? undefined) : undefined,
         credentialTitle: hasCip ? (credentialTitle ?? undefined) : undefined,
+        name,
+        location,
+        schoolType: type,
+        schoolUrl: schoolUrl ?? undefined,
       });
       if (result === "full") {
         alert(

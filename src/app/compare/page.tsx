@@ -1,7 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CompareHeader from "@/components/compare/CompareHeader";
@@ -10,7 +9,6 @@ import CollegeDetailsModal from "@/components/compare/CollegeDetailsModal";
 import { useCompareColleges } from "@/components/compare/useCompareColleges";
 import CompareSearchBar from "@/components/compare/CompareSearchBar";
 import EmptyComparisonState from "@/components/compare/EmptyComparisonState";
-import { useAuth } from "@/context/AuthContext";
 import { Modal, Spin } from "antd";
 
 function CompareContent() {
@@ -103,33 +101,8 @@ function CompareContent() {
   );
 }
 
-/**
- * Auth gate: compare is logged-in only. We check auth BEFORE mounting
- * CompareContent so the compare data fetches (inside useCompareColleges) never
- * run for an unauthenticated user — redirect to login first, never render-then-401.
- */
-function CompareGate() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      // No dedicated /login route — send home with a flag that opens the modal.
-      router.replace("/?login=1");
-    }
-  }, [loading, user, router]);
-
-  if (loading || !user) {
-    return (
-      <div className="flex justify-center items-center py-24">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  return <CompareContent />;
-}
-
+// Compare is public: anyone can browse and build a comparison. Only
+// generating an AI report (inside CompareHeader) requires signing in.
 export default function ComparePage() {
   return (
     <main className="min-h-screen bg-white flex flex-col">
@@ -141,7 +114,7 @@ export default function ComparePage() {
           </div>
         }
       >
-        <CompareGate />
+        <CompareContent />
       </Suspense>
       <Footer />
     </main>

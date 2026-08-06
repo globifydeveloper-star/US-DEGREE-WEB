@@ -264,6 +264,10 @@ export default function ResultCard({
         credentialLevel: cipCode ? credentialLevel ?? undefined : undefined,
         credentialTitle:
           cipCode && specializations !== "N/A" ? specializations : undefined,
+        name: university,
+        location,
+        schoolType,
+        schoolUrl: schoolUrl ?? undefined,
       });
       if (result === "full") {
         message.warning(
