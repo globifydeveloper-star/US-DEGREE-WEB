@@ -33,12 +33,13 @@ export default function ActionButtons({
         onClick={onViewDetails}
         className={
           isDesktop
-            ? "bg-[#3F51B5] hover:bg-[#303F9F] border-none font-bold rounded-lg md:rounded-xl h-9 md:h-11 shadow-sm w-full text-xs md:text-sm"
-            : "flex-1 bg-[#3F51B5] hover:bg-[#303F9F] border-none font-bold rounded-lg h-9 text-xs shadow-sm"
+            ? "bg-[#3F51B5] hover:bg-[#303F9F] border-none font-bold rounded-xl h-11 shadow-sm w-full text-sm flex items-center justify-center"
+            : "flex-1 bg-[#3F51B5] hover:bg-[#303F9F] border-none font-bold rounded-lg h-9 text-xs shadow-sm flex items-center justify-center"
         }
       >
         View Details
       </Button>
+
       {schoolUrl ? (
         <a
           href={schoolUrl}
@@ -46,8 +47,8 @@ export default function ActionButtons({
           rel="noopener noreferrer"
           className={
             isDesktop
-              ? "border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-[11px] font-bold transition text-center flex items-center justify-center w-full"
-              : "flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-bold transition flex items-center justify-center h-9"
+              ? "border border-blue-400 text-blue-600 hover:bg-blue-50 font-bold rounded-xl h-11 w-full text-sm transition flex items-center justify-center"
+              : "flex-1 border border-blue-100 text-blue-600 hover:bg-blue-50 rounded-lg h-9 text-xs font-bold transition flex items-center justify-center"
           }
         >
           Visit Website
@@ -57,8 +58,8 @@ export default function ActionButtons({
           disabled
           className={
             isDesktop
-              ? "border border-gray-200 text-gray-400 px-4 py-1.5 rounded-full text-[11px] font-bold cursor-not-allowed text-center flex items-center justify-center w-full"
-              : "flex-1 border border-gray-200 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed flex items-center justify-center h-9"
+              ? "border border-gray-200 text-gray-400 font-bold rounded-xl h-11 w-full text-sm cursor-not-allowed flex items-center justify-center"
+              : "flex-1 border border-gray-200 text-gray-400 rounded-lg h-9 text-xs font-bold cursor-not-allowed flex items-center justify-center"
           }
         >
           Visit Website

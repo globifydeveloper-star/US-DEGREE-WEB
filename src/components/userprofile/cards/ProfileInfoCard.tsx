@@ -196,7 +196,8 @@ export default function ProfileInfoCard({
         <Descriptions.Item
           label={
             <span className="font-bold flex items-center gap-1.5">
-              <PhoneOutlined className="text-neutral-400" /> Phone
+              <PhoneOutlined className="text-neutral-400 -scale-x-100" />
+              Phone
             </span>
           }
         >

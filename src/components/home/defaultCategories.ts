@@ -37,7 +37,7 @@ export const DEFAULT_CATEGORIES: PopularCategory[] = [
     category_name: "Mechanical Engineering",
     slug: "mechanical-engineering",
     description:
-      "Mechanical Engineering Related Technologies/Technicians, Aerospace, and Material design programs.",
+      "Mechanical Engineering Related Technologies, Aerospace, and Material design programs.",
     credential_level: null,
     popularity_score: 0,
     sort_order: 3,
@@ -57,7 +57,7 @@ export const DEFAULT_CATEGORIES: PopularCategory[] = [
     category_name: "Design",
     slug: "design",
     description:
-      "Environmental Design, Drafting/Design Engineering Technologies/Technicians, and Multimedia programs.",
+      "Environmental Design, Drafting/Design Engineering Technologies, and Multimedia programs.",
     credential_level: null,
     popularity_score: 0,
     sort_order: 5,
