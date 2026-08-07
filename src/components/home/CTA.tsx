@@ -12,13 +12,17 @@ export default function CTA() {
   const handleGetStarted = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoggedIn) {
-      const element = document.getElementById("search-programs-section");
+      const element =
+        document.getElementById("search-programs-section-mobile") ||
+        document.getElementById("search-programs-section");
       if (element) {
         element.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.location.href = "/#search-programs-section-mobile";
       }
     } else {
       const event = new CustomEvent("open-auth-modal", {
-        detail: { mode: "signup" },
+        detail: { mode: "login" },
       });
       window.dispatchEvent(event);
     }

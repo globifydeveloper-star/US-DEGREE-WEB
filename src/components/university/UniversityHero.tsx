@@ -65,7 +65,6 @@ export default function UniversityHero({
     }
   };
 
-
   const formattedSchoolUrl = schoolUrl
     ? schoolUrl.trim().startsWith("http://") ||
       schoolUrl.trim().startsWith("https://")
@@ -145,6 +144,7 @@ export default function UniversityHero({
           alt={`${name} campus`}
           fill
           priority
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent"></div>

@@ -77,7 +77,7 @@ px-5 sm:px-8 lg:px-[86px]"
                 flex
                 flex-col
                 items-center
-                sm:items-start
+                xl:items-start
               "
             >
               {/* Number + Icon */}
@@ -91,7 +91,7 @@ px-5 sm:px-8 lg:px-[86px]"
                   mb-4
                   sm:mb-6
                   justify-center
-                  sm:justify-start
+                  xl:justify-start
                   w-full
                 "
               >
@@ -161,7 +161,7 @@ px-5 sm:px-8 lg:px-[86px]"
                   mb-2
                   sm:mb-4
                   text-center
-                  sm:text-left
+                  xl:text-left
                   w-full
                 "
               >
@@ -181,7 +181,7 @@ px-5 sm:px-8 lg:px-[86px]"
                   max-w-full
                   sm:max-w-[240px]
                   text-center
-                  sm:text-left
+                  xl:text-left
                 "
               >
                 {step.desc}

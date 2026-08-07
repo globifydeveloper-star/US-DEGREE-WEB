@@ -36,7 +36,7 @@ export default function Hero() {
                     fill
                     priority
                     loading="eager"
-                    sizes="100vw"
+                    sizes="(max-width: 1023px) 100vw, 1px"
                     className="object-cover object-center"
                   />
                 </div>
@@ -60,7 +60,7 @@ export default function Hero() {
                 fill
                 priority
                 loading="eager"
-                sizes="(min-width: 1024px) 50vw, 100vw"
+                sizes="(min-width: 1024px) 50vw, 1px"
                 className="object-cover object-center"
               />
             </div>
