@@ -38,7 +38,12 @@ interface EditProfileModalProps {
 const STEP_FIELDS: string[][] = [
   ["fullName", "email", "phone", "address"],
   ["highSchoolName", "graduationYear", "gpa", "satScore", "actScore"],
-  ["preferredStates","preferredPrograms","preferredDegreeLevel","preferredCollegeType",],
+  [
+    "preferredStates",
+    "preferredPrograms",
+    "preferredDegreeLevel",
+    "preferredCollegeType",
+  ],
 ];
 
 const STEP_TITLES = [
@@ -100,8 +105,7 @@ export default function EditProfileModal({
     }
   };
 
-  const handleBack = () =>
-    setCurrentStep((step) => Math.max(step - 1, 0));
+  const handleBack = () => setCurrentStep((step) => Math.max(step - 1, 0));
 
   const handleFinish = async (values: ProfileFormValues) => {
     // Ignore a submit that fires within the ghost-click window right after
@@ -229,9 +233,10 @@ export default function EditProfileModal({
                 rules={[{ required: true, message: "GPA is required" }]}
               >
                 <InputNumber
-                  min={1.0}
-                  max={5.0}
+                  min={0.0}
+                  max={4.0}
                   step={0.01}
+                  precision={2}
                   className="w-full"
                 />
               </Form.Item>
@@ -247,12 +252,12 @@ export default function EditProfileModal({
                 name="satScore"
                 label="SAT Score"
                 rules={[
-                  { required: true, message: "Mandatory" },
+                  { required: true, message: "SAT Score is required" },
                   {
                     type: "number",
                     min: 400,
                     max: 1600,
-                    message: "Enter a value between 400 and 1600",
+                    message: "Enter a SAT score between 400 and 1600",
                   },
                 ]}
               >
@@ -260,6 +265,7 @@ export default function EditProfileModal({
                   min={400}
                   max={1600}
                   step={10}
+                  precision={0}
                   placeholder="e.g. 1350"
                   className="w-full"
                 />
@@ -270,6 +276,7 @@ export default function EditProfileModal({
                 <InputNumber
                   min={1}
                   max={36}
+                  precision={0}
                   placeholder="Not taken"
                   className="w-full"
                 />
@@ -319,7 +326,10 @@ export default function EditProfileModal({
 
           <Row gutter={16}>
             <Col xs={24} md={12}>
-              <Form.Item name="preferredDegreeLevel" label="Target Degree Level">
+              <Form.Item
+                name="preferredDegreeLevel"
+                label="Target Degree Level"
+              >
                 {/* Options from GET /degree-levels in backend order; the canonical
                     string is both the value submitted and the label shown. */}
                 <Select
