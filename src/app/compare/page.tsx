@@ -1,109 +1,57 @@
-"use client";
-
 import { Suspense } from "react";
+import type { Metadata } from "next";
+import { Spin } from "antd";
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import CompareHeader from "@/components/compare/CompareHeader";
-import ComparisonTable from "@/components/compare/ComparisonTable";
-import CollegeDetailsModal from "@/components/compare/CollegeDetailsModal";
-import { useCompareColleges } from "@/components/compare/useCompareColleges";
-import CompareSearchBar from "@/components/compare/CompareSearchBar";
-import EmptyComparisonState from "@/components/compare/EmptyComparisonState";
-import { Modal, Spin } from "antd";
+import CompareClientContent from "@/components/compare/CompareClientContent";
+import { fetchServerCompareDetails } from "@/lib/compare/compareServer";
+import { getSiteUrl } from "@/lib/env";
 
-function CompareContent() {
-  const {
-    comparedIds,
-    comparedColleges,
-    isDetailsLoading,
-    isLimitModalOpen,
-    isClearingAll,
-    setIsLimitModalOpen,
-    activeModalId,
-    setActiveModalId,
-    collegeDetailsCache,
-    setCollegeDetailsCache,
-    averages,
-    highlights,
-    handleAddCollege,
-    handleRemoveCollege,
-    handleClearAll,
-  } = useCompareColleges();
-
-  return (
-    <div className="bg-[#FAFBFD] min-h-screen pt-28 pb-6 lg:pb-20 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 1. Header */}
-        <CompareHeader
-          comparedIds={comparedIds}
-          comparedColleges={comparedColleges}
-        />
-
-        {/* 2. Selection search bar */}
-        <CompareSearchBar
-          comparedCount={comparedColleges.length}
-          comparedIds={comparedIds}
-          onAdd={handleAddCollege}
-          onClearAll={handleClearAll}
-          isClearingAll={isClearingAll}
-        />
-
-        {/* 3. Main canvas (Loading spinner, Comparison table, or Empty state) */}
-        {isDetailsLoading ? (
-          <div className="flex justify-center items-center py-24 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
-            <div className="flex flex-col items-center gap-4">
-              <Spin size="large" />
-              <p className="text-gray-400 font-semibold text-sm">
-                Retrieving institutional datasets...
-              </p>
-            </div>
-          </div>
-        ) : comparedColleges.length === 0 ? (
-          <EmptyComparisonState />
-        ) : (
-          <ComparisonTable
-            comparedColleges={comparedColleges}
-            averages={averages}
-            highlights={highlights}
-            onRemove={handleRemoveCollege}
-            onViewDetails={(id) => setActiveModalId(id)}
-          />
-        )}
-
-        <CollegeDetailsModal
-          collegeId={activeModalId}
-          isOpen={activeModalId !== null}
-          onClose={() => setActiveModalId(null)}
-          cache={collegeDetailsCache}
-          setCache={setCollegeDetailsCache}
-          comparedColleges={comparedColleges}
-        />
-
-        {/* 5. Limit reached warnings modal */}
-        <Modal
-          title="Comparison Limit Reached"
-          open={isLimitModalOpen}
-          onCancel={() => setIsLimitModalOpen(false)}
-          onOk={() => setIsLimitModalOpen(false)}
-          okText="Got it"
-          cancelButtonProps={{ style: { display: "none" } }}
-          centered
-          className="font-sans"
-        >
-          <p className="text-gray-600">
-            You can compare a maximum of 5 entries simultaneously (the same
-            college can be added more than once for different programs) to
-            ensure complete readability.
-          </p>
-        </Modal>
-      </div>
-    </div>
-  );
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-// Compare is public: anyone can browse and build a comparison. Only
-// generating an AI report (inside CompareHeader) requires signing in.
-export default function ComparePage() {
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const resolvedParams = await searchParams;
+  const idsParam = (resolvedParams.ids as string) || "";
+  const initialBundle = await fetchServerCompareDetails(idsParam);
+
+  const names = initialBundle.comparedColleges.map((c) => c.name);
+  const siteUrl = getSiteUrl();
+
+  let title = "Compare Colleges & Degree Programs Side-by-Side | US Degrees";
+  let description =
+    "Compare up to 5 US colleges side-by-side on tuition costs, admission rates, graduate salaries, graduation rates, and overall ROI.";
+
+  if (names.length > 0) {
+    const listStr = names.join(" vs. ");
+    title = `College Comparison: ${listStr} | US Degrees`;
+    description = `Detailed side-by-side breakdown of ${listStr}. Compare tuition, graduation rate, median salary, and admissions requirements.`;
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/compare${idsParam ? `?ids=${idsParam}` : ""}`,
+      type: "website",
+    },
+    alternates: {
+      canonical: `${siteUrl}/compare${idsParam ? `?ids=${idsParam}` : ""}`,
+    },
+  };
+}
+
+export default async function ComparePage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const idsParam = (resolvedSearchParams.ids as string) || "";
+  const initialBundle = await fetchServerCompareDetails(idsParam);
+
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
@@ -114,7 +62,7 @@ export default function ComparePage() {
           </div>
         }
       >
-        <CompareContent />
+        <CompareClientContent initialBundle={initialBundle} />
       </Suspense>
       <Footer />
     </main>

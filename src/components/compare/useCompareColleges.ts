@@ -15,18 +15,23 @@ import { useCompareDetailsFetch } from "./useCompareDetailsFetch";
 import { useCompareHighlights } from "./useCompareHighlights";
 import { MATRIX_OWNER_CHANGED_EVENT } from "@/hooks/useCompareCount";
 
+import { ServerCompareBundle } from "@/lib/compare/compareServer";
+
 export type { UniOption } from "./compareCollegeTypes";
 export { parseEntryId };
 
-export function useCompareColleges() {
+export function useCompareColleges(initialBundle?: ServerCompareBundle) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // ---- comparedIds is DERIVED from the URL (single source of truth) ----
   const idsParam = searchParams.get("ids");
   const comparedIds = useMemo<string[]>(
-    () => (idsParam ? idsParam.split(",").filter(Boolean) : []),
-    [idsParam],
+    () =>
+      idsParam
+        ? idsParam.split(",").filter(Boolean)
+        : initialBundle?.comparedIds || [],
+    [idsParam, initialBundle?.comparedIds],
   );
 
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
@@ -65,6 +70,7 @@ export function useCompareColleges() {
   const { comparedColleges, isDetailsLoading } = useCompareDetailsFetch(
     comparedIds,
     { allUniversitiesRef, cacheUniversity },
+    initialBundle?.comparedColleges,
   );
 
   const { highlights, averages } = useCompareHighlights(comparedColleges);

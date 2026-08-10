@@ -298,9 +298,14 @@ interface DetailsFetchDeps {
 export function useCompareDetailsFetch(
   comparedIds: string[],
   deps: DetailsFetchDeps,
+  initialColleges?: College[],
 ) {
-  const [comparedColleges, setComparedColleges] = useState<College[]>([]);
-  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [comparedColleges, setComparedColleges] = useState<College[]>(
+    () => initialColleges || [],
+  );
+  const [isDetailsLoading, setIsDetailsLoading] = useState(
+    () => !initialColleges || initialColleges.length === 0,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -308,6 +313,18 @@ export function useCompareDetailsFetch(
     const run = async () => {
       if (comparedIds.length === 0) {
         setComparedColleges((prev) => (prev.length === 0 ? prev : []));
+        setIsDetailsLoading(false);
+        return;
+      }
+
+      // If initialColleges matches current comparedIds on first mount, skip re-fetching
+      if (
+        initialColleges &&
+        initialColleges.length === comparedIds.length &&
+        initialColleges.every((c, i) => c.id === comparedIds[i]) &&
+        comparedColleges.length === initialColleges.length
+      ) {
+        setIsDetailsLoading(false);
         return;
       }
 
@@ -382,5 +399,6 @@ export function useCompareDetailsFetch(
 
   return { comparedColleges, isDetailsLoading };
 }
+
 
 

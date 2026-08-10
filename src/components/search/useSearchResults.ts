@@ -8,18 +8,26 @@ import { buildSearchRequest } from "@/lib/search/searchRequest";
 import { filterSearchResults } from "@/lib/search/searchFilters";
 import { SearchResult, ViewMode } from "@/types/search-details";
 
+import { ServerSearchBundle } from "@/lib/search/searchServer";
+
 const GRID_ITEMS_PER_PAGE = 12;
 const LIST_ITEMS_PER_PAGE = 10;
 
-export function useSearchResults() {
+export function useSearchResults(initialData?: ServerSearchBundle) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
-  const [isServerPaginated, setIsServerPaginated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [results, setResults] = useState<SearchResult[]>(
+    () => initialData?.results || [],
+  );
+  const [totalCount, setTotalCount] = useState<number | null>(
+    () => initialData?.totalCount ?? null,
+  );
+  const [isServerPaginated, setIsServerPaginated] = useState<boolean>(
+    () => initialData?.isServerPaginated || false,
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!initialData);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const itemsPerPage =

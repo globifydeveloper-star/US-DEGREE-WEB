@@ -21,6 +21,7 @@ export default function CompareIconAnimation({
     idle: { x: 0, y: 0, scale: 1, opacity: 0.8 },
     animate: {
       scale: [1, 0.9, 1.05, 1],
+      opacity: 0.8,
       transition: { duration: 0.5 },
     },
   };

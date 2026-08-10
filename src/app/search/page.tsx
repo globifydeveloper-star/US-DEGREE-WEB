@@ -1,102 +1,83 @@
-"use client";
-
 import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import type { Metadata } from "next";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import TopSearchBar from "@/components/search/TopSearchBar";
-import SearchHeader from "@/components/search/SearchHeader";
-import SearchSidebar from "@/components/search/SearchSidebar";
-import Pagination from "@/components/search/Pagination";
-import CompareDeck from "@/components/search/CompareDeck";
-import CategoryFilterChip from "@/components/search/CategoryFilterChip";
-import SearchResultsView from "@/components/search/SearchResultsView";
-import SearchResultsSkeleton from "@/components/search/SearchResultsSkeleton";
-import BackToTopButton from "@/components/search/BackToTopButton";
+import SearchClientContent from "@/components/search/SearchClientContent";
 import {
   ResultListSkeleton,
   SearchHeaderSkeleton,
 } from "@/components/search/SearchSkeletons";
-import { useSearchResults } from "@/components/search/useSearchResults";
-import { useScrollPastThreshold } from "@/hooks/useScrollPastThreshold";
+import { fetchServerSearchResults } from "@/lib/search/searchServer";
 import { getCategoryLabel } from "@/constants/searchCategories";
+import { getSiteUrl } from "@/lib/env";
 
-const BACK_TO_TOP_THRESHOLD = 400;
-
-function SearchContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const {
-    isLoading,
-    currentPage,
-    setCurrentPage,
-    viewMode,
-    setViewMode,
-    totalPages,
-    currentResults,
-    category,
-  } = useSearchResults();
-
-  const categoryLabel = getCategoryLabel(category);
-  const showBackToTop = useScrollPastThreshold(BACK_TO_TOP_THRESHOLD);
-
-  const handleRemoveCategory = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("category");
-    router.push(`/search?${params.toString()}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  return (
-    <>
-      <div className="flex-1 min-h-[75vh] flex flex-col">
-        <TopSearchBar />
-        <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-4 flex flex-col md:flex-row gap-8">
-          <SearchSidebar />
-
-          <div className="flex-1 w-full min-w-0">
-            {isLoading ? (
-              <SearchResultsSkeleton viewMode={viewMode} />
-            ) : (
-              <>
-                {categoryLabel && (
-                  <CategoryFilterChip
-                    label={categoryLabel}
-                    onRemove={handleRemoveCategory}
-                  />
-                )}
-                <SearchHeader view={viewMode} onViewChange={setViewMode} />
-                <SearchResultsView
-                  viewMode={viewMode}
-                  results={currentResults}
-                />
-              </>
-            )}
-
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </div>
-      </div>
-
-      {showBackToTop && <BackToTopButton />}
-      <CompareDeck />
-    </>
-  );
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default function SearchPage() {
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const resolvedParams = await searchParams;
+  const titleParam = (resolvedParams.title as string) || "";
+  const categoryParam = (resolvedParams.category as string) || "";
+  const stateParam = (resolvedParams.state as string) || "";
+  const credentialParam = (resolvedParams.credential_title as string) || "";
+
+  const categoryLabel = getCategoryLabel(categoryParam);
+
+  const parts: string[] = [];
+  if (titleParam) parts.push(`"${titleParam}"`);
+  if (categoryLabel) parts.push(categoryLabel);
+  if (credentialParam) parts.push(credentialParam);
+  if (stateParam) parts.push(`in ${stateParam.toUpperCase()}`);
+
+  const mainDescriptor = parts.length > 0 ? parts.join(" ") : "All Programs";
+  const title = `${mainDescriptor} | Degree Search | US Degrees`;
+  const description = `Explore accredited ${mainDescriptor.toLowerCase()} programs across US universities. Compare tuition, admissions, outcomes, and median graduate earnings.`;
+
+  const siteUrl = getSiteUrl();
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/search`,
+      type: "website",
+    },
+    alternates: {
+      canonical: `${siteUrl}/search`,
+    },
+  };
+}
+
+export default async function SearchPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const initialData = await fetchServerSearchResults(resolvedSearchParams);
+
+  // Build ItemList JSON-LD schema for search engines
+  const siteUrl = getSiteUrl();
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: initialData.results.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.program_title || item.school_name,
+      url: `${siteUrl}/university/${item.unitid}${item.cip_code ? `?cip=${item.cip_code}` : ""}`,
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <Navbar />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
       <Suspense
         fallback={
           <div className="flex-1">
@@ -107,7 +88,7 @@ export default function SearchPage() {
           </div>
         }
       >
-        <SearchContent />
+        <SearchClientContent initialData={initialData} />
       </Suspense>
       <Footer />
     </main>
