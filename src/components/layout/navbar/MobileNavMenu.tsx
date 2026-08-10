@@ -83,15 +83,20 @@ export default function MobileNavMenu({
               <Link
                 href="/"
                 onClick={onClose}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-100 hover:border-blue-200/80 transition-all duration-150 group active:scale-[0.98]"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-100 hover:border-blue-200/80 transition-all duration-150 group active:scale-[0.98]"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-150">
                     <Home className="w-3.5 h-3.5" />
                   </div>
-                  <span className="font-bold text-slate-800 text-xs truncate group-hover:text-blue-600 transition-colors">
-                    Home
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-slate-800 text-xs leading-tight truncate group-hover:text-blue-600 transition-colors">
+                      Home
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium leading-tight truncate group-hover:text-blue-500/80 transition-colors">
+                      Main Portal
+                    </span>
+                  </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500 shrink-0 transition-all" />
               </Link>
@@ -100,15 +105,20 @@ export default function MobileNavMenu({
               <Link
                 href="/compare"
                 onClick={onClose}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-indigo-50/60 border border-slate-100 hover:border-indigo-200/80 transition-all duration-150 group active:scale-[0.98]"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-slate-50/80 hover:bg-indigo-50/60 border border-slate-100 hover:border-indigo-200/80 transition-all duration-150 group active:scale-[0.98]"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-150">
                     <Scale className="w-3.5 h-3.5" />
                   </div>
-                  <span className="font-bold text-slate-800 text-xs truncate group-hover:text-indigo-600 transition-colors">
-                    Compare
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-slate-800 text-xs leading-tight truncate group-hover:text-indigo-600 transition-colors">
+                      Compare
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium leading-tight truncate group-hover:text-indigo-500/80 transition-colors">
+                      Side-by-Side
+                    </span>
+                  </div>
                 </div>
                 {isLoggedIn && compareCount > 0 ? (
                   <CompareBadge count={compareCount} />
@@ -124,15 +134,20 @@ export default function MobileNavMenu({
                   <Link
                     href="/profile"
                     onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-sky-50/60 border border-slate-100 hover:border-sky-200/80 transition-all duration-150 group active:scale-[0.98]"
+                    className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-slate-50/80 hover:bg-sky-50/60 border border-slate-100 hover:border-sky-200/80 transition-all duration-150 group active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-150">
                         <User className="w-3.5 h-3.5" />
                       </div>
-                      <span className="font-bold text-slate-800 text-xs truncate group-hover:text-sky-600 transition-colors">
-                        My Profile
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-slate-800 text-xs leading-tight truncate group-hover:text-sky-600 transition-colors">
+                          My Profile
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight truncate group-hover:text-sky-500/80 transition-colors">
+                          Account & Info
+                        </span>
+                      </div>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-sky-500 shrink-0 transition-all" />
                   </Link>
@@ -141,15 +156,20 @@ export default function MobileNavMenu({
                   <Link
                     href="/profile#saved_colleges_section"
                     onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-rose-50/60 border border-slate-100 hover:border-rose-200/80 transition-all duration-150 group active:scale-[0.98]"
+                    className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-slate-50/80 hover:bg-rose-50/60 border border-slate-100 hover:border-rose-200/80 transition-all duration-150 group active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-150">
                         <Heart className="w-3.5 h-3.5 fill-rose-500/20" />
                       </div>
-                      <span className="font-bold text-slate-800 text-xs truncate group-hover:text-rose-600 transition-colors">
-                        Saved
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-slate-800 text-xs leading-tight truncate group-hover:text-rose-600 transition-colors">
+                          Saved
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight truncate group-hover:text-rose-500/80 transition-colors">
+                          Shortlisted List
+                        </span>
+                      </div>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-rose-500 shrink-0 transition-all" />
                   </Link>
@@ -158,15 +178,20 @@ export default function MobileNavMenu({
                   <Link
                     href="/profile#reports_section"
                     onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/80 hover:bg-amber-50/60 border border-slate-100 hover:border-amber-200/80 transition-all duration-150 group active:scale-[0.98]"
+                    className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-slate-50/80 hover:bg-amber-50/60 border border-slate-100 hover:border-amber-200/80 transition-all duration-150 group active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-150">
                         <FileText className="w-3.5 h-3.5" />
                       </div>
-                      <span className="font-bold text-slate-800 text-xs truncate group-hover:text-amber-600 transition-colors">
-                        My Reports
-                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-slate-800 text-xs leading-tight truncate group-hover:text-amber-600 transition-colors">
+                          My Reports
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight truncate group-hover:text-amber-500/80 transition-colors">
+                          Saved Reports
+                        </span>
+                      </div>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-500 shrink-0 transition-all" />
                   </Link>
@@ -209,5 +234,6 @@ export default function MobileNavMenu({
     </div>
   );
 }
+
 
 

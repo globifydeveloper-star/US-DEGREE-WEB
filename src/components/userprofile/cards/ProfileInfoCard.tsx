@@ -21,7 +21,6 @@ import {
   SettingOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
-  // SecurityScanOutlined,
 } from "@ant-design/icons";
 import { StudentProfile } from "../../../types/profile";
 import { calculateProfileCompletion } from "../../../lib/profileCompletion";
@@ -105,11 +104,12 @@ export default function ProfileInfoCard({
       <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
         <Avatar
           size={80}
+          shape="circle"
           icon={<UserOutlined />}
-          src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(
+          src={`https://api.dicebear.com/10.x/initials/svg?seed=${encodeURIComponent(
             profile.fullName || profile.email || "student",
           )}`}
-          className="bg-blue-100 border-2 border-blue-500 shadow-sm"
+          className="bg-blue-100 border-2 border-blue-500 shadow-sm shrink-0 rounded-full aspect-square"
         />
         <div className="text-center sm:text-left space-y-1 w-full">
           <h2 className="text-xl font-bold text-neutral-900">
@@ -131,13 +131,7 @@ export default function ProfileInfoCard({
                 {profile.preferredDegreeLevel} Preference
               </Tag>
             )}
-            {/* <Tag
-              color="blue"
-              style={{ borderRadius: "6px" }}
-              icon={<SecurityScanOutlined />}
-            >
-              Verified Student ID
-            </Tag> */}
+           
           </div>
         </div>
       </div>
@@ -265,7 +259,8 @@ export default function ProfileInfoCard({
             color: BRAND_BLUE,
           }}
         >
-          Change Email Address
+          <span className="hidden sm:inline">Change Email Address</span>
+          <span className="sm:hidden">Change Email</span>
         </Button>
       </div>
     </Card>
