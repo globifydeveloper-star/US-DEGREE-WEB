@@ -24,7 +24,7 @@ export const mapToCardProps = (result: SearchResult) => ({
       : "N/A",
   duration: "4 Years", // Default fallback if not provided
   specializations: result.credential_title || "N/A",
-  matchScore: 90, // Placeholder
+  matchScore: 0, // Placeholder
   gradRate: hasValue(result.emp_factor)
     ? parseFloat(Number(result.emp_factor).toFixed(1))
     : 0,

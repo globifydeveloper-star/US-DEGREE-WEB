@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
@@ -20,6 +20,23 @@ export default function TopSearchBar() {
     setPrevUrlTitle(urlTitle);
     setQuery(urlTitle);
   }
+
+  // Debounce URL update while typing so rapid keystrokes don't flood API calls
+  useEffect(() => {
+    if (query.trim() === urlTitle.trim()) return;
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (query.trim()) {
+        params.set("title", query.trim());
+      } else {
+        params.delete("title");
+      }
+      router.replace(`${pathname}?${params.toString()}`);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [query, urlTitle, pathname, router, searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,3 +70,4 @@ export default function TopSearchBar() {
     </div>
   );
 }
+

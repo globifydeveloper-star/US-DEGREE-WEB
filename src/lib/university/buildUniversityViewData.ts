@@ -192,7 +192,7 @@ export async function buildUniversityViewData(
     sanitizeSalary(resolvedEarnings?.year_1?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_1) ||
     sanitizeSalary(apiData?.earnings?.year_1) ||
-    (id === "1" ? 91200 : id === "2" ? 85000 : null);
+    null;
   const salaryYear5 =
     sanitizeSalary(resolvedEarnings?.year_5?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_5) ||
@@ -202,7 +202,7 @@ export async function buildUniversityViewData(
     sanitizeSalary(resolvedEarnings?.year_10?.value) ||
     sanitizeSalary(outcomesData?.earnings?.year_10) ||
     sanitizeSalary(apiData?.earnings?.year_10) ||
-    (id === "1" ? 149696 : id === "2" ? 135000 : null);
+    null;
 
   const salaryYear1Method =
     resolvedEarnings?.year_1?.method ??
@@ -274,10 +274,10 @@ export async function buildUniversityViewData(
     name,
     location,
     type,
-    rank: "#1 National",
+    rank: "N/A",
     admissionRate: admissionRateRaw,
     tuitionFee: tuitionRaw,
-    logoColor: "bg-blue-600",
+    logoColor: "",
     description:
       apiData?.school?.school_description ||
       `${name} is a distinguished institution situated in ${location}. It offers a wide range of academic opportunities and a vibrant student environment.`,
@@ -287,7 +287,6 @@ export async function buildUniversityViewData(
     format: "Full-time, On-campus",
     financialAid: "Available",
     cipCode,
-    school: "College of Engineering",
     programDescription: degree
       ? `The ${degree} program at ${name} is designed to provide comprehensive, top-tier training in the discipline, combining foundational principles with modern applications.`
       : "Information about this program is currently being updated by the university.",

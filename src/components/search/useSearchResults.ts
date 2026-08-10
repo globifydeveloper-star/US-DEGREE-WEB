@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { CATEGORY_KEYWORDS } from "@/constants/searchCategories";
 import { buildSearchRequest } from "@/lib/search/searchRequest";
@@ -12,32 +12,74 @@ const GRID_ITEMS_PER_PAGE = 12;
 const LIST_ITEMS_PER_PAGE = 10;
 
 export function useSearchResults() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [isServerPaginated, setIsServerPaginated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const itemsPerPage =
     viewMode === "grid" ? GRID_ITEMS_PER_PAGE : LIST_ITEMS_PER_PAGE;
   const category = searchParams.get("category") || "";
 
+  // Derive current page from URL parameter (default: 1)
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (page > 1) {
+        params.set("page", String(page));
+      } else {
+        params.delete("page");
+      }
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [router, pathname, searchParams],
+  );
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const controller = new AbortController();
 
     const fetchResults = async () => {
       setIsLoading(true);
       try {
         const { requestParams, selectedCredentials, selectedStates } =
-          buildSearchRequest(searchParams, category);
+          buildSearchRequest(searchParams, category, currentPage, itemsPerPage);
 
         const res = await fetch(
           `/api/proxy/search?${requestParams.toString()}`,
+          { signal: controller.signal },
         );
         const data = await res.json();
 
-        if (res.ok && Array.isArray(data)) {
-          const filteredData = filterSearchResults(data, {
+        let rawResults: SearchResult[] = [];
+        let serverTotal: number | null = null;
+        let serverPaginated = false;
+
+        if (res.ok) {
+          if (Array.isArray(data)) {
+            rawResults = data;
+          } else if (data && typeof data === "object") {
+            if (Array.isArray(data.results)) {
+              rawResults = data.results;
+              serverPaginated = true;
+            }
+            if (typeof data.total === "number") {
+              serverTotal = data.total;
+            } else if (typeof data.count === "number") {
+              serverTotal = data.count;
+            }
+          }
+
+          const filteredData = filterSearchResults(rawResults, {
             schoolType: searchParams.get("school_type"),
             selectedCredentials,
             selectedStates,
@@ -45,30 +87,49 @@ export function useSearchResults() {
           });
 
           setResults(filteredData);
-          setCurrentPage(1); // Reset to first page on new search
+          setTotalCount(serverTotal);
+          setIsServerPaginated(serverPaginated);
         } else {
           setResults([]);
+          setTotalCount(null);
+          setIsServerPaginated(false);
         }
       } catch (err) {
-        console.error("Search failed:", err);
+        if ((err as Error).name !== "AbortError") {
+          console.error("Search failed:", err);
+        }
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchResults();
-  }, [searchParams, category]);
 
-  const totalPages = Math.ceil(results.length / itemsPerPage);
-  const currentResults = results.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    return () => {
+      controller.abort();
+    };
+  }, [searchParams, category, currentPage, itemsPerPage]);
+
+  const totalPages = Math.max(
+    1,
+    totalCount !== null
+      ? Math.ceil(totalCount / itemsPerPage)
+      : Math.ceil(results.length / itemsPerPage),
   );
+
+  const currentResults = isServerPaginated
+    ? results
+    : results.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+      );
 
   return {
     isLoading,
     currentPage,
-    setCurrentPage,
+    setCurrentPage: handlePageChange,
     viewMode,
     setViewMode,
     totalPages,
@@ -76,3 +137,4 @@ export function useSearchResults() {
     category,
   };
 }
+

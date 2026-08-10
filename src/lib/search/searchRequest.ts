@@ -15,11 +15,20 @@ interface SearchRequest {
 export const buildSearchRequest = (
   searchParams: ReadonlyURLSearchParams,
   category: string,
+  page?: number,
+  limit?: number,
 ): SearchRequest => {
   const requestParams = new URLSearchParams(searchParams.toString());
 
   requestParams.delete("school_type");
   requestParams.delete("category");
+
+  if (page != null) {
+    requestParams.set("page", String(page));
+  }
+  if (limit != null) {
+    requestParams.set("limit", String(limit));
+  }
 
   // When a category is selected but no explicit search title exists, send the
   // primary category keyword as the title so the API returns relevant programs

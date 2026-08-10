@@ -14,10 +14,11 @@ import { getCredentialLevelInfo } from "@/constants/credentialLevel";
 
 export default function CourseSummarySideCard({
   degree,
-  format,
+  programType,
   financialAid,
   schoolUrl,
   credentialLevel,
+  credentialTitle,
 }: CourseSummarySideCardProps) {
   const [expanded, setExpanded] = useState(false);
   const credentialInfo = getCredentialLevelInfo(credentialLevel);
@@ -48,9 +49,11 @@ export default function CourseSummarySideCard({
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm text-slate-500">
             <Building2 size={16} className="text-slate-400" />
-            Format
+            Program Type
           </span>
-          <span className="text-sm font-medium text-slate-800">{format}</span>
+          <span className="text-sm font-medium text-slate-800">
+            {credentialTitle || programType || "N/A"}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm text-slate-500">
