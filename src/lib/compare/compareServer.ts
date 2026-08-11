@@ -3,6 +3,8 @@ import type { College } from "@/types/university/ComparisonTable";
 import { parseEntryId } from "@/components/compare/compareEntryIds";
 import { resolveSalaryValue, type SelectedCompareCollege } from "@/lib/auth/api";
 
+import { MAX_COMPARE } from "@/components/compare/compareMatrixStore";
+
 export interface ServerCompareBundle {
   comparedIds: string[];
   comparedColleges: College[];
@@ -15,7 +17,7 @@ export async function fetchServerCompareDetails(
     return { comparedIds: [], comparedColleges: [] };
   }
 
-  const comparedIds = idsParam.split(",").filter(Boolean);
+  const comparedIds = idsParam.split(",").filter(Boolean).slice(0, MAX_COMPARE);
   if (comparedIds.length === 0) {
     return { comparedIds: [], comparedColleges: [] };
   }

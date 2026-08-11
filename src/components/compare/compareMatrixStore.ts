@@ -150,7 +150,10 @@ export async function ensureMatrixLoaded(): Promise<void> {
       const backendIds = apiEntriesToMatrixIds(backendEntries);
       // Union with whatever's already local — an add can land while this
       // load is in flight, and the backend list alone would silently drop it.
-      const ids = Array.from(new Set([...backendIds, ...readEntries()]));
+      const ids = Array.from(new Set([...backendIds, ...readEntries()])).slice(
+        0,
+        MAX_COMPARE,
+      );
       writeMatrixEntries(ids);
       writeEntryPrograms({
         ...apiEntriesToPrograms(backendEntries),

@@ -176,4 +176,15 @@ describe("writeMatrixEntries", () => {
     window.removeEventListener(MATRIX_UPDATED_EVENT, onChange);
     expect(fired).toBe(1);
   });
+
+  it("truncates entries to a maximum of 5 items", () => {
+    writeMatrixEntries(["1", "2", "3", "4", "5", "6", "7"]);
+    expect(JSON.parse(localStorage.getItem(MATRIX_ENTRIES_KEY) ?? "[]")).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+    ]);
+  });
 });

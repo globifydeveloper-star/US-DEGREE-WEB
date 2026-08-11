@@ -28,9 +28,10 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
   const idsParam = searchParams.get("ids");
   const comparedIds = useMemo<string[]>(
     () =>
-      idsParam
+      (idsParam
         ? idsParam.split(",").filter(Boolean)
-        : initialBundle?.comparedIds || [],
+        : initialBundle?.comparedIds || []
+      ).slice(0, MAX_COMPARE),
     [idsParam, initialBundle?.comparedIds],
   );
 
@@ -116,7 +117,7 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
         const ids = getCompareEntryIds();
         if (ids.length > 0) {
           const params = new URLSearchParams();
-          params.set("ids", ids.join(","));
+          params.set("ids", ids.slice(0, MAX_COMPARE).join(","));
           router.replace(`/compare?${params.toString()}`);
         }
       } catch (e) {
@@ -142,7 +143,7 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
       (async () => {
         try {
           await reloadMatrix();
-          const ids = getCompareEntryIds();
+          const ids = getCompareEntryIds().slice(0, MAX_COMPARE);
           const params = new URLSearchParams();
           if (ids.length > 0) params.set("ids", ids.join(","));
           router.replace(`/compare${ids.length > 0 ? `?${params.toString()}` : ""}`);
@@ -162,9 +163,10 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
   // owns the page's own shareable-link concern.
   const syncUrlParams = useCallback(
     (ids: string[]) => {
+      const capped = ids.slice(0, MAX_COMPARE);
       const params = new URLSearchParams();
-      if (ids.length > 0) {
-        params.set("ids", ids.join(","));
+      if (capped.length > 0) {
+        params.set("ids", capped.join(","));
       }
       router.push(`/compare?${params.toString()}`);
     },
@@ -182,6 +184,10 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
       location?: string;
     },
   ) => {
+    if (comparedIds.length >= MAX_COMPARE) {
+      setIsLimitModalOpen(true);
+      return;
+    }
     const cipCode = program?.cipCode || "default";
     addCollegeToCompare({
       unitid: id,
@@ -203,7 +209,7 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
         // course under a different credential level (e.g. Bachelor's vs
         // Master's) gets a distinct entryId and is allowed.
         const entryId = makeEntryId(id, cipCode, program?.credentialLevel);
-        syncUrlParams([...comparedIds, entryId]);
+        syncUrlParams([...comparedIds, entryId].slice(0, MAX_COMPARE));
       })
       .catch((err) =>
         console.error("Failed to sync comparison selection:", err),

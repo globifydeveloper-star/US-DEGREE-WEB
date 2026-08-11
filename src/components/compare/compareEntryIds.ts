@@ -72,11 +72,14 @@ export function writeEntryPrograms(map: Record<string, EntryProgramInfo>) {
   localStorage.setItem(ENTRY_PROGRAMS_KEY, JSON.stringify(map));
 }
 
+const MAX_COMPARE = 5;
+
 // The nav badge counts matrix entries (programs), not distinct colleges — see
 // hooks/useCompareCount.ts. This is the sole writer of that key.
 export function writeMatrixEntries(ids: string[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(MATRIX_ENTRIES_KEY, JSON.stringify(ids));
+  const cappedIds = ids.slice(0, MAX_COMPARE);
+  localStorage.setItem(MATRIX_ENTRIES_KEY, JSON.stringify(cappedIds));
   window.dispatchEvent(new Event(MATRIX_UPDATED_EVENT));
 }
 
