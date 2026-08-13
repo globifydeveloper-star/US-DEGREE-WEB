@@ -1,3 +1,5 @@
+"use client";
+
 import ResultCard from "./ResultCard";
 import TileCard from "./TileCard";
 import { mapToCardProps } from "@/lib/search/mapToCardProps";

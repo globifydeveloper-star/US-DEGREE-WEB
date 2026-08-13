@@ -90,6 +90,7 @@ export default function CompareIconAnimation({
           height="13"
           rx="2"
           variants={backCardVariants}
+          initial="idle"
           animate={isAnimating ? "animate" : "idle"}
           className="text-current"
         />
@@ -102,6 +103,7 @@ export default function CompareIconAnimation({
           height="13"
           rx="2"
           variants={frontCardVariants}
+          initial="idle"
           animate={isAnimating ? "animate" : active ? "active" : "idle"}
           className="text-current"
         />
@@ -114,6 +116,7 @@ export default function CompareIconAnimation({
           y2="0"
           strokeWidth="1.5"
           variants={dashVariants1}
+          initial="idle"
           animate={isAnimating ? "animate" : "idle"}
           className="text-blue-500"
         />
@@ -124,6 +127,7 @@ export default function CompareIconAnimation({
           y2="5"
           strokeWidth="1.5"
           variants={dashVariants2}
+          initial="idle"
           animate={isAnimating ? "animate" : "idle"}
           className="text-blue-500"
         />
@@ -134,6 +138,7 @@ export default function CompareIconAnimation({
           y2="-1"
           strokeWidth="1.5"
           variants={dashVariants3}
+          initial="idle"
           animate={isAnimating ? "animate" : "idle"}
           className="text-blue-500"
         />
