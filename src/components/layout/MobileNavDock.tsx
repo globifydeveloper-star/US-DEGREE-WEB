@@ -23,6 +23,24 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
 
   const [savedCount, setSavedCount] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentHash, setCurrentHash] = useState<string>("");
+
+  // Sync hash state on mount and route changes
+  useEffect(() => {
+    const updateHash = () => {
+      if (typeof window !== "undefined") {
+        setCurrentHash(window.location.hash);
+      }
+    };
+
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+    window.addEventListener("popstate", updateHash);
+    return () => {
+      window.removeEventListener("hashchange", updateHash);
+      window.removeEventListener("popstate", updateHash);
+    };
+  }, [pathname]);
 
   // Visibility: hidden on scroll-down (shown again on scroll-up) and hidden
   // while any modal/drawer/bottom-sheet is open. The Compare Deck (see
@@ -123,6 +141,7 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
       href: "/profile#saved_colleges_section",
       icon: Heart,
       hasNotification: savedCount > 0,
+      requiresAuth: true,
     },
     {
       id: "profile",
@@ -134,22 +153,48 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
   ];
 
   const getActiveIndex = () => {
-    if (pathname === "/compare") return 1;
-    if (pathname === "/search") return 2;
-    if (pathname.includes("/profile") || pathname.includes("/account"))
+    if (pathname === "/compare" || pathname.startsWith("/compare")) return 1;
+
+    if (
+      pathname === "/search" ||
+      pathname.startsWith("/search") ||
+      (pathname === "/" && currentHash === "#search-programs-section-mobile")
+    ) {
+      return 2;
+    }
+
+    if (
+      (pathname.includes("/profile") || pathname.includes("/account")) &&
+      currentHash === "#saved_colleges_section"
+    ) {
+      return 3;
+    }
+
+    if (pathname.includes("/profile") || pathname.includes("/account")) {
       return 4;
+    }
+
     return 0; // default Home
   };
 
   const activeIndex = getActiveIndex();
 
   const handleItemClick = (e: React.MouseEvent, item: (typeof navItems)[0]) => {
+    if (item.requiresAuth && !user) {
+      e.preventDefault();
+      if (onOpenAuthModal) {
+        onOpenAuthModal("login");
+      } else {
+        router.push("/?login=1");
+      }
+      return;
+    }
+
     if (item.id === "search") {
       e.preventDefault();
-      // Open the home page's own search dropdown instead of the search
-      // results page — scroll to it directly if already home, otherwise
-      // navigate home and let the hash land on it.
       if (pathname === "/") {
+        window.history.pushState(null, "", "/#search-programs-section-mobile");
+        setCurrentHash("#search-programs-section-mobile");
         document
           .getElementById("search-programs-section-mobile")
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -159,13 +204,36 @@ export default function MobileNavDock({ onOpenAuthModal }: MobileNavDockProps) {
       return;
     }
 
-    if (item.requiresAuth && !user) {
-      e.preventDefault();
-      if (onOpenAuthModal) {
-        onOpenAuthModal("login");
-      } else {
-        router.push("/?login=1");
+    if (item.id === "saved") {
+      if (pathname === "/profile") {
+        e.preventDefault();
+        window.history.pushState(null, "", "/profile#saved_colleges_section");
+        setCurrentHash("#saved_colleges_section");
+        document
+          .getElementById("saved_colleges_section")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+      return;
+    }
+
+    if (item.id === "home") {
+      if (pathname === "/") {
+        e.preventDefault();
+        window.history.pushState(null, "", "/");
+        setCurrentHash("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
+
+    if (item.id === "profile") {
+      if (pathname === "/profile") {
+        e.preventDefault();
+        window.history.pushState(null, "", "/profile");
+        setCurrentHash("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
     }
   };
 

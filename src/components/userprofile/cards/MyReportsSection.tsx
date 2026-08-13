@@ -60,7 +60,11 @@ export default function MyReportsSection() {
     setDownloadingId(reportId);
     try {
       const detail = await fetchReport(reportId);
-      const win = window.open(detail.downloadUrl, "_blank", "noopener,noreferrer");
+      const win = window.open(
+        detail.downloadUrl,
+        "_blank",
+        "noopener,noreferrer",
+      );
       if (!win) message.error("Please allow pop-ups to download the report.");
     } catch (err) {
       console.error("Failed to get download link:", err);
@@ -182,7 +186,7 @@ export default function MyReportsSection() {
                     onClick={() => router.push("/compare")}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl"
                   >
-                    Compare colleges to generate one
+                    Generate Your First Report
                   </Button>
                 </Space>
               </Empty>
