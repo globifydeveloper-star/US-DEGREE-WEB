@@ -13,7 +13,7 @@ export default function NavbarBrand() {
         width={200}
         height={100}
         priority
-        className="h-[30px] sm:h-[32px] w-auto object-contain"
+        className="h-[36px] sm:h-[40px] w-auto object-contain"
       />
     </Link>
   );
