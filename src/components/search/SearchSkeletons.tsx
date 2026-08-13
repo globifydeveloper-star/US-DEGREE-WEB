@@ -1,65 +1,35 @@
 import React from "react";
-import { Skeleton } from "antd";
 
 /**
  * Skeleton that mimics the ResultCard layout (list view).
  */
 export function ResultCardSkeleton() {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+    <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm animate-pulse">
       {/* Header: logo + name/location */}
       <div className="flex items-start gap-4 mb-4">
-        <Skeleton.Avatar
-          active
-          shape="square"
-          size={40}
-          style={{ borderRadius: 8 }}
-        />
+        <div className="w-10 h-10 bg-gray-200 rounded-lg shrink-0" />
         <div className="flex-1">
-          <Skeleton.Input
-            active
-            size="small"
-            style={{ width: 200, height: 16, marginBottom: 6 }}
-          />
-          <Skeleton.Input
-            active
-            size="small"
-            style={{ width: 120, height: 12 }}
-          />
+          <div className="h-4 w-48 bg-gray-200 rounded mb-2" />
+          <div className="h-3 w-28 bg-gray-200 rounded" />
         </div>
       </div>
 
       {/* Degree title */}
-      <Skeleton.Input
-        active
-        size="small"
-        style={{ width: 260, height: 14, marginBottom: 12 }}
-      />
+      <div className="h-3.5 w-64 bg-gray-200 rounded mb-3" />
 
       {/* Stat pills row */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <Skeleton.Input active size="small" style={{ width: 80, height: 12 }} />
-        <Skeleton.Input active size="small" style={{ width: 70, height: 12 }} />
-        <Skeleton.Input active size="small" style={{ width: 90, height: 12 }} />
+        <div className="h-3 w-20 bg-gray-200 rounded" />
+        <div className="h-3 w-16 bg-gray-200 rounded" />
+        <div className="h-3 w-24 bg-gray-200 rounded" />
       </div>
 
       {/* Tags row */}
       <div className="flex flex-wrap gap-2 mb-5">
-        <Skeleton.Button
-          active
-          size="small"
-          style={{ width: 60, height: 24, borderRadius: 6 }}
-        />
-        <Skeleton.Button
-          active
-          size="small"
-          style={{ width: 70, height: 24, borderRadius: 6 }}
-        />
-        <Skeleton.Button
-          active
-          size="small"
-          style={{ width: 110, height: 24, borderRadius: 6 }}
-        />
+        <div className="h-6 w-16 bg-gray-200 rounded-md" />
+        <div className="h-6 w-20 bg-gray-200 rounded-md" />
+        <div className="h-6 w-28 bg-gray-200 rounded-md" />
       </div>
 
       {/* Stat tiles */}
@@ -67,36 +37,20 @@ export function ResultCardSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]"
+            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px] flex-1"
           >
-            <Skeleton.Input
-              active
-              size="small"
-              style={{ width: 60, height: 10, marginBottom: 6 }}
-            />
-            <Skeleton.Input
-              active
-              size="small"
-              style={{ width: 50, height: 14 }}
-            />
+            <div className="h-2.5 w-14 bg-gray-200 rounded mb-2" />
+            <div className="h-3.5 w-12 bg-gray-200 rounded" />
           </div>
         ))}
       </div>
 
       {/* Footer buttons */}
       <div className="flex items-center justify-between">
-        <Skeleton.Input active size="small" style={{ width: 70, height: 14 }} />
+        <div className="h-3.5 w-16 bg-gray-200 rounded" />
         <div className="flex gap-2">
-          <Skeleton.Button
-            active
-            size="small"
-            style={{ width: 100, height: 30, borderRadius: 9999 }}
-          />
-          <Skeleton.Button
-            active
-            size="small"
-            style={{ width: 120, height: 30, borderRadius: 9999 }}
-          />
+          <div className="h-8 w-24 bg-gray-200 rounded-full" />
+          <div className="h-8 w-28 bg-gray-200 rounded-full" />
         </div>
       </div>
     </div>
@@ -108,67 +62,34 @@ export function ResultCardSkeleton() {
  */
 export function TileCardSkeleton() {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex flex-col gap-3 animate-pulse">
       {/* Header: logo + name */}
       <div className="flex items-start gap-2">
-        <Skeleton.Avatar
-          active
-          shape="square"
-          size={36}
-          style={{ borderRadius: 8 }}
-        />
+        <div className="w-9 h-9 bg-gray-200 rounded-lg shrink-0" />
         <div className="flex-1 min-w-0">
-          <Skeleton.Input
-            active
-            size="small"
-            style={{ width: "80%", height: 14, marginBottom: 4 }}
-          />
-          <Skeleton.Input
-            active
-            size="small"
-            style={{ width: "50%", height: 11 }}
-          />
+          <div className="h-3.5 w-4/5 bg-gray-200 rounded mb-1.5" />
+          <div className="h-2.5 w-1/2 bg-gray-200 rounded" />
         </div>
       </div>
 
       {/* Badge */}
-      <Skeleton.Button
-        active
-        size="small"
-        style={{ width: 60, height: 20, borderRadius: 9999 }}
-      />
+      <div className="h-5 w-16 bg-gray-200 rounded-full" />
 
       {/* Degree */}
-      <Skeleton.Input
-        active
-        size="small"
-        style={{ width: "70%", height: 12 }}
-      />
+      <div className="h-3 w-3/4 bg-gray-200 rounded" />
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         {[1, 2, 3, 4].map((i) => (
           <div key={i}>
-            <Skeleton.Input
-              active
-              size="small"
-              style={{ width: 50, height: 9, marginBottom: 3 }}
-            />
-            <Skeleton.Input
-              active
-              size="small"
-              style={{ width: 45, height: 12 }}
-            />
+            <div className="h-2 w-12 bg-gray-200 rounded mb-1" />
+            <div className="h-3 w-10 bg-gray-200 rounded" />
           </div>
         ))}
       </div>
 
       {/* CTA button */}
-      <Skeleton.Button
-        active
-        block
-        style={{ height: 30, borderRadius: 9999, marginTop: "auto" }}
-      />
+      <div className="h-8 w-full bg-gray-200 rounded-full mt-auto" />
     </div>
   );
 }
@@ -204,38 +125,22 @@ export function TileGridSkeleton({ count = 12 }: { count?: number }) {
  */
 export function SearchHeaderSkeleton() {
   return (
-    <div className="w-full mb-8">
+    <div className="w-full mb-8 animate-pulse">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 mb-4">
-        <Skeleton.Input active size="small" style={{ width: 40, height: 12 }} />
-        <Skeleton.Input active size="small" style={{ width: 50, height: 12 }} />
-        <Skeleton.Input active size="small" style={{ width: 80, height: 12 }} />
+        <div className="h-3 w-10 bg-gray-200 rounded" />
+        <div className="h-3 w-12 bg-gray-200 rounded" />
+        <div className="h-3 w-20 bg-gray-200 rounded" />
       </div>
       {/* Title row */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
         <div>
-          <Skeleton.Input
-            active
-            size="medium"
-            style={{ width: 300, height: 28, marginBottom: 8 }}
-          />
-          <Skeleton.Input
-            active
-            size="small"
-            style={{ width: 220, height: 14 }}
-          />
+          <div className="h-7 w-72 bg-gray-200 rounded mb-2" />
+          <div className="h-3.5 w-56 bg-gray-200 rounded" />
         </div>
         <div className="flex items-center gap-2">
-          <Skeleton.Button
-            active
-            size="small"
-            style={{ width: 70, height: 32, borderRadius: 8 }}
-          />
-          <Skeleton.Button
-            active
-            size="small"
-            style={{ width: 180, height: 32, borderRadius: 8 }}
-          />
+          <div className="h-8 w-16 bg-gray-200 rounded-lg" />
+          <div className="h-8 w-44 bg-gray-200 rounded-lg" />
         </div>
       </div>
     </div>
@@ -247,27 +152,17 @@ export function SearchHeaderSkeleton() {
  */
 export function SidebarSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-pulse">
       {/* Degree Level section */}
       <div>
-        <Skeleton.Input
-          active
-          size="small"
-          style={{ width: 90, height: 12, marginBottom: 16 }}
-        />
+        <div className="h-3 w-20 bg-gray-200 rounded mb-4" />
         <div className="flex flex-col gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <Skeleton.Avatar
-                active
-                shape="square"
-                size={14}
-                style={{ borderRadius: 3 }}
-              />
-              <Skeleton.Input
-                active
-                size="small"
-                style={{ width: 100 + i * 15, height: 13 }}
+              <div className="w-3.5 h-3.5 bg-gray-200 rounded shrink-0" />
+              <div
+                className="h-3 bg-gray-200 rounded"
+                style={{ width: 100 + i * 15 }}
               />
             </div>
           ))}
@@ -276,57 +171,25 @@ export function SidebarSkeleton() {
 
       {/* Institution Type section */}
       <div>
-        <Skeleton.Input
-          active
-          size="small"
-          style={{ width: 110, height: 12, marginBottom: 16 }}
-        />
-        <Skeleton.Button
-          active
-          block
-          style={{ height: 36, borderRadius: 20 }}
-        />
+        <div className="h-3 w-24 bg-gray-200 rounded mb-4" />
+        <div className="h-9 w-full bg-gray-200 rounded-full" />
       </div>
 
       {/* State section */}
       <div>
-        <Skeleton.Input
-          active
-          size="small"
-          style={{ width: 40, height: 12, marginBottom: 16 }}
-        />
-        <Skeleton.Button
-          active
-          block
-          style={{ height: 32, borderRadius: 20, marginBottom: 12 }}
-        />
+        <div className="h-3 w-10 bg-gray-200 rounded mb-4" />
+        <div className="h-8 w-full bg-gray-200 rounded-lg mb-3" />
         <div className="flex flex-col gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <Skeleton.Avatar
-                active
-                shape="square"
-                size={14}
-                style={{ borderRadius: 3 }}
-              />
-              <Skeleton.Input
-                active
-                size="small"
-                style={{ width: 60 + i * 12, height: 13 }}
+              <div className="w-3.5 h-3.5 bg-gray-200 rounded shrink-0" />
+              <div
+                className="h-3 bg-gray-200 rounded"
+                style={{ width: 60 + i * 12 }}
               />
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Tuition section */}
-      <div>
-        <Skeleton.Input
-          active
-          size="small"
-          style={{ width: 100, height: 12, marginBottom: 16 }}
-        />
-        <Skeleton.Input active block style={{ height: 6, borderRadius: 3 }} />
       </div>
     </div>
   );
