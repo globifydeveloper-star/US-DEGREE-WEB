@@ -387,12 +387,12 @@ export async function fetchSchoolsForProgram(
   const data = await res.json();
   if (!Array.isArray(data)) return [];
 
-  const qLower = q?.trim().toLowerCase();
+  const qLower = q ? q.trim().toLowerCase() : "";
   const byUnitid = new Map<string, SchoolForProgram>();
   for (const row of data as SearchResult[]) {
     if (String(row.cip_code) !== cipCode) continue;
     if (row.credential_level !== credentialLevel) continue;
-    if (qLower && !row.school_name?.toLowerCase().includes(qLower)) continue;
+    if (qLower && (!row.school_name || !row.school_name.toLowerCase().includes(qLower))) continue;
     const key = String(row.unitid);
     if (byUnitid.has(key)) continue;
     byUnitid.set(key, {

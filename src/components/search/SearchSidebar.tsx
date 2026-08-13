@@ -125,8 +125,8 @@ export default function SearchSidebar() {
   const q = searchState.toLowerCase();
   const filteredStates = (states ?? []).filter(
     (s) =>
-      s.state_title?.toLowerCase().includes(q) ||
-      s.state_code?.toLowerCase().includes(q),
+      Boolean(s.state_title && s.state_title.toLowerCase().includes(q)) ||
+      Boolean(s.state_code && s.state_code.toLowerCase().includes(q)),
   );
 
   /* ── Shared filter content (used in both mobile drawer & desktop sidebar) ── */

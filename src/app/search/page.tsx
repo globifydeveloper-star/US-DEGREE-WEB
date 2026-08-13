@@ -16,14 +16,19 @@ interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+const getParamString = (param: string | string[] | undefined): string => {
+  if (!param) return "";
+  return Array.isArray(param) ? param[0] || "" : param;
+};
+
 export async function generateMetadata({
   searchParams,
 }: PageProps): Promise<Metadata> {
   const resolvedParams = await searchParams;
-  const titleParam = (resolvedParams.title as string) || "";
-  const categoryParam = (resolvedParams.category as string) || "";
-  const stateParam = (resolvedParams.state as string) || "";
-  const credentialParam = (resolvedParams.credential_title as string) || "";
+  const titleParam = getParamString(resolvedParams.title);
+  const categoryParam = getParamString(resolvedParams.category);
+  const stateParam = getParamString(resolvedParams.state);
+  const credentialParam = getParamString(resolvedParams.credential_title);
 
   const categoryLabel = getCategoryLabel(categoryParam);
 
@@ -63,7 +68,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: initialData.results.map((item, index) => ({
+    itemListElement: (initialData?.results || []).map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: item.program_title || item.school_name,

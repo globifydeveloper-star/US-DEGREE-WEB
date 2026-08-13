@@ -9,6 +9,7 @@ import {
 import { Select } from "antd";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { OPEN_FILTERS_EVENT } from "./SearchSidebar";
+import { getCategoryLabel } from "@/constants/searchCategories";
 
 type ViewMode = "list" | "grid";
 
@@ -84,9 +85,12 @@ export default function SearchHeader({
   const pathname = usePathname();
 
   const title = searchParams.get("title");
+  const categoryParam = searchParams.get("category");
   const credentialTitle = searchParams.get("credential_title");
   const stateParam = searchParams.get("state");
   const sort = searchParams.get("sort") || "recommended";
+
+  const categoryLabel = categoryParam ? getCategoryLabel(categoryParam) : "";
 
   // Parse multi-value params for heading
   const stateCodes = stateParam?.split(",").filter(Boolean) ?? [];
@@ -104,6 +108,7 @@ export default function SearchHeader({
 
   const headingPrefix =
     title ||
+    categoryLabel ||
     (credentialTitles.length === 1
       ? credentialTitles[0]
       : credentialTitles.length > 1

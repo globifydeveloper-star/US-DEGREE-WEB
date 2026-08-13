@@ -27,6 +27,9 @@ interface SearchFilterArgs {
   categoryKeywords: string[] | null;
 }
 
+const textMatchesKeyword = (text: string | null | undefined, kw: string) =>
+  Boolean(text && text.toLowerCase().includes(kw.toLowerCase()));
+
 // Client-side narrowing of the broad result set returned by the API for
 // filters the API can't apply itself (school type, multi-value credential /
 // state selections, and category keyword matching).
@@ -60,8 +63,10 @@ export const filterSearchResults = (
 
   if (categoryKeywords && categoryKeywords.length > 0) {
     filteredData = filteredData.filter((item) =>
-      categoryKeywords.some((kw) =>
-        item.program_title?.toLowerCase().includes(kw.toLowerCase()),
+      categoryKeywords.some(
+        (kw) =>
+          textMatchesKeyword(item.program_title, kw) ||
+          textMatchesKeyword(item.credential_title, kw),
       ),
     );
   }

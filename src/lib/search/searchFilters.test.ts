@@ -145,9 +145,10 @@ describe("filterSearchResults", () => {
     expect(filtered).toHaveLength(1);
   });
 
-  it("tolerates rows with missing fields rather than throwing", () => {
+  it("tolerates rows with missing or null fields rather than throwing", () => {
     const data = [
       result({ credential_title: undefined, state: undefined, program_title: undefined }),
+      result({ credential_title: null as unknown as string, state: null as unknown as string, program_title: null as unknown as string }),
     ];
     expect(() =>
       filterSearchResults(data, {
@@ -157,5 +158,16 @@ describe("filterSearchResults", () => {
         categoryKeywords: ["x"],
       }),
     ).not.toThrow();
+  });
+
+  it("matches category keywords against credential_title when program_title is null", () => {
+    const data = [
+      result({ program_title: null as unknown as string, credential_title: "Master of Business Administration" }),
+    ];
+    const filtered = filterSearchResults(data, {
+      ...none,
+      categoryKeywords: ["business"],
+    });
+    expect(filtered).toHaveLength(1);
   });
 });

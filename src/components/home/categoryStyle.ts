@@ -58,7 +58,7 @@ export function getCategoryStyle(
 ) {
   if (slug && CATEGORY_STYLE[slug]) return CATEGORY_STYLE[slug];
 
-  const nameSlug = categoryName?.trim().toLowerCase().replace(/\s+/g, "-");
+  const nameSlug = categoryName ? categoryName.trim().toLowerCase().replace(/\s+/g, "-") : "";
   if (nameSlug && CATEGORY_STYLE[nameSlug]) return CATEGORY_STYLE[nameSlug];
 
   return DEFAULT_CATEGORY_STYLE;
