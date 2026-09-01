@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -21,19 +21,6 @@ export function useHeroSearch() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCoursesLoading, setIsCoursesLoading] = useState(false);
-
-  // Once a course is chosen, the state dropdown is narrowed to only the
-  // states that actually offer that (level, course) combination — null means
-  // "no narrowing yet, show every state". The backend's /states endpoint
-  // doesn't support filtering, so this is derived client-side from /courses
-  // (which does filter by credential_title + state) and cached per combo so
-  // re-selecting the same course doesn't re-fetch.
-  const [availableStates, setAvailableStates] = useState<SelectOption[] | null>(
-    null,
-  );
-  const [isStatesLoading, setIsStatesLoading] = useState(false);
-  const stateAvailabilityCache = useRef<Map<string, SelectOption[]>>(new Map());
-  const availabilityRequestId = useRef(0);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -94,79 +81,9 @@ export function useHeroSearch() {
     [fetchCourses],
   );
 
-  // Derives, for a given (level, course), the subset of `states` that
-  // actually offer it — by probing /courses per state (the only filter the
-  // backend supports) and keeping the states whose course list contains it.
-  // Cached per "level||course" key and cancellable via a request id so a
-  // fast follow-up selection wins over a stale in-flight computation.
-  const computeAvailableStates = useCallback(
-    async (
-      level: string | null,
-      course: string | null,
-    ): Promise<SelectOption[] | null> => {
-      if (!course) {
-        setAvailableStates(null);
-        setIsStatesLoading(false);
-        return null;
-      }
-
-      const cacheKey = `${level ?? ""}||${course}`;
-      const cached = stateAvailabilityCache.current.get(cacheKey);
-      if (cached) {
-        setAvailableStates(cached);
-        return cached;
-      }
-
-      const requestId = ++availabilityRequestId.current;
-      setIsStatesLoading(true);
-
-      try {
-        const results = await Promise.all(
-          states.map(async (state) => {
-            try {
-              const courseOptions = await fetchCourseOptions(level, state.value);
-              const hasCourse = (courseOptions ?? []).some(
-                (option) => option.value === course,
-              );
-              return hasCourse ? state : null;
-            } catch {
-              return null;
-            }
-          }),
-        );
-
-        if (requestId !== availabilityRequestId.current) return null;
-
-        const filtered = results.filter(
-          (state): state is SelectOption => state !== null,
-        );
-        stateAvailabilityCache.current.set(cacheKey, filtered);
-        setAvailableStates(filtered);
-        return filtered;
-      } finally {
-        if (requestId === availabilityRequestId.current) {
-          setIsStatesLoading(false);
-        }
-      }
-    },
-    [states],
-  );
-
-  const handleLevelChange = async (value: string | null) => {
+  const handleLevelChange = (value: string | null) => {
     setSelectedLevel(value);
     updateCourses(value, selectedState);
-    setAvailableStates(null);
-
-    if (selectedCourse) {
-      const filtered = await computeAvailableStates(value, selectedCourse);
-      if (
-        filtered &&
-        selectedState &&
-        !filtered.some((state) => state.value === selectedState)
-      ) {
-        setSelectedState(null);
-      }
-    }
   };
 
   const handleStateChange = (value: string | null) => {
@@ -174,16 +91,8 @@ export function useHeroSearch() {
     updateCourses(selectedLevel, value);
   };
 
-  const handleCourseChange = async (value: string | null) => {
+  const handleCourseChange = (value: string | null) => {
     setSelectedCourse(value);
-    const filtered = await computeAvailableStates(selectedLevel, value);
-    if (
-      filtered &&
-      selectedState &&
-      !filtered.some((state) => state.value === selectedState)
-    ) {
-      setSelectedState(null);
-    }
   };
 
   const handleSearch = () => {
@@ -201,14 +110,14 @@ export function useHeroSearch() {
 
   return {
     levels,
-    states: availableStates ?? states,
+    states,
     courses,
     selectedLevel,
     selectedState,
     selectedCourse,
     isLoading,
     isCoursesLoading,
-    isStatesLoading,
+    isStatesLoading: false,
     setSelectedCourse: handleCourseChange,
     handleLevelChange,
     handleStateChange,

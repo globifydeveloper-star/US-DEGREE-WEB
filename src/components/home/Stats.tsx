@@ -16,7 +16,7 @@ const stats = [
     icon: <ReadOutlined />,
   },
   {
-    title: "2 lakhs+",
+    title: "200K+",
     desc: "Degree Programs",
     bg: "#DCE3EE",
     icon: <TeamOutlined />,
