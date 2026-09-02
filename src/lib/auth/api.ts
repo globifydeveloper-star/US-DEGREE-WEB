@@ -663,3 +663,41 @@ export class ReportNotFoundError extends Error {
     this.name = "ReportNotFoundError";
   }
 }
+
+// ---- Apply Now Click Analytics ----------------------------------------------
+
+export interface TrackApplyClickPayload {
+  universityId?: string | number | null;
+  cipCode?: string | null;
+  degree?: string | null;
+  credentialLevel?: number | null;
+  credentialTitle?: string | null;
+  schoolUrl?: string | null;
+}
+
+/**
+ * POST /analytics/apply-click — records when a user (or guest) clicks 'Apply Now'.
+ * Uses authedFetch so signed-in users automatically attach their Authorization header.
+ */
+export async function trackApplyClick(
+  payload: TrackApplyClickPayload,
+): Promise<void> {
+  try {
+    await authedFetch("/analytics/apply-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        university_id: payload.universityId ? String(payload.universityId) : null,
+        cip_code: payload.cipCode ?? null,
+        degree: payload.degree ?? null,
+        credential_level: payload.credentialLevel ?? null,
+        credential_title: payload.credentialTitle ?? null,
+        school_url: payload.schoolUrl ?? null,
+        clicked_at: new Date().toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error("Failed to track Apply Now click:", err);
+  }
+}
+

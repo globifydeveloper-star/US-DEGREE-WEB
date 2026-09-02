@@ -200,6 +200,8 @@ export default function TabContent({ data }: { data: any }) {
             schoolUrl={data.schoolUrl}
             credentialLevel={data.credentialLevel}
             credentialTitle={data.credentialTitle}
+            universityId={data.id}
+            cipCode={data.cipCode}
           />
         </div>
       </div>

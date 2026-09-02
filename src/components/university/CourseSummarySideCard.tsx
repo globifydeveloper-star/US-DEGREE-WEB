@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { CourseSummarySideCardProps } from "@/types/university/CourseSummarySideCard";
 import { getCredentialLevelInfo } from "@/constants/credentialLevel";
+import { trackApplyClick } from "@/lib/auth/api";
+import { trackEvent } from "@/lib/analytics";
 
 export default function CourseSummarySideCard({
   degree,
@@ -19,9 +21,33 @@ export default function CourseSummarySideCard({
   schoolUrl,
   credentialLevel,
   credentialTitle,
+  universityId,
+  cipCode,
 }: CourseSummarySideCardProps) {
   const [expanded, setExpanded] = useState(false);
   const credentialInfo = getCredentialLevelInfo(credentialLevel);
+
+  const handleApplyClick = () => {
+    // Client-side analytics event
+    trackEvent("apply_now_click", {
+      university_id: universityId,
+      degree,
+      credential_title: credentialTitle || programType,
+      credential_level: credentialLevel,
+      cip_code: cipCode,
+      school_url: schoolUrl,
+    });
+
+    // Backend tracking call (attaches user auth header if logged in)
+    trackApplyClick({
+      universityId,
+      cipCode,
+      degree,
+      credentialLevel,
+      credentialTitle: credentialTitle || programType || null,
+      schoolUrl,
+    });
+  };
 
   return (
     <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col gap-5">
@@ -120,7 +146,7 @@ export default function CourseSummarySideCard({
         </>
       )}
 
-      {/* CTA — unchanged */}
+      {/* CTA */}
       <a
         href={
           schoolUrl
@@ -129,6 +155,7 @@ export default function CourseSummarySideCard({
               : `https://${schoolUrl}`
             : "#"
         }
+        onClick={handleApplyClick}
         target="_blank"
         rel="noopener noreferrer"
         className="w-full text-center rounded-[16px] bg-gradient-to-r from-[#2b55ff] to-[#9333ea] py-4 text-[15px] font-black text-white hover:opacity-95 hover:shadow-lg active:scale-[0.99] transition-all shadow-md shadow-blue-500/10 block"

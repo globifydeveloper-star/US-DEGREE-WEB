@@ -9,4 +9,6 @@ export interface CourseSummarySideCardProps {
   // "About this credential type" section is hidden entirely.
   credentialLevel?: number | null;
   credentialTitle?: string | null;
+  universityId?: string | number | null;
+  cipCode?: string | null;
 }
