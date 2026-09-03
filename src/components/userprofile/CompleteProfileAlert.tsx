@@ -23,7 +23,7 @@ export default function CompleteProfileAlert({
     <Alert
       type="info"
       className="rounded-2xl border border-blue-200/80 bg-blue-50/60 p-3.5 sm:p-5 shadow-xs mb-6 sm:mb-8"
-      message={
+      title={
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full">
           <div className="flex-1 min-w-0 pr-0 sm:pr-2">
             <span className="block text-sm sm:text-base font-bold text-slate-900 leading-snug">

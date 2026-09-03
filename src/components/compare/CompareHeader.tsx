@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button, message, Modal } from "antd";
 import { useRouter } from "next/navigation";
-import { Check, FileText, MapPin, Sparkles, X } from "lucide-react";
+import { Check, FileText, Loader2, MapPin, Sparkles, X } from "lucide-react";
 import { authedFetch, fetchProfile } from "@/lib/auth/api";
 import { College } from "@/types/university/ComparisonTable";
 import { useAuth } from "@/context/AuthContext";
@@ -14,13 +14,20 @@ import { calculateProfileCompletion } from "@/lib/profileCompletion";
 // report so the AI has enough signal (academics + preferences) to personalize it.
 const MIN_PROFILE_COMPLETION_FOR_REPORT = 90;
 
-const GENERATION_STEPS = [
-  "analyzing the profile...",
-  "Gathering college data...",
-  "Generating AI insights...",
-  "Building your report...",
-  "Finalizing PDF...",
+// Each step owns a slice of the progress bar. The bar eases toward the current
+// step's ceiling and parks there until the next step starts, so it always
+// creeps forward without ever pretending to be finished — the real completion
+// (100%) only comes from the API response.
+const GENERATION_STEPS: { label: string; ceiling: number }[] = [
+  { label: "Analyzing your profile", ceiling: 18 },
+  { label: "Gathering college data", ceiling: 40 },
+  { label: "Generating AI insights", ceiling: 65 },
+  { label: "Building your report", ceiling: 84 },
+  { label: "Finalizing PDF", ceiling: 95 },
 ];
+
+const STEP_DURATION_MS = 2000;
+const PROGRESS_TICK_MS = 60;
 
 interface CompareHeaderProps {
   comparedIds: string[];
@@ -36,10 +43,18 @@ export default function CompareHeader({
   const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
   const [generationStep, setGenerationStep] = useState<number>(-1);
+  const [progress, setProgress] = useState(0);
   const [isGenerated, setIsGenerated] = useState(false);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMounted = useRef(true);
+
+  const stopTicker = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
 
   const router = useRouter();
   const { user } = useAuth();
@@ -106,18 +121,26 @@ export default function CompareHeader({
     setIsGenerated(false);
     setIsGenerating(true);
     setGenerationStep(0);
+    setProgress(0);
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    // A single ticker drives both the step label and the bar. The bar eases
+    // toward the active step's ceiling (fast at first, slower as it approaches)
+    // so it keeps visibly moving even while a step takes longer than expected.
+    stopTicker();
+    const startedAt = Date.now();
     intervalRef.current = setInterval(() => {
-      setGenerationStep((prev) => {
-        if (prev < GENERATION_STEPS.length - 1) {
-          return prev + 1;
-        }
-        return prev;
+      const elapsed = Date.now() - startedAt;
+      const step = Math.min(
+        Math.floor(elapsed / STEP_DURATION_MS),
+        GENERATION_STEPS.length - 1,
+      );
+      setGenerationStep(step);
+      setProgress((prev) => {
+        const ceiling = GENERATION_STEPS[step].ceiling;
+        if (prev >= ceiling) return prev;
+        return Math.min(ceiling, prev + (ceiling - prev) * 0.06 + 0.12);
       });
-    }, 2000);
+    }, PROGRESS_TICK_MS);
 
     const key = "generate-report";
     message.open({
@@ -145,13 +168,11 @@ export default function CompareHeader({
         raw: comparedColleges,
         resolved: selectedColleges,
       });
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      stopTicker();
       if (isMounted.current) {
         setIsGenerating(false);
         setGenerationStep(-1);
+        setProgress(0);
       }
       message.open({
         key,
@@ -183,14 +204,12 @@ export default function CompareHeader({
         pdfUrl: string;
       };
 
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      stopTicker();
 
       if (isMounted.current) {
         setIsGenerating(false);
         setIsGenerated(true);
+        setProgress(100);
       }
 
       message.open({
@@ -212,13 +231,11 @@ export default function CompareHeader({
       }
     } catch (err) {
       console.error("Report generation error:", err);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      stopTicker();
       if (isMounted.current) {
         setIsGenerating(false);
         setGenerationStep(-1);
+        setProgress(0);
       }
       message.open({
         key,
@@ -229,20 +246,31 @@ export default function CompareHeader({
     }
   };
 
-  const getButtonText = () => {
-    if (isGenerated) return "Generated";
-    if (isGenerating && generationStep >= 0 && generationStep < GENERATION_STEPS.length) {
-      return GENERATION_STEPS[generationStep];
-    }
-    if (isCheckingProfile) return "Checking Profile...";
-    return "Generate AI Report";
-  };
+  // The button label stays put while a report is generating — the moving parts
+  // (progress bar, percentage, step line below) carry the status instead, so
+  // nothing flickers or resizes under the cursor.
+  const buttonLabel = isGenerated
+    ? "Report Ready"
+    : isGenerating
+      ? "Generating Report"
+      : isCheckingProfile
+        ? "Checking Profile"
+        : "Generate AI Report";
+
+  const isBusy = isGenerating || isCheckingProfile;
+  const isDisabled = comparedIds.length === 0;
 
   const buttonBgClass = isGenerated
-    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-    : isGenerating
-      ? "animate-gradient-flow"
-      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700";
+    ? "bg-gradient-to-r from-green-500 to-emerald-600"
+    : "bg-gradient-to-r from-blue-600 to-indigo-600";
+
+  const statusLine = isGenerated
+    ? "Report ready — opening it now"
+    : isGenerating && generationStep >= 0
+      ? GENERATION_STEPS[generationStep].label
+      : isCheckingProfile
+        ? "Checking your profile"
+        : "";
 
   return (
     <div className="mb-10 text-center lg:text-left flex flex-col lg:flex-row justify-between items-center gap-6">
@@ -260,19 +288,90 @@ export default function CompareHeader({
         </p>
       </div>
 
-      <div className="shrink-0">
-        <Button
-          type="primary"
-          icon={isGenerated ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-          loading={isGenerating || isCheckingProfile}
-          disabled={comparedIds.length === 0}
-          onClick={isGenerating || isGenerated ? undefined : handleOpenConfirm}
-          className={`${buttonBgClass} border-none font-bold rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all flex items-center gap-2 text-sm cursor-pointer`}
+      <div className="shrink-0 w-full sm:w-[268px]">
+        <button
+          type="button"
+          disabled={isDisabled || isBusy || isGenerated}
+          aria-busy={isGenerating}
+          aria-live="polite"
+          onClick={handleOpenConfirm}
+          className={`${buttonBgClass} relative w-full overflow-hidden border-none rounded-xl h-12 text-white shadow-md transition-all duration-300
+            ${isDisabled ? "opacity-50 cursor-not-allowed grayscale" : isBusy || isGenerated ? "cursor-default" : "cursor-pointer hover:shadow-lg hover:brightness-110"}`}
         >
-          <span key={getButtonText()} className={isGenerating ? "animate-text-change" : ""}>
-            {getButtonText()}
+          {/* Progress fill — a lighter wash that sweeps across the button. */}
+          <span
+            className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-200 ease-linear"
+            style={{ width: `${progress}%` }}
+            aria-hidden
+          />
+
+          {/* Shimmer, only while work is actually in flight. */}
+          {isBusy && (
+            <span className="absolute inset-0 overflow-hidden" aria-hidden>
+              <span className="absolute top-0 -left-[40%] h-full w-[40%] skew-x-[-25deg] bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.4s_linear_infinite]" />
+            </span>
+          )}
+
+          {/* Label row — fixed content, no width jitter. */}
+          <span className="relative z-10 flex items-center justify-center gap-2 px-5 text-sm font-bold">
+            {isGenerated ? (
+              <Check className="w-4 h-4 shrink-0" />
+            ) : isBusy ? (
+              <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 shrink-0" />
+            )}
+            <span>{buttonLabel}</span>
+            {/* Absolutely placed so the centered label never shifts when the
+                percentage appears. */}
+            {(isGenerating || isGenerated) && (
+              <span className="absolute right-4 tabular-nums text-xs font-black text-white/90">
+                {Math.round(progress)}%
+              </span>
+            )}
           </span>
-        </Button>
+
+          {/* Track pinned to the bottom edge of the button. */}
+          {(isGenerating || isGenerated) && (
+            <span className="absolute bottom-0 left-0 h-[3px] w-full bg-black/15" aria-hidden>
+              <span
+                className="block h-full bg-white transition-[width] duration-200 ease-linear"
+                style={{ width: `${progress}%` }}
+              />
+            </span>
+          )}
+        </button>
+
+        {/* Status line + step dots. The row is always reserved so the header
+            never shifts when generation starts. */}
+        <div className="h-5 mt-2 flex items-center justify-center lg:justify-start gap-2">
+          {statusLine && (
+            <>
+              <span
+                key={statusLine}
+                className="animate-text-change text-xs font-semibold text-gray-500"
+              >
+                {statusLine}
+              </span>
+              {isGenerating && (
+                <span className="flex items-center gap-1" aria-hidden>
+                  {GENERATION_STEPS.map((step, i) => (
+                    <span
+                      key={step.label}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        i < generationStep
+                          ? "w-1.5 bg-blue-600"
+                          : i === generationStep
+                            ? "w-4 bg-blue-600 animate-pulse"
+                            : "w-1.5 bg-gray-200"
+                      }`}
+                    />
+                  ))}
+                </span>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Confirmation modal: review the selected colleges before generating. */}

@@ -227,7 +227,7 @@ export default function SearchHeader({
         </div>
 
         {/* View Toggle + Sort (+ mobile Filters) */}
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap">
           {/* Mobile Filters trigger — sits side by side with "Sort by" so it's
               always reachable at the top (never behind the bottom nav dock). */}
           <button
@@ -244,9 +244,22 @@ export default function SearchHeader({
             )}
           </button>
 
+          {/* Sort Select */}
+          <Select
+            value={sort}
+            onChange={handleSortChange}
+            options={[
+              { value: "recommended", label: "Sort: Recommended" },
+              { value: "admission_high", label: "Acceptance: High to Low" },
+              { value: "admission_low", label: "Acceptance: Low to High" },
+              { value: "tuition_low", label: "Tuition: Low to High" },
+              { value: "tuition_high", label: "Tuition: High to Low" },
+            ]}
+            className="w-full sm:w-48"
+          />
+
           {/* List / Grid toggle */}
           <div className="hidden md:flex items-center bg-gray-100 border border-gray-200 rounded-lg p-0.5">
-            {" "}
             <button
               onClick={() => onViewChange("list")}
               title="List view"
@@ -269,24 +282,6 @@ export default function SearchHeader({
             >
               <LayoutGrid size={16} />
             </button>
-          </div>
-
-          {/* Sort Dropdown */}
-          <div className="flex flex-1 md:flex-none items-center bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm md:min-w-[200px]">
-            <span className="text-sm text-gray-500 mr-2 whitespace-nowrap">
-              Sort by:
-            </span>
-            <Select
-              value={sort}
-              variant="borderless"
-              className="w-full font-medium text-gray-900"
-              onChange={handleSortChange}
-              options={[
-                { value: "recommended", label: "Recommended" },
-                { value: "tuition_low", label: "Tuition (Low to High)" },
-                { value: "admission_high", label: "Admission Rate (High)" },
-              ]}
-            />
           </div>
         </div>
       </div>
