@@ -15,6 +15,7 @@ export interface SearchResult {
   earnings_year_5: number | string | null;
   roi_20yr: number | string | null;
   tuition_in_state?: number | string | null;
+  sticker_price_by_api?: number | string | null;
   school_min_range?: number | null;
   school_max_range?: number | null;
   school_url?: string | null;

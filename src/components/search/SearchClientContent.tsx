@@ -36,6 +36,8 @@ export default function SearchClientContent({
     totalPages,
     currentResults,
     category,
+    pageSize,
+    setPageSize,
   } = useSearchResults(initialData);
 
   const categoryLabel = getCategoryLabel(category);
@@ -82,6 +84,8 @@ export default function SearchClientContent({
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
             />
           </div>
         </div>

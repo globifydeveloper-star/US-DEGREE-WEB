@@ -134,7 +134,7 @@ export default function UniversityHero({
   const activeStickerPrice = tuitionData
     ? `$${Math.round(activeStickerVal).toLocaleString()}`
     : tuitionFee;
-
+  console.log("tuitionData", tuitionData);
   return (
     <div className="relative w-full">
       {/* Banner Cover Image */}

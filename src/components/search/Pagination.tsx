@@ -1,18 +1,49 @@
 import React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { PAGE_SIZE_OPTIONS } from "@/lib/search/searchRequest";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
 }
 
 export default function Pagination({
   currentPage,
   totalPages,
   onPageChange,
+  pageSize,
+  onPageSizeChange,
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  const pageSizePicker = (
+    <label className="flex items-center gap-2 text-xs font-bold text-gray-500">
+      Show
+      <select
+        value={pageSize}
+        onChange={(e) => onPageSizeChange(Number(e.target.value))}
+        className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {PAGE_SIZE_OPTIONS.map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
+      </select>
+      / page
+    </label>
+  );
+
+  // Still let the user change the page size even when there's only one page
+  // of results — a bigger page size might reveal more of them.
+  if (totalPages <= 1) {
+    return (
+      <div className="flex items-center justify-center mt-12 mb-8">
+        {pageSizePicker}
+      </div>
+    );
+  }
 
   // Build a smart page list with ellipsis for large page counts. Always
   // surfaces a run of pages at whichever edge(s) are close to the current
@@ -107,6 +138,8 @@ export default function Pagination({
       <span className="text-xs font-bold text-gray-400 bg-gray-50 border border-gray-150 rounded-full px-3 py-1 shadow-sm leading-none shrink-0">
         Page {currentPage} of {totalPages}
       </span>
+
+      {pageSizePicker}
     </div>
   );
 }

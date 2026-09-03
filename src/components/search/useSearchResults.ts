@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { CATEGORY_KEYWORDS } from "@/constants/searchCategories";
-import { buildSearchRequest } from "@/lib/search/searchRequest";
+import { buildSearchRequest, PAGE_SIZE_OPTIONS } from "@/lib/search/searchRequest";
 import { filterSearchResults } from "@/lib/search/searchFilters";
 import { SearchResult, ViewMode } from "@/types/search-details";
 
@@ -30,8 +30,14 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
   const [isLoading, setIsLoading] = useState<boolean>(!initialData);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  const itemsPerPage =
+  const defaultItemsPerPage =
     viewMode === "grid" ? GRID_ITEMS_PER_PAGE : LIST_ITEMS_PER_PAGE;
+  const perPageParam = parseInt(searchParams.get("per_page") || "", 10);
+  const itemsPerPage = (PAGE_SIZE_OPTIONS as readonly number[]).includes(
+    perPageParam,
+  )
+    ? perPageParam
+    : defaultItemsPerPage;
   const category = searchParams.get("category") || "";
 
   // Derive current page from URL parameter (default: 1)
@@ -49,6 +55,22 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
       router.push(`${pathname}?${params.toString()}`);
     },
     [router, pathname, searchParams],
+  );
+
+  // Changing how many results are shown per page also resets to page 1 —
+  // otherwise the user could land on a page past the new, shorter total.
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (size === defaultItemsPerPage) {
+        params.delete("per_page");
+      } else {
+        params.set("per_page", String(size));
+      }
+      params.delete("page");
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [router, pathname, searchParams, defaultItemsPerPage],
   );
 
   useEffect(() => {
@@ -143,6 +165,8 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
     totalPages,
     currentResults,
     category,
+    pageSize: itemsPerPage,
+    setPageSize: handlePageSizeChange,
   };
 }
 

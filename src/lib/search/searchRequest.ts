@@ -2,6 +2,11 @@ import type { ReadonlyURLSearchParams } from "next/navigation";
 
 import { CATEGORY_KEYWORDS } from "@/constants/searchCategories";
 
+// Choices offered by the "results per page" control. The user's pick is
+// stored in the URL (`per_page`) so it survives pagination/filter changes
+// and back/forward navigation, overriding the list/grid view default.
+export const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+
 interface SearchRequest {
   requestParams: URLSearchParams;
   selectedCredentials: string[];

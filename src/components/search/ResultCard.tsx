@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Clock, BookOpen, MapPin } from "lucide-react";
 import UserSatPopup from "./UserSatPopup";
-import StickerPrice from "./StickerPrice";
 import { Button, message } from "antd";
 import CompareIconAnimation from "./CompareIconAnimation";
 import { useSavedCollege, toggleSaved } from "./useSavedColleges";
@@ -585,7 +584,14 @@ export default function ResultCard({
             </span>
           </div>
 
-          <StickerPrice id={id} estCost={estCost} />
+          <div className="flex flex-col bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 min-w-[90px]">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+              Sticker Price
+            </span>
+            <span className="text-sm font-extrabold text-gray-900">
+              {estCost ?? "N/A"}
+            </span>
+          </div>
         </div>
 
         {/* Footer Actions */}

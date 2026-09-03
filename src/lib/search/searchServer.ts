@@ -1,6 +1,6 @@
 import { getBackendBaseUrl } from "@/lib/env";
 import { CATEGORY_KEYWORDS } from "@/constants/searchCategories";
-import { buildSearchRequest } from "@/lib/search/searchRequest";
+import { buildSearchRequest, PAGE_SIZE_OPTIONS } from "@/lib/search/searchRequest";
 import { filterSearchResults } from "@/lib/search/searchFilters";
 import { SearchResult } from "@/types/search-details";
 
@@ -32,7 +32,13 @@ export async function fetchServerSearchResults(
   const category = urlSearchParams.get("category") || "";
   const schoolType = urlSearchParams.get("school_type");
   const viewMode = urlSearchParams.get("view") || "list";
-  const itemsPerPage = viewMode === "grid" ? 12 : 10;
+  const defaultItemsPerPage = viewMode === "grid" ? 12 : 10;
+  const perPageParam = parseInt(urlSearchParams.get("per_page") || "", 10);
+  const itemsPerPage = (PAGE_SIZE_OPTIONS as readonly number[]).includes(
+    perPageParam,
+  )
+    ? perPageParam
+    : defaultItemsPerPage;
 
   const pageParam = parseInt(urlSearchParams.get("page") || "1", 10);
   const currentPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
