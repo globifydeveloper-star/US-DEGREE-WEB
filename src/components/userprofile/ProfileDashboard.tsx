@@ -13,6 +13,7 @@ import AcademicInfoCard from "./cards/AcademicInfoCard";
 import PreferencesCard from "./cards/PreferencesCard";
 import CollegeMatchesSection from "./cards/CollegeMatchesSection";
 import SavedCollegesSection from "./cards/SavedCollegesSection";
+import AppliedListSection from "./cards/AppliedListSection";
 import MyReportsSection from "./cards/MyReportsSection";
 import DangerZoneCard from "./cards/DangerZoneCard";
 
@@ -117,11 +118,19 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
       {/* Match Engine Recommendations */}
       <CollegeMatchesSection matches={matches} loading={matchesLoading} />
 
-      {/* Saved Colleges */}
-      <SavedCollegesSection
-        view={savedCollegesView}
-        onViewChange={setSavedCollegesView}
-      />
+      {/* Saved Colleges + Applied List, side by side on wide screens and
+          stacked below xl (the applied table needs the room). */}
+      <Row gutter={[24, 24]} align="stretch">
+        <Col xs={24} xl={12}>
+          <SavedCollegesSection
+            view={savedCollegesView}
+            onViewChange={setSavedCollegesView}
+          />
+        </Col>
+        <Col xs={24} xl={12}>
+          <AppliedListSection />
+        </Col>
+      </Row>
 
       {/* Generated Reports */}
       <MyReportsSection />

@@ -22,6 +22,7 @@ export default function CourseSummarySideCard({
   credentialLevel,
   credentialTitle,
   universityId,
+  universityName,
   cipCode,
 }: CourseSummarySideCardProps) {
   const [expanded, setExpanded] = useState(false);
@@ -31,6 +32,7 @@ export default function CourseSummarySideCard({
     // Client-side analytics event
     trackEvent("apply_now_click", {
       university_id: universityId,
+      university_name: universityName,
       degree,
       credential_title: credentialTitle || programType,
       credential_level: credentialLevel,
@@ -41,6 +43,7 @@ export default function CourseSummarySideCard({
     // Backend tracking call (attaches user auth header if logged in)
     trackApplyClick({
       universityId,
+      universityName,
       cipCode,
       degree,
       credentialLevel,

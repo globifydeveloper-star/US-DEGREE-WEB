@@ -214,29 +214,48 @@ export default function EditProfileModal({
                   { required: true, message: "High school name is required" },
                 ]}
               >
-                <Input placeholder="Lincoln High School" />
+                <Input placeholder="Enter Your High School" />
               </Form.Item>
             </Col>
             <Col xs={12} md={6}>
               <Form.Item
                 name="graduationYear"
                 label="Graduation Year"
-                rules={[{ required: true, message: "Required" }]}
+                rules={[
+                  { required: true, message: "Required" },
+                  {
+                    type: "number",
+                  },
+                ]}
               >
-                <InputNumber min={2020} max={2035} className="w-full" />
+                <InputNumber
+                  step={1}
+                  precision={0}
+                  placeholder="e.g. 2026"
+                  className="w-full"
+                />
               </Form.Item>
             </Col>
             <Col xs={12} md={6}>
               <Form.Item
                 name="gpa"
                 label="Cumulative GPA"
-                rules={[{ required: true, message: "GPA is required" }]}
+                rules={[
+                  { required: true, message: "GPA is required" },
+                  {
+                    type: "number",
+                    min: 0,
+                    max: 4,
+                    message: "GPA must be between 0.0 and 4.0",
+                  },
+                ]}
               >
                 <InputNumber
-                  min={0.0}
-                  max={4.0}
+                  min={0}
+                  max={4}
                   step={0.01}
                   precision={2}
+                  placeholder="e.g. 3.75"
                   className="w-full"
                 />
               </Form.Item>

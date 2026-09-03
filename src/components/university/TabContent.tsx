@@ -201,6 +201,7 @@ export default function TabContent({ data }: { data: any }) {
             credentialLevel={data.credentialLevel}
             credentialTitle={data.credentialTitle}
             universityId={data.id}
+            universityName={data.name}
             cipCode={data.cipCode}
           />
         </div>

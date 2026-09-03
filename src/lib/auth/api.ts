@@ -668,6 +668,7 @@ export class ReportNotFoundError extends Error {
 
 export interface TrackApplyClickPayload {
   universityId?: string | number | null;
+  universityName?: string | null;
   cipCode?: string | null;
   degree?: string | null;
   credentialLevel?: number | null;
@@ -688,6 +689,7 @@ export async function trackApplyClick(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         university_id: payload.universityId ? String(payload.universityId) : null,
+        university_name: payload.universityName ?? null,
         cip_code: payload.cipCode ?? null,
         degree: payload.degree ?? null,
         credential_level: payload.credentialLevel ?? null,
@@ -699,5 +701,43 @@ export async function trackApplyClick(
   } catch (err) {
     console.error("Failed to track Apply Now click:", err);
   }
+}
+
+/** One row of usd_apply_clicks, as returned by GET /analytics/apply-clicks. */
+export interface ApplyClick {
+  id: number;
+  universityId: string | null;
+  /** Institution name — the `university_name` column. */
+  universityName: string | null;
+  cipCode: string | null;
+  /** Program name — the `degree` column. */
+  degree: string | null;
+  credentialLevel: number | null;
+  /** Degree level label — the `credential_title` column. */
+  credentialTitle: string | null;
+  schoolUrl: string | null;
+  clickedAt: string;
+}
+
+export interface PaginatedApplyClicks {
+  clicks: ApplyClick[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
+/**
+ * GET /analytics/apply-clicks?page=&limit= — the signed-in user's own
+ * "Apply Now" click history (the read side of trackApplyClick above).
+ */
+export async function fetchApplyClicks(
+  page = 1,
+  limit = 10,
+): Promise<PaginatedApplyClicks> {
+  const res = await authedFetch(
+    `/analytics/apply-clicks?page=${page}&limit=${limit}`,
+  );
+  return parseJson<PaginatedApplyClicks>(res, "Load applied list");
 }
 

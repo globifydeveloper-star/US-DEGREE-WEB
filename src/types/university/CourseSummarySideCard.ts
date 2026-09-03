@@ -10,5 +10,6 @@ export interface CourseSummarySideCardProps {
   credentialLevel?: number | null;
   credentialTitle?: string | null;
   universityId?: string | number | null;
+  universityName?: string | null;
   cipCode?: string | null;
 }
