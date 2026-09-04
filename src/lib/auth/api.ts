@@ -81,6 +81,11 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
 /** Shape returned by POST /auth/apple — app JWT plus the found/created user. */
 export interface AppleAuthResult {
   token: string;
+  /** Firebase custom token — sign in with it via signInWithCustomToken to
+   * establish a persisted Firebase client session for the Apple user (the
+   * same kind Google/email logins already get from the popup/credential
+   * flows), so silent app-JWT restore-on-refresh has a session to key off. */
+  firebaseToken: string;
   user: {
     id?: number;
     display_name?: string | null;
@@ -93,9 +98,11 @@ export interface AppleAuthResult {
 
 /**
  * Send Apple's id_token straight to the backend, which verifies it against
- * Apple's public keys, finds/creates the user, and returns the app JWT plus
- * the user record. Unlike exchangeIdToken, no Firebase session backs this —
- * Apple's token is verified entirely server-side.
+ * Apple's public keys, finds/creates the user, and returns the app JWT, the
+ * user record, and a Firebase custom token. Apple's own id_token is verified
+ * entirely server-side (no Firebase involved there) — the custom token is
+ * what the caller then uses with signInWithCustomToken to establish a real
+ * Firebase client session, matching Google/email logins.
  *
  * `fullName` is only ever present on the user's first-ever authorization
  * (Apple never sends it again) — the backend should use it solely when

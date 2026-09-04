@@ -1,9 +1,11 @@
 /**
  * Loads Apple's official "Sign in with Apple" JS SDK on demand and exposes a
- * popup sign-in helper that resolves with Apple's id_token. This flow is
- * intentionally independent of Firebase — the id_token is verified directly
- * by the backend's POST /auth/apple (Apple's public keys), not exchanged via
- * the Firebase-based /auth/login path used by Google.
+ * popup sign-in helper that resolves with Apple's id_token. The id_token
+ * itself is verified directly by the backend's POST /auth/apple (Apple's
+ * public keys), not exchanged via the Firebase-based /auth/login path used
+ * by Google — the backend then hands back a Firebase custom token in that
+ * same response so the caller can still establish a persisted Firebase
+ * client session (see AuthContext.loginWithApple).
  */
 
 const APPLE_SDK_SRC =

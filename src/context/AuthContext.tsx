@@ -14,6 +14,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   sendPasswordResetEmail,
+  signInWithCustomToken,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { clearAppJwt } from "@/lib/auth/tokenStore";
@@ -299,7 +300,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       clearAppJwt();
       const { idToken, fullName } = await signInWithApple();
-      const { user: dbUser } = await exchangeAppleIdToken(idToken, fullName);
+      const { user: dbUser, firebaseToken } = await exchangeAppleIdToken(idToken, fullName);
+
+      // Exchanging Apple's id_token gets us the backend's app JWT, but that
+      // alone leaves no persisted Firebase client session — unlike Google,
+      // which gets one from signInWithPopup. Without a real Firebase session,
+      // there's nothing for silent-restore-on-refresh (exchangeIdToken) to
+      // re-authenticate against once the 30-minute app JWT expires. Signing
+      // in with the backend-issued custom token establishes that session.
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithCustomToken(auth, firebaseToken);
 
       const mappedUser: AuthUser = {
         id: dbUser.id,
