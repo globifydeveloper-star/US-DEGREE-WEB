@@ -22,6 +22,7 @@ interface DesktopComparisonTableProps {
     bestValueId: string;
   };
   onRemove: (id: string) => void;
+  removingIds?: Set<string>;
   onViewDetails: (id: string) => void;
 }
 
@@ -34,6 +35,7 @@ export default function DesktopComparisonTable({
   averages,
   highlights,
   onRemove,
+  removingIds,
   onViewDetails,
 }: DesktopComparisonTableProps) {
   return (
@@ -51,6 +53,7 @@ export default function DesktopComparisonTable({
                 isHighSalary={highlights.highestSalaryId === college.id}
                 isLowestCost={highlights.lowestTuitionId === college.id}
                 onRemove={onRemove}
+                isRemoving={!!removingIds?.has(college.id)}
                 onViewDetails={onViewDetails}
               />
             ))}

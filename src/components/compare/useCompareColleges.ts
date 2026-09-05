@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { message } from "antd";
 import type { CollegeDetail } from "@/types/university/ComparisonTable";
 import {
   MAX_COMPARE,
@@ -37,6 +38,7 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
 
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [activeModalId, setActiveModalId] = useState<string | null>(null);
   const [collegeDetailsCache, setCollegeDetailsCache] = useState<
     Record<string, CollegeDetail>
@@ -204,6 +206,10 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
           setIsLimitModalOpen(true);
           return;
         }
+        if (result === "exists") {
+          message.warning("This program is already added to comparison");
+          return;
+        }
         if (result !== "added") return;
         // Same college + same course + same credential level → same entryId,
         // so an exact duplicate is already blocked ("exists") above. Same
@@ -218,6 +224,11 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
   };
 
   const handleRemoveCollege = (entryId: string) => {
+    // Guard against the delete button being clicked again before the first
+    // request (and the URL/details update that follows it) has landed.
+    if (removingIds.has(entryId)) return;
+    setRemovingIds((prev) => new Set(prev).add(entryId));
+
     const { unitid, cipCode, credentialLevel } = parseEntryId(entryId);
     removeCollegeFromCompare(unitid, {
       ...(cipCode !== "default" ? { cipCode, credentialLevel } : {}),
@@ -236,7 +247,15 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
       })
       .catch((err) =>
         console.error("Failed to sync comparison selection:", err),
-      );
+      )
+      .finally(() => {
+        setRemovingIds((prev) => {
+          if (!prev.has(entryId)) return prev;
+          const next = new Set(prev);
+          next.delete(entryId);
+          return next;
+        });
+      });
   };
 
   const handleClearAll = () => {
@@ -258,6 +277,7 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
     isDetailsLoading,
     isLimitModalOpen,
     isClearingAll,
+    removingIds,
     setIsLimitModalOpen,
     activeModalId,
     setActiveModalId,

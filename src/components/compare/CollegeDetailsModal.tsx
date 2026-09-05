@@ -9,9 +9,7 @@ import {
   CollegeDetail,
   ApiNumber,
   OverviewResponse,
-  TuitionResponse,
-  CampusResponse,
-  CollegeResponse,
+  CollegeSummaryResponse,
   OutcomesResponse,
 } from "@/types/university/ComparisonTable";
 
@@ -101,24 +99,22 @@ export default function CollegeDetailsModal({
         );
         const actualId = matchedCollege?.unitid || collegeId;
 
-        // Stage 1: Fetch overview, tuition, campus, and colleges details in parallel
-        const [overviewRes, tuitionRes, campusRes, collegeRes] =
-          await Promise.all([
-            fetch(`${apiUrl}/overview/${actualId}/default`),
-            fetch(`${apiUrl}/tuition/${actualId}`),
-            fetch(`${apiUrl}/campus/${actualId}`),
-            fetch(`${apiUrl}/colleges/${actualId}`),
-          ]);
+        // Stage 1: Fetch overview and the tuition+campus summary in parallel.
+        // `colleges/{id}` used to be fetched here too, but every field it can
+        // return (school_name/name/city/state/control/school_url) is already
+        // present on `overview.school`, so it was a pure duplicate call.
+        // `/tuition/{id}` and `/campus/{id}` are likewise merged server-side
+        // into `/college-summary/{id}` (same field paths, one response).
+        const [overviewRes, summaryRes] = await Promise.all([
+          fetch(`${apiUrl}/overview/${actualId}/default`),
+          fetch(`${apiUrl}/college-summary/${actualId}`),
+        ]);
 
         let overviewData: OverviewResponse = {};
-        let tuitionData: TuitionResponse = {};
-        let campusData: CampusResponse = {};
-        let collegeData: CollegeResponse = {};
+        let summaryData: CollegeSummaryResponse = {};
 
         if (overviewRes.ok) overviewData = await overviewRes.json();
-        if (tuitionRes.ok) tuitionData = await tuitionRes.json();
-        if (campusRes.ok) campusData = await campusRes.json();
-        if (collegeRes.ok) collegeData = await collegeRes.json();
+        if (summaryRes.ok) summaryData = await summaryRes.json();
 
         // Stage 2: Fetch outcomes details with resolved program cip_code
         const universityCipFallbacks: Record<string, string> = {
@@ -144,8 +140,6 @@ export default function CollegeDetailsModal({
 
         const name =
           matchedCollege?.name ||
-          collegeData?.school_name ||
-          collegeData?.name ||
           overviewData?.school_name ||
           overviewData?.school?.school_name ||
           overviewData?.school?.name ||
@@ -155,8 +149,8 @@ export default function CollegeDetailsModal({
               ? "UC Berkeley"
               : "Unknown University");
 
-        const city = collegeData?.city || overviewData?.school?.city || "";
-        const state = collegeData?.state || overviewData?.school?.state || "";
+        const city = overviewData?.school?.city || "";
+        const state = overviewData?.school?.state || "";
         const location =
           matchedCollege?.location ||
           (city && state
@@ -169,7 +163,6 @@ export default function CollegeDetailsModal({
                   ? "Berkeley, CA"
                   : "Unknown Location"));
         const control =
-          collegeData?.control ||
           overviewData?.school?.control ||
           (matchedCollege?.isPrivate ? "Private" : "Public");
         const type = control.toLowerCase().includes("private")
@@ -178,9 +171,6 @@ export default function CollegeDetailsModal({
 
         const logo =
           matchedCollege?.logo ||
-          (collegeData?.school_url
-            ? `https://logo.clearbit.com/${new URL(collegeData.school_url.startsWith("http") ? collegeData.school_url : `https://${collegeData.school_url}`).hostname}`
-            : null) ||
           (overviewData?.school?.school_url
             ? `https://logo.clearbit.com/${new URL(overviewData.school.school_url.startsWith("http") ? overviewData.school.school_url : `https://${overviewData.school.school_url}`).hostname}`
             : null) ||
@@ -250,18 +240,18 @@ export default function CollegeDetailsModal({
 
         // Tuition costs
         const tuitionInState =
-          tuitionData?.tuition?.tuition_in_state !== null &&
-          tuitionData?.tuition?.tuition_in_state !== undefined
-            ? Number(tuitionData.tuition.tuition_in_state)
+          summaryData?.tuition?.tuition_in_state !== null &&
+          summaryData?.tuition?.tuition_in_state !== undefined
+            ? Number(summaryData.tuition.tuition_in_state)
             : actualId === "1"
               ? 56169
               : actualId === "2"
                 ? 14200
                 : null;
         const tuitionOutOfState =
-          tuitionData?.tuition?.tuition_out_state !== null &&
-          tuitionData?.tuition?.tuition_out_state !== undefined
-            ? Number(tuitionData.tuition.tuition_out_state)
+          summaryData?.tuition?.tuition_out_state !== null &&
+          summaryData?.tuition?.tuition_out_state !== undefined
+            ? Number(summaryData.tuition.tuition_out_state)
             : actualId === "1"
               ? 56169
               : actualId === "2"
@@ -315,7 +305,7 @@ export default function CollegeDetailsModal({
                 : "N/A";
 
         // Repayments mapping (matching Program Details loanRepaymentDisplay logic)
-        const rawRepayment = campusData?.repayment?.all_borrowers_3yr;
+        const rawRepayment = summaryData?.repayment?.all_borrowers_3yr;
         const repaymentRate3YrVal = toPercentVal(rawRepayment);
         const graduates3yr =
           repaymentRate3YrVal !== null
@@ -376,14 +366,14 @@ export default function CollegeDetailsModal({
 
         // Gender demographics
         const menStudentsPct =
-          campusData?.students?.demographics?.men !== null &&
-          campusData?.students?.demographics?.men !== undefined
-            ? Number(campusData.students.demographics.men)
+          summaryData?.students?.demographics?.men !== null &&
+          summaryData?.students?.demographics?.men !== undefined
+            ? Number(summaryData.students.demographics.men)
             : 44;
         const womenStudentsPct =
-          campusData?.students?.demographics?.women !== null &&
-          campusData?.students?.demographics?.women !== undefined
-            ? Number(campusData.students.demographics.women)
+          summaryData?.students?.demographics?.women !== null &&
+          summaryData?.students?.demographics?.women !== undefined
+            ? Number(summaryData.students.demographics.women)
             : 56;
         const menFacultyPct = 58;
         const womenFacultyPct = 42;

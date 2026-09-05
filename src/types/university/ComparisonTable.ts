@@ -118,6 +118,10 @@ export interface CampusResponse {
   students?: { demographics?: { men?: number | null; women?: number | null } };
 }
 
+// `/college-summary/{unitid}` — merges the old `/tuition/{unitid}` and
+// `/campus/{unitid}` responses into one payload (same field paths as both).
+export type CollegeSummaryResponse = TuitionResponse & CampusResponse;
+
 export interface CollegeResponse {
   school_name?: string;
   name?: string;

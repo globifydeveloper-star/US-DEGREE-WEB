@@ -14,6 +14,7 @@ interface ComparisonTableProps {
     bestValueId: string;
   };
   onRemove: (id: string) => void;
+  removingIds?: Set<string>;
   onViewDetails: (id: string) => void;
 }
 

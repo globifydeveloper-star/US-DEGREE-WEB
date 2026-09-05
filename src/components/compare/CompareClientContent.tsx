@@ -22,6 +22,7 @@ export default function CompareClientContent({
     isDetailsLoading,
     isLimitModalOpen,
     isClearingAll,
+    removingIds,
     setIsLimitModalOpen,
     activeModalId,
     setActiveModalId,
@@ -70,6 +71,7 @@ export default function CompareClientContent({
             averages={averages}
             highlights={highlights}
             onRemove={handleRemoveCollege}
+            removingIds={removingIds}
             onViewDetails={(id) => setActiveModalId(id)}
           />
         )}

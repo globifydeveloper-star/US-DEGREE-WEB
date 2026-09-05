@@ -1,7 +1,7 @@
 "use client";
 
 import { MapPin, Trash2 } from "lucide-react";
-import { Button, Tooltip } from "antd";
+import { Button, Spin, Tooltip } from "antd";
 import { College } from "@/types/university/ComparisonTable";
 import CollegeAvatar from "../shared/CollegeAvatar";
 import CollegeBadges from "../shared/CollegeBadges";
@@ -11,6 +11,7 @@ interface DesktopCollegeHeaderProps {
   isBestValue: boolean;
   isHighSalary: boolean;
   isLowestCost: boolean;
+  isRemoving?: boolean;
   onRemove: (id: string) => void;
   onViewDetails: (id: string) => void;
 }
@@ -21,18 +22,31 @@ export default function DesktopCollegeHeader({
   isBestValue,
   isHighSalary,
   isLowestCost,
+  isRemoving = false,
   onRemove,
   onViewDetails,
 }: DesktopCollegeHeaderProps) {
   return (
     <th className="p-4 md:p-8 relative min-w-[140px] md:min-w-[200px] sticky bg-[#FAFBFD] z-20">
+      {isRemoving && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
+          <Spin size="small" />
+        </div>
+      )}
+
       <div className="absolute top-2 right-2 md:top-4 md:right-4 z-40">
-        <Tooltip title="Remove college">
+        <Tooltip title={isRemoving ? "Removing..." : "Remove college"}>
           <Button
             type="text"
             shape="circle"
             size="small"
-            icon={<Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />}
+            loading={isRemoving}
+            disabled={isRemoving}
+            icon={
+              isRemoving ? undefined : (
+                <Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-500" />
+              )
+            }
             onClick={() => onRemove(college.id)}
           />
         </Tooltip>
