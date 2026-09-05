@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Select, Button, Spin } from "antd";
+import { Select, Button, Spin, Tooltip } from "antd";
 import { BarChart3, ChevronRight, Search, Trash2, Plus } from "lucide-react";
 import {
   fetchProgramsByCredential,
@@ -219,8 +219,10 @@ export default function CompareSearchBar({
     resetFlow();
   };
 
-  const programEnabled = credentialLevel !== null;
-  const collegeEnabled = !!selectedProgram;
+  const maxReached = comparedCount >= MAX_COMPARE;
+  const programEnabled = credentialLevel !== null && !maxReached;
+  const collegeEnabled = !!selectedProgram && !maxReached;
+  const maxReachedMessage = `Maximum ${MAX_COMPARE} programs added`;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 sm:mb-10 overflow-hidden">
@@ -287,14 +289,19 @@ export default function CompareSearchBar({
               </p>
             </div>
           </div>
-          <Select
-            className="w-full h-11"
-            placeholder="Select credential"
-            value={credentialLevel}
-            allowClear
-            onChange={handleCredentialChange}
-            options={CREDENTIAL_LEVEL_OPTIONS}
-          />
+          <Tooltip title={maxReached ? maxReachedMessage : undefined}>
+            <span className="block">
+              <Select
+                className="w-full h-11"
+                placeholder="Select credential"
+                value={credentialLevel}
+                allowClear
+                disabled={maxReached}
+                onChange={handleCredentialChange}
+                options={CREDENTIAL_LEVEL_OPTIONS}
+              />
+            </span>
+          </Tooltip>
         </div>
 
         <div className="hidden lg:flex items-center justify-center px-3 self-end pb-3.5 shrink-0">
@@ -315,30 +322,34 @@ export default function CompareSearchBar({
               </p>
             </div>
           </div>
-          <Select
-            showSearch
-            className="w-full h-11"
-            placeholder="Type a program to search"
-            disabled={!programEnabled}
-            value={selectedProgram?.title ?? null}
-            filterOption={false}
-            onSearch={(text) => handleProgramSearch(text)}
-            loading={isSearchingPrograms}
-            onChange={handleProgramChange}
-            notFoundContent={
-              isSearchingPrograms ? (
-                <Spin size="small" />
-              ) : (
-                <span className="text-gray-400 text-xs">
-                  No programs found for this search
-                </span>
-              )
-            }
-            options={programResults.map((p) => ({
-              value: p.title,
-              label: p.title,
-            }))}
-          />
+          <Tooltip title={maxReached ? maxReachedMessage : undefined}>
+            <span className="block">
+              <Select
+                showSearch
+                className="w-full h-11"
+                placeholder="Type a program to search"
+                disabled={!programEnabled}
+                value={selectedProgram?.title ?? null}
+                filterOption={false}
+                onSearch={(text) => handleProgramSearch(text)}
+                loading={isSearchingPrograms}
+                onChange={handleProgramChange}
+                notFoundContent={
+                  isSearchingPrograms ? (
+                    <Spin size="small" />
+                  ) : (
+                    <span className="text-gray-400 text-xs">
+                      No programs found for this search
+                    </span>
+                  )
+                }
+                options={programResults.map((p) => ({
+                  value: p.title,
+                  label: p.title,
+                }))}
+              />
+            </span>
+          </Tooltip>
         </div>
 
         <div className="hidden lg:flex items-center justify-center px-3 self-end pb-3.5 shrink-0">
@@ -359,61 +370,69 @@ export default function CompareSearchBar({
               </p>
             </div>
           </div>
-          <Select
-            showSearch
-            className="w-full h-11"
-            placeholder="Search for a college"
-            disabled={!collegeEnabled}
-            value={selectedCollege ? String(selectedCollege.unitid) : null}
-            filterOption={false}
-            onSearch={handleCollegeSearch}
-            loading={isSearchingColleges}
-            suffixIcon={<Search className="w-3.5 h-3.5 text-gray-400" />}
-            onChange={(value) => {
-              const college = collegeResults.find(
-                (c) => String(c.unitid) === value,
-              );
-              setSelectedCollege(college ?? null);
-            }}
-            notFoundContent={
-              isSearchingColleges ? (
-                <Spin size="small" />
-              ) : (
-                <span className="text-gray-400 text-xs">
-                  No colleges found for this search
-                </span>
-              )
-            }
-            options={collegeResults.map((c) => {
-              const base =
-                c.city && c.state
-                  ? `${c.school_name} (${c.city}, ${c.state})`
-                  : c.school_name;
-              // We compare programs now, not just colleges — a college
-              // already in the matrix can still be added again under a
-              // different course, so this is a hint, not a disabled state.
-              const alreadyAdded = comparedIds.some(
-                (entryId) =>
-                  parseEntryId(entryId).unitid === String(c.unitid),
-              );
-              return {
-                value: String(c.unitid),
-                label: alreadyAdded ? `${base} • already added` : base,
-              };
-            })}
-          />
+          <Tooltip title={maxReached ? maxReachedMessage : undefined}>
+            <span className="block">
+              <Select
+                showSearch
+                className="w-full h-11"
+                placeholder="Search for a college"
+                disabled={!collegeEnabled}
+                value={selectedCollege ? String(selectedCollege.unitid) : null}
+                filterOption={false}
+                onSearch={handleCollegeSearch}
+                loading={isSearchingColleges}
+                suffixIcon={<Search className="w-3.5 h-3.5 text-gray-400" />}
+                onChange={(value) => {
+                  const college = collegeResults.find(
+                    (c) => String(c.unitid) === value,
+                  );
+                  setSelectedCollege(college ?? null);
+                }}
+                notFoundContent={
+                  isSearchingColleges ? (
+                    <Spin size="small" />
+                  ) : (
+                    <span className="text-gray-400 text-xs">
+                      No colleges found for this search
+                    </span>
+                  )
+                }
+                options={collegeResults.map((c) => {
+                  const base =
+                    c.city && c.state
+                      ? `${c.school_name} (${c.city}, ${c.state})`
+                      : c.school_name;
+                  // We compare programs now, not just colleges — a college
+                  // already in the matrix can still be added again under a
+                  // different course, so this is a hint, not a disabled state.
+                  const alreadyAdded = comparedIds.some(
+                    (entryId) =>
+                      parseEntryId(entryId).unitid === String(c.unitid),
+                  );
+                  return {
+                    value: String(c.unitid),
+                    label: alreadyAdded ? `${base} • already added` : base,
+                  };
+                })}
+              />
+            </span>
+          </Tooltip>
         </div>
 
         <div className="flex items-stretch lg:pl-4 lg:ml-1 lg:border-l lg:border-gray-100">
-          <Button
-            type="primary"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={handleFinalAdd}
-            disabled={!selectedCollege}
-            className="w-full lg:w-auto self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-11 px-5 shadow-sm flex items-center justify-center gap-1.5 shrink-0"
-          >
-            Add to Comparison
-          </Button>
+          <Tooltip title={maxReached ? maxReachedMessage : undefined}>
+            <span className="w-full lg:w-auto self-end">
+              <Button
+                type="primary"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={handleFinalAdd}
+                disabled={!selectedCollege || maxReached}
+                className="w-full lg:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl h-11 px-5 shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+              >
+                Add to Comparison
+              </Button>
+            </span>
+          </Tooltip>
         </div>
       </div>
     </div>

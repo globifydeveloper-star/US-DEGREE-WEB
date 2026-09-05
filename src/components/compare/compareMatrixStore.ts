@@ -35,6 +35,7 @@ import {
   removeCompareMatrixEntry,
   CompareLimitReachedError,
   hasAuthenticatedUser,
+  type SelectedCompareCollege,
 } from "@/lib/auth/api";
 import {
   makeEntryId,
@@ -263,10 +264,23 @@ export function addCollegeToCompare(
 // cards, which don't know/care about a specific program). With `opts.cipCode`,
 // removes only that one program entry (used by the /compare page's own
 // per-program remove).
+//
+// With `opts.withDetails`, the signed-in path asks the backend for each
+// remaining row's enriched details inline (same shape as
+// GET /compare/matrix/details) instead of just the bare matrix entry — the
+// /compare page uses this to redraw the table straight off the delete
+// response, skipping the separate details round trip it used to make right
+// after. Returns `{ ids, details }` (in matching order) when that enrichment
+// is available, otherwise null (anonymous visitors, or `withDetails` not
+// requested) — callers fall back to their own bookkeeping in that case.
 export function removeCollegeFromCompare(
   unitid: string,
-  opts?: { cipCode?: string; credentialLevel?: number | string },
-): Promise<void> {
+  opts?: {
+    cipCode?: string;
+    credentialLevel?: number | string;
+    withDetails?: boolean;
+  },
+): Promise<{ ids: string[]; details: SelectedCompareCollege[] } | null> {
   return enqueueMutation(async () => {
     const id = String(unitid);
 
@@ -291,17 +305,29 @@ export function removeCollegeFromCompare(
           ),
         ),
       );
-      return;
+      return null;
     }
 
-    const backendEntries = await removeCompareMatrixEntry(
-      id,
-      opts?.cipCode
-        ? { cipCode: opts.cipCode, credentialLevel: opts.credentialLevel }
-        : undefined,
-    );
+    const program = opts?.cipCode
+      ? { cipCode: opts.cipCode, credentialLevel: opts.credentialLevel }
+      : undefined;
+
+    if (opts?.withDetails) {
+      const backendEntries = await removeCompareMatrixEntry(id, program, {
+        withDetails: true,
+      });
+      writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
+      writeEntryPrograms(apiEntriesToPrograms(backendEntries));
+      return {
+        ids: apiEntriesToMatrixIds(backendEntries),
+        details: backendEntries.map((e) => e.details),
+      };
+    }
+
+    const backendEntries = await removeCompareMatrixEntry(id, program);
     writeMatrixEntries(apiEntriesToMatrixIds(backendEntries));
     writeEntryPrograms(apiEntriesToPrograms(backendEntries));
+    return null;
   });
 }
 

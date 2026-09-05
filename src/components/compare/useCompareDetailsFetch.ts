@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type { College } from "@/types/university/ComparisonTable";
 import {
   fetchCompareMatrixDetails,
@@ -307,6 +307,37 @@ export function useCompareDetailsFetch(
     () => !initialColleges || initialColleges.length === 0,
   );
 
+  // Set right before a caller (e.g. handleRemoveCollege) pushes a new `ids`
+  // URL param whose details it already has in hand — e.g. from a
+  // DELETE /compare/matrix/entry?details=true response — so the effect below
+  // can render off it directly instead of following up with its own
+  // GET /compare/matrix/details call for ids it just received data for.
+  // Consumed (cleared) the moment the matching comparedIds run shows up.
+  const pendingSeedRef = useRef<{ ids: string[]; details: SelectedCompareCollege[] } | null>(
+    null,
+  );
+
+  const seedComparedDetails = useCallback(
+    (ids: string[], details: SelectedCompareCollege[]) => {
+      const baseByEntryId = matchDetailsToEntries(ids, details);
+      const rows = ids.map((entryId) =>
+        buildCollegeRow(entryId, {
+          baseByEntryId,
+          storedDetails: readStoredDetails(),
+          entryProgramsMap: readEntryPrograms(),
+          allUniversities: deps.allUniversitiesRef.current,
+          cacheUniversity: deps.cacheUniversity,
+        }),
+      );
+      pendingSeedRef.current = { ids, details };
+      setComparedColleges(rows);
+      setIsDetailsLoading(false);
+      writeSharedDetailsMirror(rows);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -327,6 +358,21 @@ export function useCompareDetailsFetch(
         setIsDetailsLoading(false);
         return;
       }
+
+      // A caller already handed us fresh details for exactly this id set
+      // (see seedComparedDetails above) — comparedColleges is already
+      // rendering them, so there's nothing left to fetch.
+      const seed = pendingSeedRef.current;
+      if (
+        seed &&
+        seed.ids.length === comparedIds.length &&
+        seed.ids.every((id, i) => id === comparedIds[i])
+      ) {
+        pendingSeedRef.current = null;
+        setIsDetailsLoading(false);
+        return;
+      }
+      pendingSeedRef.current = null;
 
       setIsDetailsLoading(true);
       const storedDetails = readStoredDetails();
@@ -397,7 +443,7 @@ export function useCompareDetailsFetch(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [comparedIds]);
 
-  return { comparedColleges, isDetailsLoading };
+  return { comparedColleges, isDetailsLoading, seedComparedDetails };
 }
 
 

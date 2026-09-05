@@ -579,22 +579,48 @@ export async function addCompareMatrixEntry(entry: {
 }
 
 /**
+ * One row from DELETE /compare/matrix/entry/... when called with
+ * `withDetails: true` — the same matrix-entry identity fields as
+ * CompareMatrixEntry, plus that row's own enriched `details` (identical
+ * shape to a GET /compare/matrix/details row). Lets the /compare page
+ * re-render the remaining rows straight off the delete response instead of
+ * following up with a separate GET /compare/matrix/details round trip.
+ */
+export interface CompareMatrixEntryWithDetails extends CompareMatrixEntry {
+  details: SelectedCompareCollege;
+}
+
+/**
  * DELETE /compare/matrix/entry/:unitid — removes every entry for a college
  * (no program given), or DELETE /compare/matrix/entry/:unitid/:cipCode/
  * :credentialLevel — removes one specific program entry. Returns the
  * caller's full updated matrix.
+ *
+ * Pass `{ withDetails: true }` to also get each remaining row's enriched
+ * details inline (`?details=true`) — see CompareMatrixEntryWithDetails.
  */
 export async function removeCompareMatrixEntry(
   unitid: string,
   program?: { cipCode: string; credentialLevel?: string | number },
-): Promise<CompareMatrixEntry[]> {
-  const path = program
+): Promise<CompareMatrixEntry[]>;
+export async function removeCompareMatrixEntry(
+  unitid: string,
+  program: { cipCode: string; credentialLevel?: string | number } | undefined,
+  opts: { withDetails: true },
+): Promise<CompareMatrixEntryWithDetails[]>;
+export async function removeCompareMatrixEntry(
+  unitid: string,
+  program?: { cipCode: string; credentialLevel?: string | number },
+  opts?: { withDetails?: boolean },
+): Promise<CompareMatrixEntry[] | CompareMatrixEntryWithDetails[]> {
+  const basePath = program
     ? `/compare/matrix/entry/${encodeURIComponent(unitid)}/${encodeURIComponent(program.cipCode)}/${encodeURIComponent(String(program.credentialLevel ?? ""))}`
     : `/compare/matrix/entry/${encodeURIComponent(unitid)}`;
+  const path = opts?.withDetails ? `${basePath}?details=true` : basePath;
   const res = await authedFetch(path, { method: "DELETE" });
   if (!res.ok) throw new Error(`Remove compare matrix entry failed (${res.status})`);
   const data = await res.json();
-  return Array.isArray(data) ? (data as CompareMatrixEntry[]) : [];
+  return Array.isArray(data) ? data : [];
 }
 
 /**

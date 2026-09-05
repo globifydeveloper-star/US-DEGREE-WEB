@@ -68,11 +68,12 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
     handleDropdownSearch,
   } = useCollegeSearch(handle401);
 
-  const { comparedColleges, isDetailsLoading } = useCompareDetailsFetch(
-    comparedIds,
-    { allUniversitiesRef, cacheUniversity },
-    initialBundle?.comparedColleges,
-  );
+  const { comparedColleges, isDetailsLoading, seedComparedDetails } =
+    useCompareDetailsFetch(
+      comparedIds,
+      { allUniversitiesRef, cacheUniversity },
+      initialBundle?.comparedColleges,
+    );
 
   const { highlights, averages } = useCompareHighlights(comparedColleges);
 
@@ -218,11 +219,19 @@ export function useCompareColleges(initialBundle?: ServerCompareBundle) {
 
   const handleRemoveCollege = (entryId: string) => {
     const { unitid, cipCode, credentialLevel } = parseEntryId(entryId);
-    removeCollegeFromCompare(
-      unitid,
-      cipCode !== "default" ? { cipCode, credentialLevel } : undefined,
-    )
-      .then(() => {
+    removeCollegeFromCompare(unitid, {
+      ...(cipCode !== "default" ? { cipCode, credentialLevel } : {}),
+      withDetails: true,
+    })
+      .then((result) => {
+        if (result) {
+          // Already-enriched rows for what's left — render them straight
+          // away instead of waiting on a separate /compare/matrix/details
+          // fetch triggered by the URL change below.
+          seedComparedDetails(result.ids, result.details);
+          syncUrlParams(result.ids);
+          return;
+        }
         syncUrlParams(comparedIds.filter((cid) => cid !== entryId));
       })
       .catch((err) =>
