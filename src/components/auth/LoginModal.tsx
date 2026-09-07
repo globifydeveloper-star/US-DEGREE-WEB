@@ -48,7 +48,7 @@ export default function LoginModal({
       onOverlayClick={form.handleOverlayClick}
       onClose={onClose}
     >
-      <AuthModalHeader mode={form.mode} />
+      <AuthModalHeader mode={form.mode} resetSent={form.resetSent} />
 
       {!isForgotPassword && (
         <AuthModeTabs mode={form.mode} onSelect={selectMode} />

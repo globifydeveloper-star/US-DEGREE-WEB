@@ -1,4 +1,4 @@
-import { Mail, ArrowRight } from "lucide-react";
+import { Mail, ArrowRight, Check } from "lucide-react";
 
 import AuthField from "./AuthField";
 import type { AuthFormState } from "./useAuthForm";
@@ -13,8 +13,11 @@ export default function ForgotPasswordFields({
   if (form.resetSent) {
     return (
       <div className="my-4 text-center">
-        <div className="inline-flex w-16 h-16 rounded-3xl bg-emerald-50 items-center justify-center text-emerald-600 mb-4 shadow-inner">
-          <Mail className="w-8 h-8 animate-pulse" />
+        <div className="relative inline-flex w-16 h-16 rounded-3xl bg-emerald-50 items-center justify-center text-emerald-600 mb-4 shadow-inner">
+          <Mail className="w-8 h-8" />
+          <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center ring-4 ring-white animate-tick-pop">
+            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+          </span>
         </div>
         <h3 className="text-lg font-black text-slate-900 mb-2">
           Check Your Email

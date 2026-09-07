@@ -3,9 +3,17 @@ import type { AuthModalMode } from "@/types/auth";
 
 interface AuthModalHeaderProps {
   mode: AuthModalMode;
+  resetSent?: boolean;
 }
 
-export default function AuthModalHeader({ mode }: AuthModalHeaderProps) {
+export default function AuthModalHeader({
+  mode,
+  resetSent = false,
+}: AuthModalHeaderProps) {
+  if (mode === "forgot_password" && resetSent) {
+    return null;
+  }
+
   return (
     <div className="mb-5 text-center">
       <div className="inline-flex w-12 h-12 rounded-2xl bg-blue-600 items-center justify-center text-white mb-3 shadow-lg shadow-blue-500/20">
