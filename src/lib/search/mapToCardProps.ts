@@ -34,11 +34,9 @@ export const mapToCardProps = (result: SearchResult) => ({
   // Prefer the full sticker price (tuition + books + room/board + other
   // expenses, precomputed by the backend); fall back to tuition alone when a
   // school has no sticker-price record yet.
-  estCost: hasValue(result.sticker_price_by_api)
-    ? `$${Math.round(Number(result.sticker_price_by_api)).toLocaleString()}`
-    : hasValue(result.tuition_in_state)
-      ? `$${Math.round(Number(result.tuition_in_state)).toLocaleString()}`
-      : undefined,
+  estCost: hasValue(result.sticker_price)
+    ? `$${Math.round(Number(result.sticker_price)).toLocaleString()}`
+    : undefined,
   medianSalary: hasValue(result.earnings_year_5)
     ? `$${Math.round(Number(result.earnings_year_5)).toLocaleString()}`
     : undefined,
