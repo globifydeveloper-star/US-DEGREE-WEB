@@ -5,7 +5,12 @@ import { Card, Table, Tag, Button, Empty, Alert, Space, message } from "antd";
 import { FileTextOutlined, DownloadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
-import { fetchReports, fetchReport, ReportSummary } from "@/lib/auth/api";
+import {
+  fetchReports,
+  fetchReport,
+  emailReport,
+  ReportSummary,
+} from "@/lib/auth/api";
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +41,7 @@ export default function MyReportsSection() {
   const [error, setError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [emailingId, setEmailingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +77,25 @@ export default function MyReportsSection() {
       message.error("Could not download this report. Please try again.");
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  // NOTE (backend): requires POST /report/:reportId/email — the backend
+  // should look up the requesting user's registered email, generate/reuse a
+  // signed download link the same way GET /report/:reportId does, and send a
+  // message templated with the report name (`report-${reportId}.pdf`), its
+  // createdAt, and the compared college names. No such endpoint exists yet;
+  // emailReport() in lib/auth/api.ts assumes this contract.
+  const handleEmailReport = async (report: ReportSummary) => {
+    setEmailingId(report.reportId);
+    try {
+      await emailReport(report.reportId);
+      message.success("Download link sent to your registered email.");
+    } catch (err) {
+      console.error("Failed to email report:", err);
+      message.error("Could not email this report. Please try again.");
+    } finally {
+      setEmailingId(null);
     }
   };
 
@@ -120,17 +145,34 @@ export default function MyReportsSection() {
     {
       title: "",
       key: "download",
-      width: 140,
+      width: 160,
       render: (_value, record) => (
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          loading={downloadingId === record.reportId}
-          onClick={() => handleDownload(record.reportId)}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl whitespace-nowrap"
-        >
-          Download
-        </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            loading={downloadingId === record.reportId}
+            onClick={() => handleDownload(record.reportId)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-none font-bold rounded-xl whitespace-nowrap w-full"
+          >
+            Download
+          </Button>
+          <Button
+            icon={
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/icons/icons8-sent.gif"
+                alt=""
+                className="w-4 h-4 object-contain"
+              />
+            }
+            loading={emailingId === record.reportId}
+            onClick={() => handleEmailReport(record)}
+            className="font-bold rounded-xl whitespace-nowrap w-full border-blue-200 text-blue-600 hover:!text-blue-700 hover:!border-blue-400"
+          >
+            Send to Mail
+          </Button>
+        </div>
       ),
     },
   ];
@@ -169,7 +211,7 @@ export default function MyReportsSection() {
           columns={columns}
           dataSource={reports}
           loading={loading}
-          scroll={{ x: 800 }}
+          scroll={{ x: 850 }}
           locale={{
             emptyText: (
               <Empty

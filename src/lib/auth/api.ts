@@ -697,6 +697,25 @@ export class ReportNotFoundError extends Error {
   }
 }
 
+/**
+ * POST /report/:reportId/email — asks the backend to email the signed
+ * download link (plus report name/created date/compared colleges) to the
+ * current user's registered address. Requires backend support — see the
+ * NOTE above `emailReport`'s call site in MyReportsSection.tsx.
+ */
+export async function emailReport(reportId: string): Promise<void> {
+  const res = await authedFetch(
+    `/report/${encodeURIComponent(reportId)}/email`,
+    { method: "POST" },
+  );
+  if (res.status === 404) {
+    throw new ReportNotFoundError(reportId);
+  }
+  if (!res.ok) {
+    throw new Error(`Email report failed (${res.status})`);
+  }
+}
+
 // ---- Apply Now Click Analytics ----------------------------------------------
 
 export interface TrackApplyClickPayload {
