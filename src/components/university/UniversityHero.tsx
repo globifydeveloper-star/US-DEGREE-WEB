@@ -14,6 +14,7 @@ import {
   toggleSaved,
   useSavedCollege,
   reloadSaved,
+  SavedLimitError,
 } from "../search/useSavedColleges";
 import type { SavedCollege } from "@/lib/auth/api";
 
@@ -109,8 +110,12 @@ export default function UniversityHero({
         message.info(`Removed ${name} from saved colleges.`);
       }
     } catch (err) {
-      console.error("Failed to update saved colleges:", err);
-      message.error("Could not update saved colleges. Please try again.");
+      if (err instanceof SavedLimitError) {
+        message.warning(err.message);
+      } else {
+        console.error("Failed to update saved colleges:", err);
+        message.error("Could not update saved colleges. Please try again.");
+      }
     } finally {
       setIsSaving(false);
     }

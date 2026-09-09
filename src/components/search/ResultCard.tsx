@@ -6,7 +6,11 @@ import { Heart, Clock, BookOpen, MapPin } from "lucide-react";
 import UserSatPopup from "./UserSatPopup";
 import { Button, message } from "antd";
 import CompareIconAnimation from "./CompareIconAnimation";
-import { useSavedCollege, toggleSaved } from "./useSavedColleges";
+import {
+  useSavedCollege,
+  toggleSaved,
+  SavedLimitError,
+} from "./useSavedColleges";
 import type { SavedCollege } from "@/lib/auth/api";
 import {
   toggleCompare as toggleCompareStore,
@@ -245,8 +249,12 @@ export default function ResultCard({
           ? `Saved ${university} to your colleges.`
           : `Removed ${university} from saved colleges.`,
       );
-    } catch {
-      message.error("Could not update saved colleges. Please try again.");
+    } catch (err) {
+      if (err instanceof SavedLimitError) {
+        message.warning(err.message);
+      } else {
+        message.error("Could not update saved colleges. Please try again.");
+      }
     } finally {
       setIsSaving(false);
     }

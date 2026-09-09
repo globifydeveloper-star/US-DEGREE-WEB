@@ -20,6 +20,17 @@ import {
 
 export const SAVED_EVENT = "saved-colleges-updated";
 
+/** Maximum number of colleges a user may have saved at once. */
+export const MAX_SAVED = 10;
+
+/** Thrown by `toggleSaved` when adding would exceed `MAX_SAVED`. */
+export class SavedLimitError extends Error {
+  constructor() {
+    super(`You can save a maximum of ${MAX_SAVED} colleges.`);
+    this.name = "SavedLimitError";
+  }
+}
+
 // ---- Program/credential cache ---------------------------------------------
 //
 // POST /saved-colleges only persists `{ unitid }` — the backend has no notion
@@ -151,6 +162,10 @@ export async function toggleSaved(
 ): Promise<boolean> {
   const key = String(unitid);
   const next = !savedSet.has(key);
+
+  if (next && savedSet.size >= MAX_SAVED) {
+    throw new SavedLimitError();
+  }
 
   const addDetail: SavedChangeDetail | undefined = optimistic
     ? { action: "added", record: optimistic }

@@ -34,6 +34,7 @@ import {
   toggleSaved,
   useSavedIds,
   reloadSaved,
+  SavedLimitError,
 } from "../../search/useSavedColleges";
 import type { SavedCollege } from "../../../lib/auth/api";
 import EarningsMethodBadge from "../../common/EarningsMethodBadge";
@@ -132,8 +133,12 @@ export default function CollegeMatchesSection({
         message.info(`Removed ${match.name} from saved colleges.`);
       }
     } catch (err) {
-      console.error("Failed to update saved colleges:", err);
-      message.error("Could not update saved colleges. Please try again.");
+      if (err instanceof SavedLimitError) {
+        message.warning(err.message);
+      } else {
+        console.error("Failed to update saved colleges:", err);
+        message.error("Could not update saved colleges. Please try again.");
+      }
     }
   };
 
@@ -198,7 +203,7 @@ export default function CollegeMatchesSection({
             const isCompared = isCollegeCompared(match.id);
 
             return (
-              <Col xs={24} sm={12} md={12} lg={6} key={match.id}>
+              <Col xs={24} sm={12} md={12} lg={8} xl={6} key={match.id}>
                 <Card
                   variant="outlined"
                   hoverable

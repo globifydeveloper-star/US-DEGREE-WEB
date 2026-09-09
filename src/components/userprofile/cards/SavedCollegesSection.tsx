@@ -32,6 +32,7 @@ import {
   reloadSaved,
   applyProgramCache,
   forgetProgramInfo,
+  MAX_SAVED,
   type SavedChangeDetail,
 } from "../../search/useSavedColleges";
 
@@ -207,8 +208,13 @@ export default function SavedCollegesSection({
           <Space>
             <HeartFilled className="text-red-500" />
             <span className="font-bold">
-              Saved Colleges ({colleges.length})
+              Saved Colleges ({colleges.length}/{MAX_SAVED})
             </span>
+            {/* {colleges.length >= MAX_SAVED && (
+              <span className="text-xs font-semibold text-amber-600">
+                Limit reached
+              </span>
+            )} */}
           </Space>
 
           {/* Grid/List segment switch */}
@@ -239,11 +245,17 @@ export default function SavedCollegesSection({
           }
         />
       ) : view === "Grid" ? (
-        /* Grid View mode matching college style */
-        <Row gutter={[20, 20]}>
+        /* Grid View mode: fixed 2-column layout (2x5 for a full 10-entry
+           list) on sm+ screens, single column on mobile. Capped to MAX_SAVED
+           entries, so once the list is full it scrolls instead of growing
+           the page indefinitely — height scales down on smaller screens. */
+        <Row
+          gutter={[20, 20]}
+          className="max-h-[70vh] sm:max-h-[640px] overflow-y-auto pr-1 -mr-1"
+        >
           {colleges.map((uni) => {
             return (
-              <Col xs={24} sm={12} md={8} lg={6} key={uni.unitid}>
+              <Col xs={24} sm={12} key={uni.unitid}>
                 <Card
                   hoverable
                   variant="outlined"
@@ -325,8 +337,9 @@ export default function SavedCollegesSection({
           })}
         </Row>
       ) : (
-        /* List View mode — plain rows (antd's List component is deprecated) */
-        <div className="flex flex-col">
+        /* List View mode — plain rows (antd's List component is deprecated).
+           Same scroll cap as the grid view once the saved list is full. */
+        <div className="flex flex-col max-h-[70vh] sm:max-h-[640px] overflow-y-auto pr-1 -mr-1">
           {colleges.map((uni) => {
             return (
               <div
