@@ -5,7 +5,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
-import { getFriendlyErrorMessage } from "@/lib/auth/authErrors";
+import {
+  getFriendlyErrorMessage,
+  isCancelledPopupError,
+} from "@/lib/auth/authErrors";
 import type { AuthMode, AuthModalMode } from "@/types/auth";
 
 const EMAIL_REGEX = /\S+@\S+\.\S+/;
@@ -241,7 +244,9 @@ export function useAuthForm({
       onSuccess(firebaseUser.email!);
       onClose();
     } catch (err) {
-      setError(getFriendlyErrorMessage(err));
+      if (!isCancelledPopupError(err)) {
+        setError(getFriendlyErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +260,9 @@ export function useAuthForm({
       onSuccess(appleUser.email ?? "");
       onClose();
     } catch (err) {
-      setError(getFriendlyErrorMessage(err));
+      if (!isCancelledPopupError(err)) {
+        setError(getFriendlyErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }

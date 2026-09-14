@@ -1,3 +1,15 @@
+const CANCELLED_POPUP_CODES = [
+  "auth/popup-closed-by-user",
+  "auth/cancelled-popup-request",
+  "auth/user-cancelled",
+];
+
+export function isCancelledPopupError(error: unknown): boolean {
+  const err = error as { code?: string; message?: string } | null;
+  const code = err?.code || err?.message || "";
+  return CANCELLED_POPUP_CODES.some((c) => code.includes(c));
+}
+
 export function getFriendlyErrorMessage(error: unknown): string {
   const err = error as { code?: string; message?: string } | null;
   const code = err?.code || err?.message || "";
