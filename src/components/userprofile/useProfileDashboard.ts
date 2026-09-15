@@ -12,15 +12,18 @@ import React from "react";
 import {
   updatePassword,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   EmailAuthProvider,
   verifyBeforeUpdateEmail,
   signOut,
+  type User as FirebaseUser,
 } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { auth, googleProvider } from "../../lib/firebase";
 import {
   fetchProfile,
   patchProfile,
   deleteAccount,
+  checkEmailAvailable,
   type DeactivationPayload,
 } from "../../lib/auth/api";
 import { clearAppJwt } from "../../lib/auth/tokenStore";
@@ -39,6 +42,29 @@ import {
   getAuthErrorMessage,
   type ProfileAuthUser,
 } from "./profileUtils";
+
+/**
+ * How the signed-in Firebase user must reauthenticate before a sensitive
+ * operation (e.g. changing their email). Derived from the Firebase user's
+ * linked providers, never from client-submitted form data.
+ */
+export type ReauthMethod = "password" | "google" | "unsupported";
+
+/**
+ * Thrown when the backend's email-availability pre-check rejects the entered
+ * new email (already in use / in cooldown / current email unverified). Kept
+ * distinct from other handleEmailSubmit failures so the modal can surface it
+ * as an inline field error instead of a generic toast.
+ */
+export class EmailAvailabilityError extends Error {}
+
+function getReauthMethod(user: FirebaseUser | null): ReauthMethod {
+  if (!user) return "unsupported";
+  const providerIds = user.providerData.map((p) => p.providerId);
+  if (providerIds.includes("password")) return "password";
+  if (providerIds.includes("google.com")) return "google";
+  return "unsupported";
+}
 
 /**
  * Custom hook to manage state, synchronization, and backend operations for ProfileDashboard.
@@ -142,6 +168,8 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
+  const [changeEmailReauthMethod, setChangeEmailReauthMethod] =
+    useState<ReauthMethod>("password");
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [accountDeactivatedStatus, setAccountDeactivatedStatus] =
     useState(false);
@@ -226,6 +254,11 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
     }
   };
 
+  const openChangeEmailModal = () => {
+    setChangeEmailReauthMethod(getReauthMethod(auth.currentUser));
+    setIsChangeEmailOpen(true);
+  };
+
   const handleEmailSubmit = async (values: {
     newEmail: string;
     currentPassword: string;
@@ -235,22 +268,79 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
       message.error("You must be signed in to change your email.");
       return;
     }
+    if (!current.emailVerified) {
+      message.error(
+        "You must verify your current email address before changing it.",
+      );
+      return;
+    }
+
+    // Reauthentication is mandatory and must succeed *before* we ever call
+    // verifyBeforeUpdateEmail — do not rely on Firebase's own
+    // auth/requires-recent-login error to trigger it, since Firebase may
+    // consider the existing session "recent enough" and skip that error
+    // entirely, letting a fabricated password field through unchecked.
+    const reauthMethod = getReauthMethod(current);
+    if (reauthMethod === "password") {
+      if (!values.currentPassword) {
+        message.error("Please enter your current password.");
+        return;
+      }
+      try {
+        const credential = EmailAuthProvider.credential(
+          current.email,
+          values.currentPassword,
+        );
+        await reauthenticateWithCredential(current, credential);
+      } catch (err) {
+        console.error("Reauthentication failed:", err);
+        message.error(
+          getAuthErrorMessage(err, "Current password is incorrect."),
+        );
+        return;
+      }
+    } else if (reauthMethod === "google") {
+      try {
+        await reauthenticateWithPopup(current, googleProvider);
+      } catch (err) {
+        console.error("Reauthentication failed:", err);
+        message.error(
+          getAuthErrorMessage(
+            err,
+            "Reauthentication failed. Please try again.",
+          ),
+        );
+        return;
+      }
+    } else {
+      message.error(
+        "Reauthentication isn't supported for this sign-in method yet. Please contact support to change your email address.",
+      );
+      return;
+    }
+
+    // Pre-check the new email against the backend's ownership/cooldown rules
+    // before ever sending a Firebase verification link — Firebase's own
+    // uniqueness check has no idea about this app's deactivation cooldown, so
+    // without this a doomed-to-conflict change would still get a "check your
+    // email" success state. This is UX only: the backend re-validates the
+    // same conditions independently when the change is finalized, so a
+    // failed/skipped pre-check here can't put an account in a bad state.
+    try {
+      const availability = await checkEmailAvailable(values.newEmail);
+      if (!availability.available) {
+        throw new EmailAvailabilityError(
+          availability.details ||
+            "This email address can't be used right now.",
+        );
+      }
+    } catch (err) {
+      if (err instanceof EmailAvailabilityError) throw err;
+      console.error("Email availability pre-check failed:", err);
+    }
 
     try {
-      try {
-        await verifyBeforeUpdateEmail(current, values.newEmail);
-      } catch (err) {
-        if ((err as { code?: string }).code === "auth/requires-recent-login") {
-          const credential = EmailAuthProvider.credential(
-            current.email,
-            values.currentPassword,
-          );
-          await reauthenticateWithCredential(current, credential);
-          await verifyBeforeUpdateEmail(current, values.newEmail);
-        } else {
-          throw err;
-        }
-      }
+      await verifyBeforeUpdateEmail(current, values.newEmail);
 
       setIsChangeEmailOpen(false);
       notification.success({
@@ -299,6 +389,8 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
     setIsChangePasswordOpen,
     isChangeEmailOpen,
     setIsChangeEmailOpen,
+    changeEmailReauthMethod,
+    openChangeEmailModal,
     isDeactivateOpen,
     setIsDeactivateOpen,
     accountDeactivatedStatus,

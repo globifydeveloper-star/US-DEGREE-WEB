@@ -258,6 +258,31 @@ export async function deleteAccount(
   await parseJson<{ ok: boolean }>(res, "Delete account");
 }
 
+/** Result of GET /account/email-available. */
+export interface EmailAvailability {
+  available: boolean;
+  code?: "EMAIL_ALREADY_IN_USE" | "EMAIL_IN_COOLDOWN" | "CURRENT_EMAIL_NOT_VERIFIED";
+  details?: string;
+}
+
+/**
+ * GET /account/email-available?email=... — pre-checks a prospective new email
+ * against the backend's ownership/cooldown/verification rules *before* a
+ * Firebase verification link is sent, so a doomed-to-conflict change is
+ * rejected immediately instead of after the user clicks a dead-end link.
+ * This is a UX pre-check only: the backend independently re-validates the
+ * same conditions when the change is finalized, so a skipped/raced call here
+ * cannot put an account in a bad state.
+ */
+export async function checkEmailAvailable(
+  email: string,
+): Promise<EmailAvailability> {
+  const res = await authedFetch(
+    `/account/email-available?email=${encodeURIComponent(email)}`,
+  );
+  return parseJson<EmailAvailability>(res, "Check email availability");
+}
+
 // ---- Saved colleges -------------------------------------------------------
 
 /** A saved college as enriched and returned by GET /saved-colleges. */

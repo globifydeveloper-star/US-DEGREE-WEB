@@ -53,6 +53,8 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
     setIsChangePasswordOpen,
     isChangeEmailOpen,
     setIsChangeEmailOpen,
+    changeEmailReauthMethod,
+    openChangeEmailModal,
     isDeactivateOpen,
     setIsDeactivateOpen,
     accountDeactivatedStatus,
@@ -95,7 +97,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
             loading={isProfileLoading}
             onEdit={() => setIsEditProfileOpen(true)}
             onChangePassword={() => setIsChangePasswordOpen(true)}
-            onChangeEmail={() => setIsChangeEmailOpen(true)}
+            onChangeEmail={openChangeEmailModal}
           />
         </Col>
 
@@ -154,6 +156,7 @@ export default function ProfileDashboard({ authUser }: ProfileDashboardProps) {
         open={isChangeEmailOpen}
         onClose={() => setIsChangeEmailOpen(false)}
         currentEmail={profile.email}
+        reauthMethod={changeEmailReauthMethod}
         onSubmit={handleEmailSubmit}
       />
       <DeactivateAccountModal

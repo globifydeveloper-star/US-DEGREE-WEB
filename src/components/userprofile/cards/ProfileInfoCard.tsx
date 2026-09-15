@@ -7,6 +7,7 @@ import {
   Descriptions,
   Button,
   Tag,
+  Tooltip,
   Progress,
   Skeleton,
 } from "antd";
@@ -249,19 +250,28 @@ export default function ProfileInfoCard({
         >
           Change Password
         </Button>
-        <Button
-          onClick={onChangeEmail}
-          icon={<MailOutlined />}
-          className="w-full font-semibold"
-          style={{
-            borderRadius: "8px",
-            borderColor: BRAND_BLUE,
-            color: BRAND_BLUE,
-          }}
+        <Tooltip
+          title={
+            isEmailVerified
+              ? undefined
+              : "Verify your current email address first"
+          }
         >
-          <span className="hidden sm:inline">Change Email Address</span>
-          <span className="sm:hidden">Change Email</span>
-        </Button>
+          <Button
+            onClick={onChangeEmail}
+            disabled={!isEmailVerified}
+            icon={<MailOutlined />}
+            className="w-full font-semibold"
+            style={{
+              borderRadius: "8px",
+              borderColor: BRAND_BLUE,
+              color: BRAND_BLUE,
+            }}
+          >
+            <span className="hidden sm:inline">Change Email Address</span>
+            <span className="sm:hidden">Change Email</span>
+          </Button>
+        </Tooltip>
       </div>
     </Card>
   );
