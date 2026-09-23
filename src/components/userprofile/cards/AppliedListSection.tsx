@@ -6,6 +6,7 @@ import { SendOutlined, LinkOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import { fetchApplyClicks, ApplyClick } from "@/lib/auth/api";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 const PAGE_SIZE = 10;
 
@@ -98,21 +99,24 @@ export default function AppliedListSection() {
       title: "Website",
       key: "schoolUrl",
       width: 120,
-      render: (_value, record) => (
-        <Button
-          size="small"
-          type="primary"
-          ghost
-          icon={<LinkOutlined />}
-          disabled={!record.schoolUrl}
-          href={record.schoolUrl ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold rounded-lg"
-        >
-          Visit
-        </Button>
-      ),
+      render: (_value, record) => {
+        const safeUrl = toSafeHttpUrl(record.schoolUrl);
+        return (
+          <Button
+            size="small"
+            type="primary"
+            ghost
+            icon={<LinkOutlined />}
+            disabled={!safeUrl}
+            href={safeUrl ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold rounded-lg"
+          >
+            Visit
+          </Button>
+        );
+      },
     },
     {
       title: "Applied At",

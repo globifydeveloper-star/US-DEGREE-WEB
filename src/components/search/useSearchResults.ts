@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 import { CATEGORY_KEYWORDS } from "@/constants/searchCategories";
@@ -28,7 +28,16 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
     () => initialData?.isServerPaginated || false,
   );
   const [isLoading, setIsLoading] = useState<boolean>(!initialData);
+  const [error, setError] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [retryNonce, setRetryNonce] = useState(0);
+  const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  // SSR already fetched this exact bundle for the params the page loaded
+  // with — skip the client's first fetch so hydration doesn't immediately
+  // re-request and flash a skeleton. Any later param change (filter, page,
+  // sort) goes through the effect normally.
+  const usedInitial = useRef(Boolean(initialData));
 
   const defaultItemsPerPage =
     viewMode === "grid" ? GRID_ITEMS_PER_PAGE : LIST_ITEMS_PER_PAGE;
@@ -74,6 +83,11 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
   );
 
   useEffect(() => {
+    if (usedInitial.current) {
+      usedInitial.current = false;
+      return;
+    }
+
     window.scrollTo(0, 0);
 
     const controller = new AbortController();
@@ -119,14 +133,23 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
           setResults(filteredData);
           setTotalCount(serverTotal);
           setIsServerPaginated(serverPaginated);
+          setError(false);
         } else {
+          // A non-OK response must not look like a legitimate zero-hit
+          // search — clear stale results and flag it as a failure so the UI
+          // shows "Search failed" instead of "No results found".
           setResults([]);
           setTotalCount(null);
           setIsServerPaginated(false);
+          setError(true);
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
           console.error("Search failed:", err);
+          setResults([]);
+          setTotalCount(null);
+          setIsServerPaginated(false);
+          setError(true);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -140,7 +163,7 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
     return () => {
       controller.abort();
     };
-  }, [searchParams, category, currentPage, itemsPerPage]);
+  }, [searchParams, category, currentPage, itemsPerPage, retryNonce]);
 
   const totalPages = Math.max(
     1,
@@ -158,6 +181,8 @@ export function useSearchResults(initialData?: ServerSearchBundle) {
 
   return {
     isLoading,
+    error,
+    retry,
     currentPage,
     setCurrentPage: handlePageChange,
     viewMode,

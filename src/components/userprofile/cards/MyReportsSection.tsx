@@ -11,6 +11,7 @@ import {
   emailReport,
   ReportSummary,
 } from "@/lib/auth/api";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 const PAGE_SIZE = 10;
 
@@ -66,11 +67,12 @@ export default function MyReportsSection() {
     setDownloadingId(reportId);
     try {
       const detail = await fetchReport(reportId);
-      const win = window.open(
-        detail.downloadUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
+      const safeUrl = toSafeHttpUrl(detail.downloadUrl);
+      if (!safeUrl) {
+        message.error("Could not download this report. Please try again.");
+        return;
+      }
+      const win = window.open(safeUrl, "_blank", "noopener,noreferrer");
       if (!win) message.error("Please allow pop-ups to download the report.");
     } catch (err) {
       console.error("Failed to get download link:", err);

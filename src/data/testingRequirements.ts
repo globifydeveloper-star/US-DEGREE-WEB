@@ -2,6 +2,7 @@ import {
   TestingBadgeColor,
   TestingRequirementsDisclosure,
 } from "@/types/university/AdmissionsTabContent";
+import { getBackendBaseUrl } from "@/lib/env";
 
 /**
  * Testing-requirements disclosures, sourced from the backend-exposed
@@ -61,14 +62,6 @@ function toDisclosure(
   };
 }
 
-function resolveApiUrl(): string {
-  return (
-    process.env.API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000"
-  );
-}
-
 let categoriesCache: Map<string, TestingRequirementsDisclosure> | null = null;
 let categoriesInflight: Promise<Map<
   string,
@@ -89,7 +82,7 @@ async function loadDisclosureCategories(): Promise<
     const map = new Map<string, TestingRequirementsDisclosure>();
     try {
       const res = await fetch(
-        `${resolveApiUrl()}/admission-disclosure-categories`,
+        `${getBackendBaseUrl()}/admission-disclosure-categories`,
         { cache: "no-store" },
       );
       if (res.ok) {

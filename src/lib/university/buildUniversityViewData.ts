@@ -341,3 +341,7 @@ export async function buildUniversityViewData(
       null,
   };
 }
+
+export type UniversityViewData = Awaited<
+  ReturnType<typeof buildUniversityViewData>
+>;

@@ -211,7 +211,7 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
     newPassword: string;
     confirmPassword: string;
   }) => {
-    const current = auth.currentUser;
+    const current = auth?.currentUser ?? null;
     if (!current || !current.email) {
       message.error("You must be signed in to change your password.");
       return;
@@ -255,7 +255,7 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
   };
 
   const openChangeEmailModal = () => {
-    setChangeEmailReauthMethod(getReauthMethod(auth.currentUser));
+    setChangeEmailReauthMethod(getReauthMethod(auth?.currentUser ?? null));
     setIsChangeEmailOpen(true);
   };
 
@@ -263,7 +263,7 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
     newEmail: string;
     currentPassword: string;
   }) => {
-    const current = auth.currentUser;
+    const current = auth?.currentUser ?? null;
     if (!current || !current.email) {
       message.error("You must be signed in to change your email.");
       return;
@@ -371,7 +371,7 @@ export function useProfileDashboard(authUser?: ProfileAuthUser | null) {
     setAccountDeactivatedStatus(true);
 
     try {
-      await signOut(auth);
+      if (auth) await signOut(auth);
     } catch (err) {
       console.error("Sign-out after deletion failed:", err);
     }

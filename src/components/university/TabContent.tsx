@@ -15,6 +15,7 @@ import TuitionCostsSection from "./TuitionCostsSection";
 import UniversityHero from "./UniversityHero";
 import TrustBanner from "./TrustBanner";
 import AthleticsTab from "@/components/college-profile/athletics/AthleticsTab";
+import type { UniversityViewData } from "@/lib/university/buildUniversityViewData";
 
 const tabs = [
   "Overview",
@@ -26,12 +27,11 @@ const tabs = [
   "Athletics",
 ];
 
-// `data` is a heterogeneous bag assembled in the server page and fanned out to
-// many child components, each with its own (and sometimes conflicting) prop
-// types. Typing it precisely here would force a large cross-component refactor;
-// the page that builds it is the source of truth for each field's shape.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function TabContent({ data }: { data: any }) {
+const TABPANEL_ID = "university-tabpanel";
+const tabId = (tab: string) =>
+  `tab-${tab.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+export default function TabContent({ data }: { data: UniversityViewData }) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [tuitionType, setTuitionType] = useState<"in_state" | "out_state">(
     "in_state",
@@ -48,6 +48,18 @@ export default function TabContent({ data }: { data: any }) {
       block: "nearest",
     });
   }, [activeTab]);
+
+  const handleTabKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    idx: number,
+  ) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const dir = e.key === "ArrowRight" ? 1 : -1;
+    const nextTab = tabs[(idx + dir + tabs.length) % tabs.length];
+    setActiveTab(nextTab);
+    tabRefs.current[nextTab]?.focus();
+  };
 
   return (
     <>
@@ -73,14 +85,24 @@ export default function TabContent({ data }: { data: any }) {
 
       <div className="sticky top-[50px] z-40 bg-white border-b border-gray-100 shadow-sm">
         <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px]">
-          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
-            {tabs.map((tab) => (
+          <div
+            role="tablist"
+            aria-label="University details"
+            className="flex items-center gap-8 overflow-x-auto scrollbar-none"
+          >
+            {tabs.map((tab, idx) => (
               <button
                 key={tab}
                 ref={(el) => {
                   tabRefs.current[tab] = el;
                 }}
+                role="tab"
+                id={tabId(tab)}
+                aria-selected={activeTab === tab}
+                aria-controls={TABPANEL_ID}
+                tabIndex={activeTab === tab ? 0 : -1}
                 onClick={() => setActiveTab(tab)}
+                onKeyDown={(e) => handleTabKeyDown(e, idx)}
                 className={`relative whitespace-nowrap py-5 text-sm font-bold transition-all duration-200 ${
                   activeTab === tab
                     ? "text-[#2563EB]"
@@ -98,7 +120,13 @@ export default function TabContent({ data }: { data: any }) {
       </div>
 
       <div className="w-full max-w-[2380px] mx-auto px-6 sm:px-10 lg:px-[86px] py-10 w-full flex flex-col lg:flex-row gap-10">
-        <div className="flex-1 w-full min-w-0">
+        <div
+          id={TABPANEL_ID}
+          role="tabpanel"
+          aria-labelledby={tabId(activeTab)}
+          tabIndex={0}
+          className="flex-1 w-full min-w-0"
+        >
           {activeTab === "Overview" && (
             <div className="space-y-10">
               <AboutSection name={data.name} description={data.description} />

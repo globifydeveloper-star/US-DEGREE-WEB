@@ -174,12 +174,12 @@ describe("/api/proxy", () => {
         .mockResolvedValue(new Response("{}", { status: 200 }));
 
       await POST(
-        req("http://localhost/api/proxy/thing", {
+        req("http://localhost/api/proxy/profile", {
           method: "POST",
           headers: { "content-type": "text/plain" },
           body: "hello",
         }),
-        { params: params(["thing"]) },
+        { params: params(["profile"]) },
       );
 
       expect(fetchMock.mock.calls[0][1]?.body).toBeUndefined();
@@ -203,6 +203,49 @@ describe("/api/proxy", () => {
 
       expect(res.status).toBe(400);
       expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("path allowlist", () => {
+    it("404s an unlisted path without contacting the backend", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch");
+
+      const res = await GET(
+        req("http://localhost/api/proxy/not-a-real-route"),
+        { params: params(["not-a-real-route"]) },
+      );
+
+      expect(res.status).toBe(404);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("404s an unlisted path for POST/PATCH/PUT/DELETE too", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch");
+
+      const res = await POST(
+        req("http://localhost/api/proxy/totally-unknown", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        }),
+        { params: params(["totally-unknown"]) },
+      );
+
+      expect(res.status).toBe(404);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("allows a listed prefix's sub-paths", async () => {
+      const fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response("{}", { status: 200 }));
+
+      await GET(
+        req("http://localhost/api/proxy/compare/matrix/entry/123"),
+        { params: params(["compare", "matrix", "entry", "123"]) },
+      );
+
+      expect(fetchMock).toHaveBeenCalledOnce();
     });
   });
 

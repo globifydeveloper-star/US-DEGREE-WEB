@@ -35,6 +35,10 @@ export async function exchangeIdToken(forceRefresh = false): Promise<string> {
 
   const doExchange = async (): Promise<string> => {
     try {
+      if (!auth) {
+        throw new Error("Cannot exchange token: Firebase is not configured");
+      }
+
       // Wait for Firebase to finish restoring any persisted session before
       // deciding there's no user. On a hard page refresh `auth.currentUser` is
       // momentarily null until persistence rehydrates, which otherwise made
@@ -111,11 +115,16 @@ export interface AppleAuthResult {
 export async function exchangeAppleIdToken(
   idToken: string,
   fullName?: string,
+  ageConsent?: boolean,
 ): Promise<AppleAuthResult> {
   const res = await fetch(`${PROXY_BASE}/auth/apple`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_token: idToken, full_name: fullName }),
+    body: JSON.stringify({
+      id_token: idToken,
+      full_name: fullName,
+      age_consent: !!ageConsent,
+    }),
   });
 
   if (!res.ok) {
@@ -139,6 +148,7 @@ export async function exchangeAppleIdToken(
  * (and logging spurious token-exchange errors) when nobody is logged in.
  */
 export async function hasAuthenticatedUser(): Promise<boolean> {
+  if (!auth) return false;
   try {
     await auth.authStateReady();
   } catch {
@@ -195,17 +205,20 @@ export async function authedFetch(
 
 async function parseJson<T>(res: Response, action: string): Promise<T> {
   if (!res.ok) {
-    // Surface the backend's error body (forwarded verbatim by the proxy) so a
-    // 500 isn't opaque — it usually carries the real cause (e.g. a DB error).
+    // Log the backend's error body (forwarded verbatim by the proxy)
+    // server/browser-console side only, so a 500 isn't opaque to whoever's
+    // debugging it — it usually carries the real cause (e.g. a DB error).
+    // Never put it in the thrown message: callers render Error.message
+    // straight into toasts/forms, and that body can contain stack traces,
+    // SQL, or file paths.
     let detail = "";
     try {
       detail = (await res.text()).slice(0, 500);
     } catch {
       // ignore — body may be unreadable
     }
-    throw new Error(
-      `${action} failed (${res.status})${detail ? `: ${detail}` : ""}`,
-    );
+    console.error(`${action} failed (${res.status})`, detail);
+    throw new Error(`${action} failed (${res.status})`);
   }
   return (await res.json()) as T;
 }

@@ -1,5 +1,6 @@
 import { Lock, GraduationCap } from "lucide-react";
 import type { AuthModalMode } from "@/types/auth";
+import { AUTH_MODAL_TITLE_ID } from "./AuthModalShell";
 
 interface AuthModalHeaderProps {
   mode: AuthModalMode;
@@ -23,7 +24,10 @@ export default function AuthModalHeader({
           <GraduationCap className="w-7 h-7" />
         )}
       </div>
-      <h2 className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-1.5">
+      <h2
+        id={AUTH_MODAL_TITLE_ID}
+        className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-1.5"
+      >
         {mode === "forgot_password"
           ? "Reset Password"
           : mode === "login"

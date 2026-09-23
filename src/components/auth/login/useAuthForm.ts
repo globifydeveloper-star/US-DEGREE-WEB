@@ -17,25 +17,35 @@ const REMEMBER_ME_KEY = "auth_remembered_credentials";
 
 interface RememberedCredentials {
   email: string;
-  password: string;
 }
 
+// Reads the remembered-email record, migrating away from an older format
+// that stored `password` alongside it in plaintext: any stored password is
+// dropped and the key rewritten email-only on first read after this change.
 function loadRememberedCredentials(): RememberedCredentials | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(REMEMBER_ME_KEY);
-    return raw ? (JSON.parse(raw) as RememberedCredentials) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<
+      RememberedCredentials & { password: string }
+    >;
+    if (!parsed?.email) {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+      return null;
+    }
+    if ("password" in parsed) {
+      saveRememberedCredentials(parsed.email);
+    }
+    return { email: parsed.email };
   } catch {
     return null;
   }
 }
 
-function saveRememberedCredentials(email: string, password: string) {
+function saveRememberedCredentials(email: string) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    REMEMBER_ME_KEY,
-    JSON.stringify({ email, password }),
-  );
+  localStorage.setItem(REMEMBER_ME_KEY, JSON.stringify({ email }));
 }
 
 function clearRememberedCredentials() {
@@ -97,7 +107,7 @@ export function useAuthForm({
       const remembered =
         initialMode === "login" ? loadRememberedCredentials() : null;
       setEmail(remembered?.email ?? "");
-      setPassword(remembered?.password ?? "");
+      setPassword("");
       setRememberMe(!!remembered);
       setConfirmPassword("");
       setIsParent(false);
@@ -209,7 +219,7 @@ export function useAuthForm({
       if (mode === "login") {
         await login(cleanEmail, password, rememberMe);
         if (rememberMe) {
-          saveRememberedCredentials(cleanEmail, password);
+          saveRememberedCredentials(cleanEmail);
         } else {
           clearRememberedCredentials();
         }
@@ -238,9 +248,18 @@ export function useAuthForm({
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
+    // First-time sign-up via Google/Apple must clear the same 18+ gate as
+    // email signup, before Firebase is ever called. Returning users sign in
+    // from the Login tab, where no account is being created.
+    if (mode === "signup" && !ageConsent) {
+      setError("You must confirm you are 18 or older to continue");
+      return;
+    }
     setIsLoading(true);
     try {
-      const firebaseUser = await loginWithGoogle();
+      const firebaseUser = await loginWithGoogle(
+        mode === "signup" ? ageConsent : undefined,
+      );
       onSuccess(firebaseUser.email!);
       onClose();
     } catch (err) {
@@ -254,9 +273,15 @@ export function useAuthForm({
 
   const handleAppleSignIn = async () => {
     if (isLoading) return;
+    if (mode === "signup" && !ageConsent) {
+      setError("You must confirm you are 18 or older to continue");
+      return;
+    }
     setIsLoading(true);
     try {
-      const appleUser = await loginWithApple();
+      const appleUser = await loginWithApple(
+        mode === "signup" ? ageConsent : undefined,
+      );
       onSuccess(appleUser.email ?? "");
       onClose();
     } catch (err) {

@@ -1,3 +1,6 @@
+import type { CampusData } from "@/types/university/CampusStudentsTab";
+import type { TuitionData } from "@/types/university/TuitionData";
+
 export interface PopularField {
   field_name: string;
   percentage: number;
@@ -16,20 +19,12 @@ export interface ProgramsAcademicsData {
   completionRate?: string | number;
   facultyRatio?: string | number;
   tuitionFee?: string;
-  campusData?: {
-    repayment?: {
-      all_borrowers_3yr?: number | string | null;
-    };
-  };
-  tuitionData?: {
-    tuition?: {
-      tuition_in_state?: number | string | null;
-    };
-  };
+  campusData?: CampusData | null;
+  tuitionData?: TuitionData | null;
   programsData?: {
     popular_fields?: PopularField[];
     comprehensive_degree_levels?: DegreeLevel[];
-  };
+  } | null;
 }
 
 export interface ProgramsAcademicsTabProps {

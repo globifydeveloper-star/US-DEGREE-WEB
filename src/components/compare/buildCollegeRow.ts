@@ -3,6 +3,7 @@ import { resolveSalaryValue, type SelectedCompareCollege } from "@/lib/auth/api"
 import { parseEntryId } from "./compareEntryIds";
 import type { EntryProgramInfo } from "./compareEntryIds";
 import type { RawUniversity, StoredDetail, UniOption } from "./compareCollegeTypes";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 // academics.graduationRate arrives as an already-scaled percentage (e.g.
 // 31.69); College.graduationRate is a fraction, matching acceptanceRate and
@@ -12,13 +13,9 @@ function toFraction(percent: number | null): number | null {
 }
 
 function deriveLogo(schoolUrl: string | null): string {
-  if (!schoolUrl) return "";
-  try {
-    const url = schoolUrl.startsWith("http") ? schoolUrl : `https://${schoolUrl}`;
-    return `https://logo.clearbit.com/${new URL(url).hostname}`;
-  } catch {
-    return "";
-  }
+  const safeUrl = toSafeHttpUrl(schoolUrl);
+  if (!safeUrl) return "";
+  return `https://logo.clearbit.com/${new URL(safeUrl).hostname}`;
 }
 
 interface BuildContext {

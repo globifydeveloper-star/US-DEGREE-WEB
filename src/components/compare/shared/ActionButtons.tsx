@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "antd";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 interface ActionButtonsProps {
-  schoolUrl?: string;
+  schoolUrl?: string | null;
   onViewDetails: () => void;
   /** "desktop" is the taller stacked layout, "mobile" the compact side-by-side layout. */
   layout?: "desktop" | "mobile";
@@ -19,6 +20,7 @@ export default function ActionButtons({
   layout = "desktop",
 }: ActionButtonsProps) {
   const isDesktop = layout === "desktop";
+  const safeSchoolUrl = toSafeHttpUrl(schoolUrl);
 
   return (
     <div
@@ -40,9 +42,9 @@ export default function ActionButtons({
         View Details
       </Button>
 
-      {schoolUrl ? (
+      {safeSchoolUrl ? (
         <a
-          href={schoolUrl}
+          href={safeSchoolUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={

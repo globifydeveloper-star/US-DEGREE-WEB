@@ -93,10 +93,6 @@ export interface ApiOutcomes {
   debt_income_ratio?: { debt_income_ratio?: ApiNum };
 }
 
-export interface ApiCampus {
-  campus?: { student_faculty_ratio?: ApiNum };
-}
-
 export interface ApiCollege {
   school_name?: string;
   city?: string;
@@ -104,6 +100,16 @@ export interface ApiCollege {
   school_type?: string;
   school_url?: string | null;
   accreditor?: string | null;
+}
+
+/** Shape of GET /programs/:id, as consumed by ProgramsAcademicsTab. */
+export interface ApiPrograms {
+  popular_fields?: { field_name: string; percentage: number }[];
+  comprehensive_degree_levels?: {
+    level: string;
+    total_programs: number;
+    top_titles: string[];
+  }[];
 }
 
 export interface ApiUni {

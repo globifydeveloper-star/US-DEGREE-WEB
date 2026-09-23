@@ -26,6 +26,7 @@ import {
 } from "@/lib/fitScoreSync";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 export interface ResultCardProps {
   id?: number | string;
@@ -164,12 +165,7 @@ export default function ResultCard({
   logoColor,
   schoolUrl,
 }: ResultCardProps) {
-  const formattedSchoolUrl = schoolUrl
-    ? schoolUrl.trim().startsWith("http://") ||
-      schoolUrl.trim().startsWith("https://")
-      ? schoolUrl.trim()
-      : `https://${schoolUrl.trim()}`
-    : "";
+  const formattedSchoolUrl = toSafeHttpUrl(schoolUrl);
   const hasSatData = !!satAct && satAct !== "N/A";
 
   const [isCalculated, setIsCalculated] = useState(false);

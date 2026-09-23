@@ -11,15 +11,11 @@ import {
 import { fetchServerSearchResults } from "@/lib/search/searchServer";
 import { getCategoryLabel } from "@/constants/searchCategories";
 import { getSiteUrl } from "@/lib/env";
+import { getParamString } from "@/lib/params";
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
-
-const getParamString = (param: string | string[] | undefined): string => {
-  if (!param) return "";
-  return Array.isArray(param) ? param[0] || "" : param;
-};
 
 export async function generateMetadata({
   searchParams,

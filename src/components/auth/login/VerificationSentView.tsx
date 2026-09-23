@@ -1,6 +1,6 @@
 import { Mail, ArrowRight } from "lucide-react";
 
-import AuthModalShell from "./AuthModalShell";
+import AuthModalShell, { AUTH_MODAL_TITLE_ID } from "./AuthModalShell";
 import type { AuthFormState } from "./useAuthForm";
 
 interface VerificationSentViewProps {
@@ -23,7 +23,10 @@ export default function VerificationSentView({
         <div className="inline-flex w-16 h-16 rounded-3xl bg-blue-50 items-center justify-center text-blue-600 mb-4 shadow-inner">
           <Mail className="w-8 h-8 animate-bounce" />
         </div>
-        <h2 className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-3">
+        <h2
+          id={AUTH_MODAL_TITLE_ID}
+          className="text-2xl font-black font-['Lexend'] text-slate-900 tracking-tight leading-none mb-3"
+        >
           Verify Your Email
         </h2>
         <p className="text-sm font-semibold text-slate-500 max-w-[320px] leading-relaxed mb-6">

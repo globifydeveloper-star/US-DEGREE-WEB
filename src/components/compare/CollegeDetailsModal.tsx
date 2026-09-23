@@ -12,6 +12,7 @@ import {
   CollegeSummaryResponse,
   OutcomesResponse,
 } from "@/types/university/ComparisonTable";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 interface CollegeDetailsModalProps {
   collegeId: string | null;
@@ -169,10 +170,11 @@ export default function CollegeDetailsModal({
           ? "Private"
           : "Public";
 
+        const safeSchoolUrl = toSafeHttpUrl(overviewData?.school?.school_url);
         const logo =
           matchedCollege?.logo ||
-          (overviewData?.school?.school_url
-            ? `https://logo.clearbit.com/${new URL(overviewData.school.school_url.startsWith("http") ? overviewData.school.school_url : `https://${overviewData.school.school_url}`).hostname}`
+          (safeSchoolUrl
+            ? `https://logo.clearbit.com/${new URL(safeSchoolUrl).hostname}`
             : null) ||
           `https://logo.clearbit.com/google.com`;
 

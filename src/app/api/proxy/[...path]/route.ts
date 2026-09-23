@@ -5,6 +5,55 @@ type BodylessMethod = "GET" | "DELETE";
 type BodyMethod = "POST" | "PATCH" | "PUT";
 
 /**
+ * Backend path prefixes the frontend actually calls through this proxy.
+ * Anything not listed here 404s instead of being forwarded — add a line
+ * here when you add a new backend call from the browser. This is
+ * intentionally data, not authorization: the backend remains the real
+ * authZ boundary for authed prefixes (profile, saved-colleges, compare/*,
+ * report, analytics, account/delete, flag).
+ */
+const ALLOWED_PATH_PREFIXES = [
+  // Public catalog / search data
+  "search",
+  "states",
+  "programs",
+  "schools",
+  "colleges",
+  "overview",
+  "outcomes",
+  "campus",
+  "tuition",
+  "credentials",
+  "courses",
+  "degree-levels",
+  "admission-disclosure-categories",
+
+  // Auth
+  "auth/login",
+  "auth/apple",
+  "auth/me",
+  "account/availability",
+  "account/email-available",
+  "account/delete",
+  "user",
+
+  // Authenticated user data
+  "profile",
+  "saved-colleges",
+  "compare/matrix",
+  "compare/colleges",
+  "report",
+  "analytics",
+  "flag",
+] as const;
+
+function isAllowedPath(path: string): boolean {
+  return ALLOWED_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}
+
+/**
  * Resolve the catch-all segments to a backend path.
  *
  * Segments arrive percent-decoded, so a traversal attempt that survives Next's
@@ -33,6 +82,13 @@ function proxyFailure(method: string, error: unknown): Response {
 
 function badPath(): Response {
   return Response.json({ error: "Invalid path" }, { status: 400 });
+}
+
+// 404 rather than 403 for a disallowed path — a 403 would confirm to a
+// prober that the path exists but is blocked, which is more information
+// than an unlisted route should leak.
+function notFound(): Response {
+  return Response.json({ error: "Not found" }, { status: 404 });
 }
 
 /**
@@ -73,6 +129,7 @@ async function forwardNoBody(
   try {
     const pathStr = resolvePath((await params).path);
     if (pathStr === null) return badPath();
+    if (!isAllowedPath(pathStr)) return notFound();
 
     const targetUrl = `${getBackendBaseUrl()}/${pathStr}${request.nextUrl.search}`;
 
@@ -95,6 +152,7 @@ async function forwardWithBody(
   try {
     const pathStr = resolvePath((await params).path);
     if (pathStr === null) return badPath();
+    if (!isAllowedPath(pathStr)) return notFound();
 
     const targetUrl = `${getBackendBaseUrl()}/${pathStr}${request.nextUrl.search}`;
 

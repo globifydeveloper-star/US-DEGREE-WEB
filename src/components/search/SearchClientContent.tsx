@@ -29,6 +29,8 @@ export default function SearchClientContent({
   const searchParams = useSearchParams();
   const {
     isLoading,
+    error,
+    retry,
     currentPage,
     setCurrentPage,
     viewMode,
@@ -76,6 +78,8 @@ export default function SearchClientContent({
                 <SearchResultsView
                   viewMode={viewMode}
                   results={currentResults}
+                  error={error}
+                  onRetry={retry}
                 />
               </>
             )}

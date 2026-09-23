@@ -17,6 +17,7 @@ import {
   SavedLimitError,
 } from "../search/useSavedColleges";
 import type { SavedCollege } from "@/lib/auth/api";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 export default function UniversityHero({
   id,
@@ -66,12 +67,7 @@ export default function UniversityHero({
     }
   };
 
-  const formattedSchoolUrl = schoolUrl
-    ? schoolUrl.trim().startsWith("http://") ||
-      schoolUrl.trim().startsWith("https://")
-      ? schoolUrl.trim()
-      : `https://${schoolUrl.trim()}`
-    : "";
+  const formattedSchoolUrl = toSafeHttpUrl(schoolUrl);
 
   // Saved-college state (shared store; same source as the profile grid).
   const isSaved = useSavedCollege(compareId);
@@ -95,7 +91,7 @@ export default function UniversityHero({
         tuitionFee: tuitionData?.tuition?.tuition_in_state ?? null,
         acceptanceRate: Number.isNaN(admissionNum) ? null : admissionNum,
         createdAt: new Date().toISOString(),
-        schoolUrl: formattedSchoolUrl || schoolUrl || null,
+        schoolUrl: formattedSchoolUrl,
         cipCode: hasCip ? cipCode : null,
         programName: hasCip ? degree || null : null,
         credentialLevel: hasCip ? (credentialLevel ?? null) : null,
@@ -139,7 +135,6 @@ export default function UniversityHero({
   const activeStickerPrice = tuitionData
     ? `$${Math.round(activeStickerVal).toLocaleString()}`
     : tuitionFee;
-  console.log("tuitionData", tuitionData);
   return (
     <div className="relative w-full">
       {/* Banner Cover Image */}

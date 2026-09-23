@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getBackendBaseUrl } from "@/lib/env";
 import type { College } from "@/types/university/ComparisonTable";
 import { parseEntryId } from "@/components/compare/compareEntryIds";
@@ -10,7 +11,10 @@ export interface ServerCompareBundle {
   comparedColleges: College[];
 }
 
-export async function fetchServerCompareDetails(
+// React.cache dedupes calls with the same idsParam within one request, so
+// generateMetadata and the page component (which both need this bundle)
+// hit the backend once instead of twice per request.
+export const fetchServerCompareDetails = cache(async function fetchServerCompareDetails(
   idsParam?: string,
 ): Promise<ServerCompareBundle> {
   if (!idsParam) {
@@ -108,4 +112,4 @@ export async function fetchServerCompareDetails(
     console.error("Server compare details fetch failed:", error);
     return { comparedIds, comparedColleges: [] };
   }
-}
+});

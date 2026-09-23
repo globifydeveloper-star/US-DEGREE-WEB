@@ -9,6 +9,7 @@ import { College } from "@/types/university/ComparisonTable";
 import { useAuth } from "@/context/AuthContext";
 import { emptyProfile, mergeProfile } from "@/components/userprofile/ProfileDashboard";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 // Below this, we ask the user to finish their profile before generating a
 // report so the AI has enough signal (academics + preferences) to personalize it.
@@ -223,10 +224,11 @@ export default function CompareHeader({
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       if (isMounted.current) {
+        const safePdfUrl = toSafeHttpUrl(result.pdfUrl);
         if (result.reportId) {
           router.push("/profile#reports_section");
-        } else if (result.pdfUrl) {
-          window.open(result.pdfUrl, "_blank", "noopener,noreferrer");
+        } else if (safePdfUrl) {
+          window.open(safePdfUrl, "_blank", "noopener,noreferrer");
         }
       }
     } catch (err) {

@@ -1,5 +1,5 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,8 +10,27 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export function isFirebaseConfigured(): boolean {
+  return Boolean(
+    firebaseConfig.apiKey &&
+      firebaseConfig.authDomain &&
+      firebaseConfig.projectId &&
+      firebaseConfig.appId,
+  );
+}
 
-export const auth = getAuth(app);
+let app: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
+
+if (isFirebaseConfigured()) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  authInstance = getAuth(app);
+} else if (process.env.NODE_ENV !== "production") {
+  console.error(
+    "Firebase is not configured (missing NEXT_PUBLIC_FIREBASE_* env vars) — auth is disabled.",
+  );
+}
+
+/** Null when Firebase env vars are missing. Callers must check before use. */
+export const auth = authInstance;
 export const googleProvider = new GoogleAuthProvider();

@@ -13,6 +13,7 @@ import { CourseSummarySideCardProps } from "@/types/university/CourseSummarySide
 import { getCredentialLevelInfo } from "@/constants/credentialLevel";
 import { trackApplyClick } from "@/lib/auth/api";
 import { trackEvent } from "@/lib/analytics";
+import { toSafeHttpUrl } from "@/lib/url/httpUrl";
 
 export default function CourseSummarySideCard({
   degree,
@@ -151,13 +152,7 @@ export default function CourseSummarySideCard({
 
       {/* CTA */}
       <a
-        href={
-          schoolUrl
-            ? schoolUrl.startsWith("http")
-              ? schoolUrl
-              : `https://${schoolUrl}`
-            : "#"
-        }
+        href={toSafeHttpUrl(schoolUrl) ?? "#"}
         onClick={handleApplyClick}
         target="_blank"
         rel="noopener noreferrer"

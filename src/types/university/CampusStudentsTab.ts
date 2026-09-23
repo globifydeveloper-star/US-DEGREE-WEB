@@ -5,7 +5,9 @@ export interface CampusData {
   campus?: {
     size_category?: string | null;
     size?: ApiNum;
-    student_faculty_ratio?: string | null;
+    // Comes as a bare number from one backend table and an "n:1" string from
+    // another (see buildUniversityViewData's facultyRatio derivation).
+    student_faculty_ratio?: ApiNum;
     avg_family_income?: ApiNum;
   };
   students?: {

@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import CompareClientContent from "@/components/compare/CompareClientContent";
 import { fetchServerCompareDetails } from "@/lib/compare/compareServer";
 import { getSiteUrl } from "@/lib/env";
+import { getParamString } from "@/lib/params";
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,7 +17,7 @@ export async function generateMetadata({
   searchParams,
 }: PageProps): Promise<Metadata> {
   const resolvedParams = await searchParams;
-  const idsParam = (resolvedParams.ids as string) || "";
+  const idsParam = getParamString(resolvedParams.ids);
   const initialBundle = await fetchServerCompareDetails(idsParam);
 
   const names = initialBundle.comparedColleges.map((c) => c.name);
@@ -49,7 +50,7 @@ export async function generateMetadata({
 
 export default async function ComparePage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
-  const idsParam = (resolvedSearchParams.ids as string) || "";
+  const idsParam = getParamString(resolvedSearchParams.ids);
   const initialBundle = await fetchServerCompareDetails(idsParam);
 
   return (
